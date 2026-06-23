@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.4); }
+  50% { box-shadow: 0 0 20px 6px rgba(255, 255, 255, 0.9); }
+}
+
+.btn-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee-inner {
+  display: inline-block;
+  animation: marquee 12s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes construction-flash {
+  0%, 100% { background-color: #ffcc00; color: #000; }
+  50% { background-color: #000; color: #ffcc00; }
+}
+
+.construction-banner {
+  animation: construction-flash 0.8s step-end infinite;
+}
+
+body.retro {
+  background-color: #000080;
+  background-image: repeating-linear-gradient(
+    45deg,
+    #000080 0px,
+    #000080 10px,
+    #0000aa 10px,
+    #0000aa 20px
+  );
+  overflow: auto;
+}

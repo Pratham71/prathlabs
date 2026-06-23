@@ -1,11 +1,13 @@
 import { GET, POST } from "@/app/api/visitors/route";
 import { NextRequest } from "next/server";
 
+const mockRedis = {
+  incr: jest.fn().mockResolvedValue(42),
+  get: jest.fn().mockResolvedValue(42),
+};
+
 jest.mock("@/lib/redis", () => ({
-  redis: {
-    incr: jest.fn().mockResolvedValue(42),
-    get: jest.fn().mockResolvedValue(42),
-  },
+  getRedis: jest.fn(() => mockRedis),
 }));
 
 describe("GET /api/visitors", () => {
