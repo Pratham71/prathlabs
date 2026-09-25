@@ -1,12 +1,5 @@
 import type { Status } from "@/content/projects";
 
-const LABEL: Record<Status | "online", string> = {
-  active: "active",
-  building: "building",
-  shipped: "shipped",
-  online: "online",
-};
-
 // Drawn marks, one 10px grid, so status never depends on a font's glyph coverage.
 function Mark({ kind }: { kind: Status | "online" }) {
   if (kind === "active" || kind === "online") {
@@ -35,7 +28,7 @@ export function StatusMark({ kind, children }: { kind: Status | "online"; childr
   return (
     <span className="status">
       <Mark kind={kind} />
-      {children ?? LABEL[kind]}
+      {children ?? kind}
     </span>
   );
 }

@@ -1,10 +1,10 @@
 import { unstable_cache } from "next/cache";
 import { getRedis } from "@/lib/redis";
 import { redisBeatStore } from "@/lib/beat-store";
-import { formatUptime, readOnline } from "@/lib/heartbeat";
+import { liveDevices, readOnline } from "@/lib/heartbeat";
 
 // Cached for 60s so page traffic never multiplies Redis reads; any failure means "show nothing".
-export const getOnlineDevices = unstable_cache(
+const getOnlineDevices = unstable_cache(
   async () => {
     if (!process.env.UPSTASH_REDIS_REST_URL) return [];
     try {
@@ -17,10 +17,9 @@ export const getOnlineDevices = unstable_cache(
   { revalidate: 60 },
 );
 
-// Uptime is formatted at render time so "up 3h" is accurate to the page's 60s revalidate.
-export async function getDeviceLines() {
-  const now = Date.now();
-  return (await getOnlineDevices()).map((d) => ({ ...d, uptime: formatUptime(d.since, now) }));
+export async function getLiveDevices() {
+  const renderedAt = Date.now();
+  return { devices: liveDevices(await getOnlineDevices(), renderedAt), renderedAt };
 }
 
 export const renderDate = () => new Date().toISOString().slice(0, 10);

@@ -125,7 +125,7 @@ a:hover {
   margin-top: 2.25rem;
 }
 
-.man-section > h2 {
+.man-section > .man-label {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -161,7 +161,7 @@ a:hover {
 
 .flag {
   white-space: nowrap;
-  color: var(--amber);
+  color: var(--muted);
 }
 
 /* PROJECTS: whole-row links */
@@ -284,7 +284,19 @@ a:hover {
 .heat canvas {
   display: block;
   width: 100%;
+  height: 100%;
   touch-action: pan-y;
+}
+
+/* Reserve the grid's height before the canvas measures itself (no layout shift). */
+.heat-frame:not([data-measured]) {
+  aspect-ratio: 53 / 7;
+}
+
+@media (max-width: 600px) {
+  .heat-frame:not([data-measured]) {
+    aspect-ratio: 26 / 7;
+  }
 }
 
 .heat-frame:focus-visible {
@@ -404,7 +416,7 @@ html[data-boot="out"] .boot {
   color: var(--muted);
 }
 
-.man-body h2 {
+.man-body h3 {
   font-size: 1rem;
   font-weight: 700;
   margin: 1.5rem 0 0.35rem;
@@ -476,4 +488,10 @@ html[data-boot="out"] .boot {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
   }
+}
+
+.project-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: inherit;
 }

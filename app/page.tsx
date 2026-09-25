@@ -1,25 +1,24 @@
 import Link from "next/link";
 import { ManPage, Section } from "@/components/Man";
 import { StatusMark } from "@/components/StatusMark";
+import { Devices } from "@/components/Devices";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { CopyEmail } from "@/components/CopyEmail";
 import { projects } from "@/content/projects";
 import { site } from "@/content/site";
-import { activityStats, getContributions } from "@/lib/github";
-import { getDeviceLines, renderDate } from "@/lib/devices";
+import { activityStats } from "@/lib/github";
+import { getActivity } from "@/lib/activity";
+import { getLiveDevices, renderDate } from "@/lib/devices";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [activity, devices] = await Promise.all([
-    getContributions(site.githubLogin, process.env.GITHUB_TOKEN),
-    getDeviceLines(),
-  ]);
+  const [activity, { devices, renderedAt }] = await Promise.all([getActivity(), getLiveDevices()]);
   const stats = activity ? activityStats(activity.days) : null;
 
   return (
     <ManPage title={site.manName} section={1} footLeft={site.handle} footMid={renderDate()}>
-      <Section name="NAME">
+      <Section name="NAME" plain>
         <div className="name-line">
           <h1 className="display-name">{site.name}</h1>
           <span className="muted">— {site.whatis}</span>
@@ -79,18 +78,7 @@ export default async function Home() {
         )}
       </Section>
 
-      {devices.length > 0 && (
-        <Section name="DEVICES">
-          <ul className="devices">
-            {devices.map((d) => (
-              <li key={d.id}>
-                <span>{d.name}</span>
-                <StatusMark kind="online">online · {d.uptime}</StatusMark>
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
+      <Devices devices={devices} renderedAt={renderedAt} />
 
       <Section name="SEE ALSO">
         <ul className="see-also">

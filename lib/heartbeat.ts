@@ -49,8 +49,15 @@ export async function readOnline(store: BeatStore) {
   const beats = await store.mget(ids.map(key));
   return ids.flatMap((id, i) => {
     const beat = beats[i];
-    return beat ? [{ id, name: DEVICES[id], since: beat.since }] : [];
+    return beat ? [{ id, name: DEVICES[id], since: beat.since, ts: beat.ts }] : [];
   });
+}
+
+export type OnlineDevice = { id: string; name: string; since: number; ts: number };
+
+// Cached HTML can outlive a device's key; re-check the last beat's age wherever the list is shown.
+export function liveDevices<T extends { ts: number }>(devices: T[], now: number): T[] {
+  return devices.filter((d) => now - d.ts < TTL_SECONDS * 1000);
 }
 
 export function formatUptime(since: number, now: number): string {

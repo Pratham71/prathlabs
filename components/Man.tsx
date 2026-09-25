@@ -30,11 +30,26 @@ export function ManPage({
   );
 }
 
-export function Section({ name, children, id }: { name: string; children: React.ReactNode; id?: string }) {
+// `plain` renders the section name as a label, for the section holding the page's h1 (NAME),
+// so the outline reads h1 then h2s instead of h2 before h1.
+export function Section({
+  name,
+  children,
+  id,
+  plain,
+}: {
+  name: string;
+  children: React.ReactNode;
+  id?: string;
+  plain?: boolean;
+}) {
   const hid = `${(id ?? name).toLowerCase().replace(/\s+/g, "-")}-h`;
+  const Label = plain ? "p" : "h2";
   return (
-    <section className="man-section" aria-labelledby={hid} id={id}>
-      <h2 id={hid}>{name}</h2>
+    <section className="man-section" aria-labelledby={plain ? undefined : hid} id={id}>
+      <Label id={hid} className="man-label">
+        {name}
+      </Label>
       <div className="body">{children}</div>
     </section>
   );

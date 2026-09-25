@@ -6,7 +6,6 @@ export const site = {
   github: "https://github.com/Pratham71",
   githubLogin: "Pratham71",
   whatis: "infrastructure, devops and backend",
-  synopsis: "pratham [--build systems] [--self-host] [--ship]",
   description: [
     "CS student at BITS Pilani Dubai. I build self-hosted infrastructure, backend services, and the automation that ties them together.",
     "I run my own hardware, a Raspberry Pi and a home server, and I prefer building the real thing over reading about it.",

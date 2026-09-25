@@ -54,6 +54,11 @@ describe("getContributions", () => {
     const [, init] = fetchImpl.mock.calls[0];
     expect(init.headers.Authorization).toBe("bearer tok");
   });
+  it("never lets fetch cache a response, so an error body can't stick for hours", async () => {
+    const fetchImpl = jest.fn().mockResolvedValue({ ok: true, json: async () => fixture });
+    await getContributions("Pratham71", "tok", fetchImpl as unknown as typeof fetch);
+    expect(fetchImpl.mock.calls[0][1].cache).toBe("no-store");
+  });
   it("returns null without a token, on HTTP errors, and on thrown errors", async () => {
     expect(await getContributions("x", undefined)).toBeNull();
     const notOk = jest.fn().mockResolvedValue({ ok: false, json: async () => ({}) });

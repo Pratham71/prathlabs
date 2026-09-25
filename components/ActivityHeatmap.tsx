@@ -29,6 +29,8 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
   const [active, setActive] = useState<number | null>(null);
   const [announce, setAnnounce] = useState("");
   const progress = useRef(0); // 0..1 reveal, rippling back from today
+  const revealStart = useRef<number | null>(null);
+  const size = useRef({ w: 0, h: 0, dpr: 0 });
 
   const weeks = width && width < 520 ? 26 : 53;
   const cells = useMemo(() => toCells(days, weeks), [days, weeks]);
@@ -40,8 +42,11 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
     const canvas = canvasRef.current;
     if (!canvas || !width) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
+    if (size.current.w !== width || size.current.h !== height || size.current.dpr !== dpr) {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      size.current = { w: width, h: height, dpr };
+    }
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const css = getComputedStyle(document.documentElement);
@@ -86,12 +91,11 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
       return draw();
     }
     let raf = 0;
-    const io = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      io.disconnect();
-      const start = performance.now();
+    const html = document.documentElement;
+    const run = () => {
+      revealStart.current ??= performance.now();
       const tick = (now: number) => {
-        progress.current = Math.min(1, (now - start) / REVEAL_MS);
+        progress.current = Math.min(1, (now - (revealStart.current ?? now)) / REVEAL_MS);
         draw();
         if (progress.current < 1 && !document.hidden) raf = requestAnimationFrame(tick);
         else if (progress.current < 1) {
@@ -100,11 +104,20 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
         }
       };
       raf = requestAnimationFrame(tick);
+    };
+    // Wait for the boot overlay to clear so the ripple is actually seen.
+    const start = () => (html.dataset.boot ? addEventListener("boot:done", run, { once: true }) : run());
+    if (revealStart.current !== null) run();
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      start();
     }, { threshold: 0.3 });
     draw();
-    io.observe(canvas);
+    if (revealStart.current === null) io.observe(canvas);
     return () => {
       io.disconnect();
+      removeEventListener("boot:done", run);
       cancelAnimationFrame(raf);
     };
   }, [draw, width]);
@@ -112,6 +125,10 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
   const select = (i: number | null) => {
     setActive(i);
     if (i !== null) setAnnounce(label(cells[i].day));
+  };
+
+  const onPointerLeave = (e: React.PointerEvent) => {
+    if (e.pointerType !== "touch") setActive(null);
   };
 
   const onPointer = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -148,8 +165,10 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
     <div className="heat" ref={wrapRef} data-active={a ? "true" : "false"}>
       <div
         className="heat-frame"
+        data-measured={width ? "" : undefined}
         tabIndex={0}
-        role="group"
+        role="application"
+        aria-roledescription="contribution calendar"
         aria-label="Contribution calendar. Use arrow keys to move between days."
         onKeyDown={onKey}
         onFocus={() => active === null && cells.length && select(cells.length - 1)}
@@ -157,14 +176,15 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
       >
         <canvas
           ref={canvasRef}
-          style={{ height }}
+          style={width ? { height } : undefined}
           aria-hidden="true"
           onPointerMove={onPointer}
-          onPointerLeave={() => setActive(null)}
+          onPointerDown={onPointer}
+          onPointerLeave={onPointerLeave}
         />
       </div>
-      <div className="heat-cursor" style={{ width: cell + 2, height: cell + 2, transform: `translate(${ax - 1}px, ${ay - 1}px)` }} />
-      <div className="heat-tip" style={{ transform: tipTransform }}>
+      <div className="heat-cursor" aria-hidden="true" style={{ width: cell + 2, height: cell + 2, transform: `translate(${ax - 1}px, ${ay - 1}px)` }} />
+      <div className="heat-tip" aria-hidden="true" style={{ transform: tipTransform }}>
         {a ? label(a.day) : " "}
       </div>
       <p className="sr-only" aria-live="polite">

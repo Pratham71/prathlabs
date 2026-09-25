@@ -3,6 +3,7 @@ import {
   parseBeat,
   recordBeat,
   readOnline,
+  liveDevices,
   formatUptime,
   TTL_SECONDS,
   type Beat,
@@ -71,7 +72,7 @@ describe("readOnline", () => {
   it("returns only devices with a live key, in allowlist order", async () => {
     const { store } = memoryStore();
     await recordBeat(store, "homeserver", 5);
-    expect(await readOnline(store)).toEqual([{ id: "homeserver", name: "homeserver", since: 5 }]);
+    expect(await readOnline(store)).toEqual([{ id: "homeserver", name: "homeserver", since: 5, ts: 5 }]);
     await recordBeat(store, "pi-01", 7);
     expect((await readOnline(store)).map((d) => d.id)).toEqual(["pi-01", "homeserver"]);
   });
@@ -86,5 +87,13 @@ describe("formatUptime", () => {
     [2 * 24 * 60 * m + 4 * 60 * m, "up 2d 4h"],
   ])("%d ms → %s", (elapsed, text) => {
     expect(formatUptime(0, elapsed)).toBe(text);
+  });
+});
+
+describe("liveDevices", () => {
+  const d = (id: string, ts: number) => ({ id, name: id, since: 0, ts });
+  it("drops devices whose last beat is older than the TTL, even if a cached page still lists them", () => {
+    const now = 10 * 60_000 + 1;
+    expect(liveDevices([d("a", now - 1_000), d("b", 0)], now).map((x) => x.id)).toEqual(["a"]);
   });
 });

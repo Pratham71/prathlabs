@@ -60,8 +60,8 @@ export async function getContributions(
       method: "POST",
       headers: { Authorization: `bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ query: QUERY, variables: { login } }),
-      next: { revalidate: 21600 },
-    } as RequestInit);
+      cache: "no-store", // caching happens after a successful parse (lib/activity.ts), never on error bodies
+    });
     if (!res.ok) return null;
     return parseCalendar(await res.json());
   } catch {

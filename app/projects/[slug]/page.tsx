@@ -27,10 +27,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <ManPage title={p.title} section={p.section} footLeft={site.handle} footMid={p.lang}>
-      <Section name="NAME">
-        <p>
-          <strong>{p.name}</strong> <span className="muted">— {p.summary}</span>
-        </p>
+      <Section name="NAME" plain>
+        <h1 className="project-name">
+          {p.name} <span className="muted">— {p.summary}</span>
+        </h1>
       </Section>
       <Section name="STATUS">
         <StatusMark kind={p.status} />
