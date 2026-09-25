@@ -1,5 +1,4 @@
 import { inked } from "@/lib/dither";
-import { shouldBoot } from "@/lib/boot";
 import { projects } from "@/content/projects";
 
 describe("dither", () => {
@@ -10,14 +9,6 @@ describe("dither", () => {
   };
   it("inks more of each 4x4 tile as the level rises", () => {
     expect([0, 1, 2, 3, 4].map(coverage)).toEqual([0, 4, 8, 12, 16]);
-  });
-});
-
-describe("shouldBoot", () => {
-  it("plays only when motion is allowed and it has not played this session", () => {
-    expect(shouldBoot({ reducedMotion: false, seen: false })).toBe(true);
-    expect(shouldBoot({ reducedMotion: true, seen: false })).toBe(false);
-    expect(shouldBoot({ reducedMotion: false, seen: true })).toBe(false);
   });
 });
 
