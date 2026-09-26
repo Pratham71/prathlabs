@@ -185,7 +185,7 @@ export function CommandPalette() {
     if (a.type === "np")
       void fetch("/api/now-playing")
         .then((r) => r.json())
-        .then((d) => say(d.off ? ["spotify is off right now."] : [`${d.playing ? "now playing" : "last played"}: ${d.title} · ${d.artist}`, d.url]))
+        .then((d) => say(d.off ? [`spotify is off right now${d.reason ? ` (${d.reason})` : ""}.`] : [`${d.playing ? "now playing" : "last played"}: ${d.title} · ${d.artist}`, d.url]))
         .catch(() => say(["couldn't reach spotify."]));
     if (a.type === "nav") {
       dialog.current?.close();

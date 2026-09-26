@@ -6,7 +6,7 @@ import { isAdminRequest } from "@/lib/admin";
 export async function POST(req: Request) {
   const body = (await req.json()) as HandleUploadBody;
   // Blob's own completion callback carries no cookie; the token request does.
-  if (body.type === "blob.generate-client-token" && !isAdminRequest(req)) return Response.json({ error: "not logged in" }, { status: 401 });
+  if (body.type === "blob.generate-client-token" && !(await isAdminRequest(req))) return Response.json({ error: "not logged in" }, { status: 401 });
   try {
     return Response.json(
       await handleUpload({

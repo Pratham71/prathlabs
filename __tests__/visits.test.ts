@@ -1,5 +1,8 @@
 const list: string[] = [];
+const counters = new Map<string, number>();
 const fakeRedis = {
+  incr: jest.fn(async (k: string) => (counters.set(k, (counters.get(k) ?? 0) + 1), counters.get(k)!)),
+  expire: jest.fn(async () => 1),
   lpush: jest.fn(async (_k: string, v: string) => list.unshift(v)),
   ltrim: jest.fn(async (_k: string, a: number, b: number) => list.splice(b + 1)),
   lrange: jest.fn(async () => list),
@@ -9,10 +12,11 @@ jest.mock("@/lib/redis", () => ({ getRedis: () => fakeRedis, hasRedis: () => tru
 import { GET, POST } from "@/app/api/visits/route";
 import { VISITS_WINDOW_MS, parseVisit, tallyVisits } from "@/lib/visits";
 
-const post = (body: string) => POST(new Request("http://localhost/api/visits", { method: "POST", body }));
+const post = (body: string, ip = "1.2.3.4") => POST(new Request("http://localhost/api/visits", { method: "POST", body, headers: { "x-real-ip": ip } }));
 
 beforeEach(() => {
   list.length = 0;
+  counters.clear();
   jest.clearAllMocks();
   process.env.UPSTASH_REDIS_REST_URL = "http://x";
   process.env.UPSTASH_REDIS_REST_TOKEN = "t";
@@ -47,4 +51,11 @@ test("GET tallies what was stored and is CDN-cacheable", async () => {
   const res = await GET();
   expect(await res.json()).toEqual([{ id: "bom1", n: 2 }]);
   expect(res.headers.get("cache-control")).toContain("s-maxage=60");
+});
+
+test("POST is limited per IP, other visitors unaffected", async () => {
+  for (let i = 0; i < 3; i++) expect((await post("dxb1")).status).toBe(204);
+  expect((await post("dxb1")).status).toBe(429);
+  expect((await post("dxb1", "5.6.7.8")).status).toBe(204);
+  expect(list).toHaveLength(4);
 });

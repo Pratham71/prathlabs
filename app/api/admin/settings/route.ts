@@ -9,13 +9,13 @@ const deny = () => Response.json({ error: "not logged in" }, { status: 401 });
 const files = (s: Settings) => [...Object.values(s.music).flatMap((l) => l?.map((t) => t.src) ?? []), ...Object.values(s.reboot).map((r) => r?.src)];
 
 export async function GET(req: Request) {
-  if (!isAdminRequest(req)) return deny();
+  if (!(await isAdminRequest(req))) return deny();
   return Response.json(await readSettings());
 }
 
 // PUT the whole settings object. Files the old settings had and the new one dropped are deleted from Blob.
 export async function PUT(req: Request) {
-  if (!isAdminRequest(req)) return deny();
+  if (!(await isAdminRequest(req))) return deny();
   const next = clean(await req.json().catch(() => null));
   if (!files(next).every((u) => typeof u === "string" && (isBlob(u) || isSitePath(u)))) return Response.json({ error: "bad file url" }, { status: 400 });
   const prev = await readSettings();
