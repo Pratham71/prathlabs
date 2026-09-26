@@ -73,6 +73,11 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
       })
     ).url;
 
+  // nothing can be saved without Redis; uploads also need Blob
+  const locked = busy || !ready.redis;
+  const noUpload = locked || !ready.blob;
+  const why = !ready.redis ? "connect Upstash Redis in Vercel (Storage) and redeploy to change this" : !ready.blob ? "connect Vercel Blob with a read-write token and redeploy to upload" : "";
+
   const songs = s.music[theme] ?? [];
   const reboot = s.reboot[theme];
 
@@ -83,7 +88,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
           redis {ready.redis ? "ok" : "missing: settings can't be saved"} · blob {ready.blob ? "ok" : "missing: uploads off"} · spotify{" "}
           {ready.spotify ? "ok" : "not configured"}
         </p>
-        <p className="muted" role="status" aria-live="polite">
+        <p className="admin-status" role="status" aria-live="polite">
           {status || "changes save instantly and show on the next page load"}
         </p>
         <p>
@@ -100,9 +105,10 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
       </Section>
 
       <Section name="THEMES">
+        {!ready.redis && <p className="admin-why">{why}</p>}
         <label className="admin-row">
           default for new visitors{" "}
-          <select value={s.defaultTheme} disabled={busy} onChange={(e) => save({ ...s, defaultTheme: e.target.value as Theme })}>
+          <select value={s.defaultTheme} disabled={locked} onChange={(e) => save({ ...s, defaultTheme: e.target.value as Theme })}>
             {s.themes.map((t) => (
               <option key={t} value={t}>
                 {THEME_LABEL[t]}
@@ -110,7 +116,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             ))}
           </select>
         </label>
-        <fieldset className="admin-checks" disabled={busy}>
+        <fieldset className="admin-checks" disabled={locked}>
           <legend>in the dock&apos;s theme button</legend>
           {THEMES.map((t) => (
             <label key={t}>
@@ -127,13 +133,15 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
       </Section>
 
       <Section name="SPOTIFY">
+        {!ready.redis && <p className="admin-why">{why}</p>}
         <label className="admin-row">
-          <input type="checkbox" checked={s.spotify} disabled={busy} onChange={(e) => save({ ...s, spotify: e.target.checked }, e.target.checked ? "spotify on" : "spotify off")} />{" "}
+          <input type="checkbox" checked={s.spotify} disabled={locked} onChange={(e) => save({ ...s, spotify: e.target.checked }, e.target.checked ? "spotify on" : "spotify off")} />{" "}
           show what i&apos;m listening to
         </label>
       </Section>
 
       <Section name="MUSIC">
+        {why && <p className="admin-why">{why}</p>}
         <label className="admin-row">
           station{" "}
           <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
@@ -152,12 +160,12 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               <li key={song.src}>
                 {song.title} · <span className="muted">{song.artist}</span>
                 {song.start ? <span className="muted"> · from {song.start}s</span> : null}{" "}
-                <button type="button" disabled={busy || i === 0} onClick={() => save({ ...s, music: { ...s.music, [theme]: songs.map((x, j) => (j === i - 1 ? song : j === i ? songs[i - 1] : x)) } })} aria-label={`Move ${song.title} up`}>
+                <button type="button" disabled={locked || i === 0} onClick={() => save({ ...s, music: { ...s.music, [theme]: songs.map((x, j) => (j === i - 1 ? song : j === i ? songs[i - 1] : x)) } })} aria-label={`Move ${song.title} up`}>
                   up
                 </button>{" "}
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={locked}
                   onClick={() => confirm(`Remove "${song.title}"? The file is deleted.`) && save({ ...s, music: { ...s.music, [theme]: songs.filter((x) => x !== song) } }, "removed")}
                 >
                   remove
@@ -198,7 +206,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             }
           }}
         >
-          <fieldset disabled={busy || !ready.blob}>
+          <fieldset disabled={noUpload}>
             <legend>add a song to {THEME_LABEL[theme]}</legend>
             <label>
               file <input name="file" type="file" accept="audio/*" required />
@@ -218,6 +226,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
       </Section>
 
       <Section name="REBOOT SOUND">
+        {why && <p className="admin-why">{why}</p>}
         <p>
           {THEME_LABEL[theme]}: {reboot ? `uploaded file, volume ${reboot.volume ?? 0.6}` : REBOOT_SOUNDS[theme] ? `repo default ${REBOOT_SOUNDS[theme]!.src}` : "synth"}
         </p>
@@ -231,17 +240,17 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
                 max={1}
                 step={0.05}
                 defaultValue={reboot.volume ?? 0.6}
-                disabled={busy}
+                disabled={locked}
                 onPointerUp={(e) => save({ ...s, reboot: { ...s.reboot, [theme]: { ...reboot, volume: Number(e.currentTarget.value) } } })}
                 onKeyUp={(e) => save({ ...s, reboot: { ...s.reboot, [theme]: { ...reboot, volume: Number(e.currentTarget.value) } } })}
               />
             </label>{" "}
-            <button type="button" disabled={busy} onClick={() => new Audio(reboot.src).play()}>
+            <button type="button" disabled={locked} onClick={() => new Audio(reboot.src).play()}>
               play
             </button>{" "}
             <button
               type="button"
-              disabled={busy}
+              disabled={locked}
               onClick={() => {
                 const { [theme]: _gone, ...rest } = s.reboot;
                 void _gone;
@@ -257,7 +266,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
           <input
             type="file"
             accept="audio/*"
-            disabled={busy || !ready.blob}
+            disabled={noUpload}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
