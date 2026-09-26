@@ -1,4 +1,4 @@
-import { nowPlaying } from "@/lib/spotify";
+import { envValue, nowPlaying } from "@/lib/spotify";
 
 const track = (name: string) => ({
   type: "track",
@@ -38,4 +38,12 @@ test("errors say what went wrong", async () => {
   jest.restoreAllMocks();
   mock({ "api/token": [200, { access_token: "t" }], "currently-playing": [204], "recently-played": [403] });
   await expect(nowPlaying()).rejects.toThrow("recently-played 403");
+});
+
+test("env values survive sloppy pastes", () => {
+  for (const raw of ["abc", " abc\n", '"abc"', "'abc'", "SPOTIFY_REFRESH_TOKEN=abc", 'SPOTIFY_REFRESH_TOKEN="abc" ']) {
+    process.env.SPOTIFY_REFRESH_TOKEN = raw;
+    expect(envValue("SPOTIFY_REFRESH_TOKEN")).toBe("abc");
+  }
+  process.env.SPOTIFY_REFRESH_TOKEN = "refresh";
 });

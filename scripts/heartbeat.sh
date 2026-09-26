@@ -5,7 +5,7 @@
 set -eu
 : "${HEARTBEAT_TOKEN:?set HEARTBEAT_TOKEN}"
 DEVICE="${DEVICE:-pi-01}"
-URL="${HEARTBEAT_URL:-https://www.prathlab.com/api/heartbeat}"
+URL="${HEARTBEAT_URL:-https://www.prathlabs.com/api/heartbeat}"
 
 # cpu: busy share over one second, from /proc/stat
 read -r _ u1 n1 s1 i1 w1 q1 sq1 _ < /proc/stat
