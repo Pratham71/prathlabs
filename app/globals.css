@@ -964,15 +964,15 @@ html[data-theme="solar"] {
   --ok: #a3b82a;
 }
 
-/* red alert: incident mode */
-html[data-theme="blood"] {
-  --ink: #0e0607;
-  --panel: #180b0c;
-  --line: #3a1518;
-  --text: #f5e1e1;
-  --muted: #b08a8c;
-  --amber: #ff4040;
-  --ok: #ff9f43;
+/* blade (Marvel's daywalker): black leather, silver, blood red */
+html[data-theme="blade"] {
+  --ink: #070506;
+  --panel: #120a0b;
+  --line: #2e1416;
+  --text: #ecebee;
+  --muted: #a1969a;
+  --amber: #e3121b;
+  --ok: #c9ccd3;
 }
 
 /* los santos (GTA V / Online): LS night, bank-note green, wanted-star gold as the ok state */
@@ -1308,15 +1308,15 @@ html[data-theme="fortnite"] {
   display: none;
 }
 
-html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) :is(.boot-log, .boot-globe, .boot .crt) {
+html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) :is(.boot-log, .boot-globe, .boot .crt) {
   display: none;
 }
 
-html[data-boot]:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot {
+html[data-boot]:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot {
   padding: 0;
 }
 
-html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .gi-scene {
+html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .gi-scene {
   display: block;
   position: absolute;
   inset: 0;
@@ -1326,6 +1326,7 @@ html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .gi-
   animation: gi-in 900ms var(--ease-smooth-out) both;
 }
 
+html[data-theme="blade"] .gi-blade,
 html[data-theme="gtav"] .gi-gtav,
 html[data-theme="gtavi"] .gi-gtavi,
 html[data-theme="fortnite"] .gi-fortnite {
@@ -1334,7 +1335,7 @@ html[data-theme="fortnite"] .gi-fortnite {
   inset: 0;
 }
 
-html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot .skip-hint {
+html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot .skip-hint {
   position: absolute;
   left: 2rem;
   bottom: 1.25rem;
@@ -1536,6 +1537,71 @@ html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boo
   }
 }
 
+/* blade: silver title, cut by a red slash when the blade crosses the screen */
+.gi-blade {
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.gi-blade-title {
+  position: relative;
+  font-family: var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(180deg, #ffffff, #b9bcc4 45%, #6d7079 55%, #d9dbe0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 4px 0 #000);
+  animation: gi-title 900ms var(--ease-smooth-out) 300ms both;
+}
+
+.gi-blade-title::after {
+  content: "";
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 52%;
+  height: 4px;
+  background: #e3121b;
+  box-shadow: 0 0 12px #e3121b;
+  rotate: -8deg;
+  transform-origin: left;
+  animation: gi-cut 220ms cubic-bezier(0.7, 0, 0.2, 1) 3s both;
+}
+
+@keyframes gi-cut {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.gi-blade .gi-sub {
+  margin-top: 1rem;
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  color: #d9dbe0;
+  animation: gi-title 900ms var(--ease-smooth-out) 700ms both;
+}
+
+html[data-boot="out"][data-theme="blade"] .boot {
+  animation: gi-slash 450ms cubic-bezier(0.7, 0, 0.3, 1) forwards;
+}
+
+/* exit: the screen is cut along the diagonal and falls away */
+@keyframes gi-slash {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 100%, 100% 0, 100% 0, 0 100%);
+    filter: brightness(1.6);
+  }
+}
+
 /* exits: GTA cuts to black; the bus drops you in through a closing storm eye */
 html[data-boot="out"]:is([data-theme="gtav"], [data-theme="gtavi"]) .boot {
   animation: gi-fade 450ms ease forwards;
@@ -1647,6 +1713,71 @@ html[data-theme="gtavi"] .acc-horizon {
     repeating-linear-gradient(to top, transparent 0 7px, var(--ink) 7px 9px),
     linear-gradient(to top, color-mix(in srgb, #ff5fae 22%, transparent), color-mix(in srgb, #ff8a5c 8%, transparent) 60%, transparent);
   mask: linear-gradient(to top, #000 30%, transparent);
+}
+
+/* blade: steel labels underscored in red, blood dripping from the top edge */
+html[data-theme="blade"] .man-label {
+  display: inline-block;
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.14em;
+  padding-bottom: 0.1rem;
+  border-bottom: 2px solid var(--amber);
+}
+
+html[data-theme="blade"] .acc-drips {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 4px;
+  z-index: 20;
+  pointer-events: none;
+  background: linear-gradient(#e3121b, #7a0a10);
+}
+
+.acc-drips i {
+  position: absolute;
+  top: 3px;
+  width: 5px;
+  height: var(--h, 24px);
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(#7a0a10, #e3121b);
+  transform-origin: top;
+  animation: drip 2.4s cubic-bezier(0.4, 0, 0.2, 1) var(--d, 0s) both;
+}
+
+/* the drop at the tip */
+.acc-drips i::after {
+  content: "";
+  position: absolute;
+  left: -1.5px;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: #e3121b;
+}
+
+.acc-drips i:nth-child(1) { left: 4%; --h: 30px; --d: 0.1s; }
+.acc-drips i:nth-child(2) { left: 9%; --h: 12px; --d: 0.6s; }
+.acc-drips i:nth-child(3) { left: 17%; --h: 44px; --d: 0.3s; }
+.acc-drips i:nth-child(4) { left: 24%; --h: 18px; --d: 0.9s; }
+.acc-drips i:nth-child(5) { left: 31%; --h: 26px; --d: 0.2s; }
+.acc-drips i:nth-child(6) { left: 40%; --h: 10px; --d: 1.2s; }
+.acc-drips i:nth-child(7) { left: 47%; --h: 36px; --d: 0.5s; }
+.acc-drips i:nth-child(8) { left: 55%; --h: 14px; --d: 0.8s; }
+.acc-drips i:nth-child(9) { left: 63%; --h: 52px; --d: 0.15s; }
+.acc-drips i:nth-child(10) { left: 70%; --h: 20px; --d: 1s; }
+.acc-drips i:nth-child(11) { left: 78%; --h: 32px; --d: 0.4s; }
+.acc-drips i:nth-child(12) { left: 85%; --h: 12px; --d: 0.7s; }
+.acc-drips i:nth-child(13) { left: 91%; --h: 40px; --d: 0.25s; }
+.acc-drips i:nth-child(14) { left: 97%; --h: 16px; --d: 1.1s; }
+
+@keyframes drip {
+  from {
+    transform: scaleY(0);
+  }
 }
 
 /* battle bus: labels as tilted banners, rarity on project rows, health and shield bars */

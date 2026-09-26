@@ -5,7 +5,8 @@ import { isGame } from "@/lib/theme";
 
 // Game-theme boot scenes, drawn as ordered dither (4x4 Bayer) at 4px cells over a small palette:
 // los santos loading screen (sunset over the hills and skyline), vice city (striped sun over the ocean),
-// battle bus (the bus crossing a cloudy sky over the island). Original art, drawn procedurally.
+// battle bus (the bus crossing a cloudy sky over the island), blade (a blood rave: strobes, crowd,
+// the sprinklers, then one silver slash). Original art, drawn procedurally.
 
 const CELL = 4;
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
@@ -52,6 +53,33 @@ type Scene = { palette: string[]; at: (x: number, y: number, t: number, a: numbe
 
 // v is a palette position; the dither picks floor or ceil per cell.
 const SCENES: Record<string, Scene> = {
+  blade: {
+    palette: ["#050203", "#12060a", "#2a070c", "#5c0b12", "#a3101a", "#e3121b", "#ff5a5a", "#d9dbe0"],
+    at(x, y, t, a) {
+      // the slash: one diagonal cut, drawn fast at ~3s, then it stays
+      const cut = Math.abs(y - (0.9 - 0.75 * x));
+      if (x < clamp((t - 3) / 0.22) && cut < 0.022) return cut < 0.004 ? 7 : 5.6;
+      // crowd, bouncing to the beat
+      const crowd = 0.8 + 0.05 * Math.abs(Math.sin(x * a * 26)) + 0.03 * noise(x * 40, 0) - 0.012 * Math.abs(Math.sin(t * 7.2 + Math.floor(x * a * 12)));
+      if (y > crowd) return 0;
+      let v = 0.4 + 0.7 * (1 - y);
+      // strobing red beams sweeping from the rig
+      for (let k = 0; k < 3; k++) {
+        const x0 = 0.2 + k * 0.3;
+        const ang = Math.atan2(x * a - x0 * a, y + 0.05) - Math.sin(t * 1.3 + k * 2.1) * 0.4;
+        const on = Math.sin(t * 18 + k * 1.7) > -0.3 ? 1 : 0.25;
+        if (Math.abs(ang) < 0.07) v += 2.6 * on * (1 - y * 0.6);
+      }
+      // the sprinklers open at ~1.5s: red streaks falling
+      if (t > 1.5) {
+        const col = Math.floor(x * 150);
+        const speed = 0.9 + hash(col, 7) * 0.8;
+        const py = (((hash(col, 3) * 7 + (t - 1.5) * speed) % 1.2) + 1.2) % 1.2 - 0.1;
+        if (Math.abs(y - py) < 0.035 && (x * 150) % 1 < 0.4 && hash(col, 9) > 0.35) return 5 - (py - y) * 20;
+      }
+      return Math.min(4.5, v);
+    },
+  },
   gtav: {
     palette: ["#07060c", "#1d1030", "#4a1f45", "#9c3b4f", "#e8683f", "#ffb45a", "#ffe3a0"],
     at(x, y, t, a) {

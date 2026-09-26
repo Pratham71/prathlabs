@@ -10,6 +10,11 @@ export function ThemeAccents() {
         <i />
       </div>
       <div className="acc acc-horizon" />
+      <div className="acc acc-drips">
+        {Array.from({ length: 14 }, (_, i) => (
+          <i key={i} />
+        ))}
+      </div>
       <div className="acc acc-hud">
         <i />
         <i />

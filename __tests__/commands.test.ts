@@ -35,6 +35,7 @@ test("easter eggs", () => {
 test("game eggs switch themes or play an effect", () => {
   expect(run("hesoyam").action).toEqual({ type: "theme", name: "gtav" });
   expect(run("gta6").action).toEqual({ type: "theme", name: "gtavi" });
+  expect(run("daywalker").action).toEqual({ type: "theme", name: "blade" });
   expect(run("wasted").action).toEqual({ type: "fx", name: "wasted" });
   expect(run("gg").action).toEqual({ type: "fx", name: "victory" });
 });

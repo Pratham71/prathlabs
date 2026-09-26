@@ -1,11 +1,13 @@
-// Theme radio: original loops in the spirit of each game's music, synthesized live (no files, no samples).
-// A 16th-note step sequencer with a lookahead scheduler; drums, bass, chords and a lead, all Web Audio.
-// Browser only. Plays through lib/audio's master, so the dock's sound toggle still silences it.
+// Theme radio. Each station plays any real songs listed in content/music.ts first, then its built-in
+// loops: original compositions in the spirit of the theme, synthesized live by a 16th-note step sequencer
+// with a lookahead scheduler (drums, bass, chords, a lead; all Web Audio). Browser only. Everything runs
+// through lib/audio's master, so the dock's sound toggle still silences it.
 import { bedOn, graph } from "@/lib/audio";
+import { MUSIC } from "@/content/music";
 import type { Theme } from "@/lib/theme";
 
 type Drum = "kick" | "snare" | "clap" | "hat";
-type Voice = "keys" | "saw" | "bell" | "pluck" | "brass" | "square";
+type Voice = "keys" | "saw" | "bell" | "pluck" | "brass" | "square" | "acid";
 
 export type Track = {
   title: string;
@@ -25,6 +27,31 @@ const bar = (s: string) => s.replace(/\s+/g, "");
 
 // ---- the music (original compositions) ----
 export const STATIONS: Partial<Record<Theme, Station>> = {
+  blade: {
+    name: "blood rave radio",
+    tracks: [
+      {
+        title: "sprinkler system",
+        bpm: 132,
+        drums: { kick: "x...x...x...x...", clap: "....x.......x...", hat: "..x...x...x...xo" },
+        chords: ["A2 C3 E3", "A2 C3 E3", "F2 A2 C3", "G2 B2 D3"],
+        chord: "square",
+        bass: bar("..r...r...r...r. ..r...r...r...r. ..r...r...r...r. ..r...r...r.r.r."),
+        lead: "A2 A2 A3 A2 C3 A2 E3 A2 A2 G2 A3 A2 C3 A2 D3 E3 A2 A2 A3 A2 C3 A2 E3 A2 G3 A2 E3 A2 C3 D3 C3 G2",
+        leadVoice: "acid",
+      },
+      {
+        title: "daywalker",
+        bpm: 96,
+        drums: { kick: "x.....x.x.......", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x." },
+        chords: ["D3 F3 A3", "C3 E3 G3", "A#2 D3 F3", "A2 C#3 E3"],
+        chord: "saw",
+        bass: bar("r...r...r.r.r... r...r...r.r.r... r...r...r.r.r... r...r...r.r.r.r."),
+        lead: "D5 . . . F5 . E5 . D5 . . . A4 . . . C5 . . . E5 . D5 . C5 . . . G4 . . . A#4 . . . D5 . C5 . A#4 . . . F4 . . . A4 . . . C#5 . E5 . A5 . . . . . . .",
+        leadVoice: "saw",
+      },
+    ],
+  },
   gtav: {
     name: "vinewood fm",
     tracks: [
@@ -236,6 +263,14 @@ function tone(o: Out, voice: Voice, m: number, t: number, dur: number, peak: num
       osc("square", f0);
       env(g, t, peak * 0.4, 0.004, dur);
       break;
+    case "acid": // 303-style: resonant lowpass snapping open and shut, random accents
+      f.Q.value = 12;
+      f.frequency.setValueAtTime(260, t);
+      f.frequency.exponentialRampToValueAtTime(1600 + Math.random() * 1600, t + 0.02);
+      f.frequency.exponentialRampToValueAtTime(260, t + dur);
+      osc("sawtooth", f0);
+      env(g, t, peak * 0.7, 0.003, dur);
+      break;
   }
 }
 
@@ -256,6 +291,12 @@ function bassNote(o: Out, m: number, t: number, dur: number, sub: boolean) {
 }
 
 // ---- transport ----
+// One playlist per station: real files (content/music.ts) first, then the synth loops.
+export type Entry = { title: string; artist?: string; src?: string; synth?: Track };
+export function playlist(theme: Theme): Entry[] {
+  return [...(MUSIC[theme] ?? []), ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
+}
+
 type State = { theme: Theme | null; index: number; playing: boolean };
 let state: State = { theme: null, index: 0, playing: false };
 const listeners = new Set<() => void>();
@@ -265,6 +306,7 @@ export const snapshot = () => state;
 
 let out: Out | null = null;
 let analyser: AnalyserNode | null = null;
+let file: HTMLAudioElement | null = null;
 let timer = 0;
 let step = 0;
 let nextAt = 0;
@@ -289,6 +331,25 @@ function setup(): Out {
   const d = noise.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   return (out = { ac, bus, noise });
+}
+
+// Real songs play through one <audio>, routed into the same analyser (so the visualizer still works).
+function fileEl(o: Out) {
+  if (file) return file;
+  const el = (file = new Audio());
+  el.preload = "auto";
+  el.addEventListener("ended", () => state.theme && skip(state.theme, 1)); // songs advance; loops loop
+  const g = o.ac.createGain();
+  g.gain.value = 2; // times the shared 0.16 level: mastered tracks sit a little above the loops
+  o.ac.createMediaElementSource(el).connect(g).connect(analyser!);
+  // a listed file that isn't there (or won't decode): move on rather than sit silent
+  el.addEventListener("error", () => state.playing && state.theme && skip(state.theme, 1));
+  return el;
+}
+
+function stopAll() {
+  clearInterval(timer);
+  file?.pause();
 }
 
 function schedule(o: Out, tr: Track, s: number, t: number) {
@@ -320,7 +381,7 @@ function schedule(o: Out, tr: Track, s: number, t: number) {
 
 function run() {
   const o = setup();
-  const tr = state.theme && STATIONS[state.theme]?.tracks[state.index];
+  const tr = state.theme ? playlist(state.theme)[state.index]?.synth : undefined;
   if (!tr) return;
   const sixteenth = 60 / tr.bpm / 4;
   while (nextAt < o.ac.currentTime + 0.12) {
@@ -342,27 +403,37 @@ function startClock() {
 
 // Must follow a user gesture the first time (audio.start() resumes the context).
 export async function play(theme: Theme, index = state.index) {
-  const station = STATIONS[theme];
-  if (!station) return;
+  const list = playlist(theme);
+  if (!list.length) return;
   const audio = await import("@/lib/audio");
   if (!(await audio.start())) return;
   const o = setup();
-  const same = state.playing && state.theme === theme && state.index === index;
-  state = { theme, index: (index + station.tracks.length) % station.tracks.length, playing: true };
+  const i = ((index % list.length) + list.length) % list.length;
+  if (state.playing && state.theme === theme && state.index === i) return;
+  state = { theme, index: i, playing: true };
   emit();
   bedOn(false);
-  o.bus.gain.setTargetAtTime(1, o.ac.currentTime, 0.05);
-  if (!same) startClock();
+  stopAll();
+  const e = list[i];
+  if (e.src) {
+    o.bus.gain.setTargetAtTime(0, o.ac.currentTime, 0.05);
+    const el = fileEl(o);
+    if (!el.src.endsWith(e.src)) el.src = e.src; // same src: resume where it paused
+    void el.play().catch(() => {});
+  } else {
+    o.bus.gain.setTargetAtTime(1, o.ac.currentTime, 0.05);
+    startClock();
+  }
 }
 
 export function pause() {
   if (out) out.bus.gain.setTargetAtTime(0, out.ac.currentTime, 0.08);
-  clearInterval(timer);
+  stopAll();
   state = { ...state, playing: false };
   emit();
 }
 
-// Leaving the game themes: stop the station and let the ambient bed back in.
+// Leaving the station themes: stop the station and let the ambient bed back in.
 export function off() {
   pause();
   state = { ...state, theme: null, index: 0 };
@@ -371,7 +442,7 @@ export function off() {
 }
 
 export function skip(theme: Theme, dir: 1 | -1) {
-  const n = STATIONS[theme]?.tracks.length ?? 1;
+  const n = playlist(theme).length || 1;
   const index = (state.index + dir + n) % n;
   if (state.playing) void play(theme, index);
   else {

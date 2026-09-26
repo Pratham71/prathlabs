@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { STATIONS, getAnalyser, off, pause, play, skip, snapshot, subscribe } from "@/lib/radio";
+import { STATIONS, getAnalyser, off, pause, play, playlist, skip, snapshot, subscribe } from "@/lib/radio";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { inked } from "@/lib/dither";
 
@@ -13,7 +13,7 @@ const soundOn = () => {
   }
 };
 
-// Station card for the game themes (bottom left): dithered spectrum, track, prev/play/next.
+// Station card for the station themes (bottom left): dithered spectrum, track, prev/play/next.
 // Switching into a game theme tunes in (and plays if sound is on); leaving it switches the radio off.
 export function RadioPlayer() {
   const theme = useSyncExternalStore(onThemeChange, currentTheme, () => null);
@@ -77,7 +77,7 @@ export function RadioPlayer() {
 
   if (!theme || !isGame(theme)) return null;
   const station = STATIONS[theme]!;
-  const track = station.tracks[radio.theme === theme ? radio.index : 0];
+  const track = playlist(theme)[radio.theme === theme ? radio.index : 0];
   const playing = radio.playing && radio.theme === theme;
 
   const toggle = () => {
@@ -106,7 +106,7 @@ export function RadioPlayer() {
           &gt;&gt;
         </button>
       </div>
-      <p className="radio-note muted">original tracks in the style of the game</p>
+      <p className="radio-note muted">{track.artist ?? "original loop, made for this site"}</p>
     </aside>
   );
 }

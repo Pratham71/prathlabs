@@ -35,6 +35,13 @@ export function Boot() {
       </div>
       {/* game themes swap the login for a loading screen; CSS shows the one matching html[data-theme] */}
       <GameIntro />
+      <div className="gi gi-blade">
+        <p className="gi-blade-title">pratham</p>
+        <p className="gi-sub">daywalker edition</p>
+        <p className="gi-load">
+          <i className="gi-spin" /> loading portfolio
+        </p>
+      </div>
       <div className="gi gi-gtav">
         <p className="gi-title">
           pratham

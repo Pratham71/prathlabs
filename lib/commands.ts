@@ -188,9 +188,14 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: [`ssh: connect to host ${arg || "prathlab"} port 22: you're already here.`] };
     case "matrix":
       return { out: ["wake up, visitor..."], action: { type: "theme", name: "phosphor" } };
-    case "incident":
-    case "alert":
-      return { out: ["incident declared. paging pratham... (not really)"], action: { type: "theme", name: "blood" } };
+    case "blade":
+    case "daywalker":
+      return { out: ["sunlight: not a problem. sunglasses: on."], action: { type: "theme", name: "blade" } };
+    case "garlic":
+      return { out: ["allergic reaction avoided. this site is daywalker-safe."] };
+    case "vampire":
+    case "vampires":
+      return { out: ["scanning... 0 vampires found. homelab is uv-lit."] };
     // --- games ---
     case "hesoyam":
       return { out: ["cheat activated: health, armor, $250k."], action: { type: "theme", name: "gtav" } };

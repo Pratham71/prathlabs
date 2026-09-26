@@ -1,4 +1,4 @@
-import { STATIONS, midi, steps } from "@/lib/radio";
+import { STATIONS, midi, playlist, steps } from "@/lib/radio";
 
 test("note names map to midi", () => {
   expect(midi("A4")).toBe(69);
@@ -22,4 +22,9 @@ test("every track parses: notes valid, drum bars 16 steps, bass bar-aligned", ()
       for (const t of [...bass, ...(tr.lead ? steps(tr.lead) : [])]) expect(t === "." || t === "r" || t === "R" || midi(t) !== null).toBe(true);
     }
   }
+});
+
+test("a station with no real files plays its loops; every station theme has one", () => {
+  for (const t of ["blade", "gtav", "gtavi", "fortnite"] as const) expect(playlist(t).length).toBeGreaterThan(0);
+  expect(playlist("blade")[0]).toMatchObject({ title: "sprinkler system" });
 });
