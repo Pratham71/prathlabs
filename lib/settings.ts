@@ -33,6 +33,11 @@ export function clean(raw: unknown): Settings {
   };
 }
 
+// The only file URLs settings may hold: our own Blob store (the only thing deleted on removal),
+// or a site path "/x". Never "//host" or "/\host", which browsers read as another site.
+export const isBlob = (u: string) => /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//.test(u);
+export const isSitePath = (u: string) => /^\/(?![/\\])/.test(u);
+
 const str = (s: unknown): s is string => typeof s === "string" && s.length > 0 && s.length < 500;
 const vol = (v: unknown) => (typeof v === "number" && v >= 0 && v <= 1 ? v : 0.6);
 const isTrack = (t: unknown): t is RealTrack => {
