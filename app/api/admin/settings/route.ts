@@ -27,7 +27,8 @@ export async function PUT(req: Request) {
   const keep = new Set(files(next));
   const gone = files(prev).filter((u): u is string => !!u && isBlob(u) && !keep.has(u));
   if (gone.length) await del(gone).catch(() => {}); // ponytail: an orphan blob costs cents; don't fail the save over it
-  revalidateTag(SETTINGS_TAG, "max");
+  // expire now, not stale-while-revalidate ("max"), which would serve the old settings once more
+  revalidateTag(SETTINGS_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   return Response.json(next);
 }
