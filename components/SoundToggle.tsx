@@ -56,8 +56,7 @@ export function SoundToggle() {
     };
   }, [on]);
 
-  const toggle = async () => {
-    const next = !on;
+  const set = async (next: boolean) => {
     setOn(next);
     try {
       localStorage.setItem(KEY, next ? "on" : "off");
@@ -67,8 +66,15 @@ export function SoundToggle() {
     else a.stop();
   };
 
+  // the command prompt's `sound on|off` arrives here
+  useEffect(() => {
+    const onSet = (e: Event) => void set((e as CustomEvent<boolean>).detail);
+    addEventListener("sound:set", onSet);
+    return () => removeEventListener("sound:set", onSet);
+  });
+
   return (
-    <button type="button" className="sound-toggle" aria-pressed={on} onClick={toggle} data-on={on || undefined}>
+    <button type="button" className="sound-toggle" aria-pressed={on} onClick={() => set(!on)} data-on={on || undefined}>
       <span className="eq" aria-hidden="true">
         <i />
         <i />

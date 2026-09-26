@@ -807,12 +807,18 @@ html[data-cursor] * {
 
 /* ---------- sound toggle ---------- */
 
-/* above the boot overlay so sound can be turned on during the intro */
-.sound-toggle {
+/* bottom-right dock: command prompt + sound. Above the boot overlay so sound can be turned on mid-intro. */
+.dock {
   position: fixed;
   right: 1rem;
   bottom: 1rem;
   z-index: 40;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sound-toggle,
+.dock-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.9ch;
@@ -827,7 +833,12 @@ html[data-cursor] * {
   transition: color var(--duration-quick) var(--ease-out), border-color var(--duration-quick) var(--ease-out);
 }
 
+.dock-btn span {
+  color: var(--amber);
+}
+
 .sound-toggle:hover,
+.dock-btn:hover,
 .sound-toggle[data-on] {
   color: var(--text);
   border-color: var(--muted);
@@ -897,4 +908,157 @@ html[data-cursor] * {
   height: calc(100% + 10.5rem);
   image-rendering: pixelated;
   pointer-events: none;
+}
+
+/* phosphor theme (command prompt `theme phosphor`, or the Konami code) */
+html[data-theme="phosphor"] {
+  --amber: #8dff9e;
+  --text: #d6ffdc;
+  --muted: #6f9a78;
+  --line: #1f3326;
+  --panel: #0f1a13;
+  --ink: #070b08;
+}
+
+/* ---------- command prompt (CommandPalette) ---------- */
+
+.term {
+  margin: auto;
+  width: min(760px, calc(100vw - 2rem));
+  max-height: min(560px, calc(100dvh - 4rem));
+  padding: 0;
+  color: var(--text);
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 12%, transparent), 0 24px 80px rgb(0 0 0 / 0.6);
+  font: inherit;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+}
+
+.term[open] {
+  display: flex;
+  animation: term-in var(--duration-fast) var(--ease-smooth-out);
+}
+
+.term::backdrop {
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes term-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    filter: blur(var(--blur-small, 2px));
+  }
+}
+
+.term-out {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 0.25rem;
+  min-height: 8rem;
+}
+
+.term-out p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.term-line {
+  color: var(--muted);
+}
+
+.term-ps {
+  color: var(--amber);
+}
+
+.term-in {
+  display: flex;
+  gap: 1ch;
+  padding: 0.25rem 1.25rem 0.5rem;
+}
+
+.term-in input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  outline: none;
+  caret-color: var(--amber);
+}
+
+.term-hint {
+  padding: 0.5rem 1.25rem 0.75rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .term-ps {
+    display: none;
+  }
+  .term-in::before {
+    content: "$";
+    color: var(--amber);
+  }
+}
+
+/* ---------- world clock (WorldClock) ---------- */
+
+/* gutter clocks only when the gutter is wide enough; otherwise the header's compact line */
+.clocks {
+  display: none;
+}
+
+@media (min-width: 1400px) {
+  .clocks {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: fixed;
+    top: 50%;
+    left: max(1.5rem, calc(50vw - (var(--measure) + 4rem) / 2 - 12rem));
+    translate: 0 -50%;
+    z-index: 1;
+    animation: rise var(--duration-very-slow) var(--ease-smooth-out) 300ms backwards;
+  }
+
+  .man-edge .clock-text {
+    display: none;
+  }
+}
+
+.clock-label {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+}
+
+.clock-label .muted {
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.clock canvas {
+  display: block;
+}
+
+.clock-meta {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.clock-text {
+  color: var(--muted);
 }
