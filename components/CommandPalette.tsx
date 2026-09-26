@@ -250,7 +250,11 @@ export function CommandPalette() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") return submit();
+    if (e.key === "Enter") {
+      // without this, closing the dialog hands focus back to the dock button and the same Enter clicks it open again
+      e.preventDefault();
+      return submit();
+    }
     if (askPass) return; // no completion or history on a password
     if (e.key === "Tab") {
       e.preventDefault();
