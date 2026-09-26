@@ -36,12 +36,26 @@ export function validSession(value: string | undefined, now = Date.now()): boole
   return want.length === got.length && timingSafeEqual(want, got);
 }
 
-// Reads the cookie off a Request (route handlers).
-export function isAdminRequest(req: Request) {
-  const c = req.headers.get("cookie") ?? "";
-  const m = c.match(new RegExp(`(?:^|;\\s*)${ADMIN_COOKIE}=([^;]+)`));
-  return validSession(m?.[1]);
+// Logout stamps "now" here; sessions issued before it stop working, so a copied cookie dies too.
+const EPOCH = "admin:epoch";
+
+// Signature and expiry, then the logout epoch (Redis). Use this, not validSession, to authorize.
+export async function isAdmin(value: string | undefined, now = Date.now()): Promise<boolean> {
+  if (!value || !validSession(value, now)) return false;
+  if (!hasRedis()) return true;
+  const epoch = (await getRedis().get<number>(EPOCH)) ?? 0;
+  return Number(value.split(".")[0]) - TTL_MS >= epoch; // issued at, not before the last logout
 }
+
+export async function revokeSessions(now = Date.now()) {
+  if (hasRedis()) await getRedis().set(EPOCH, now);
+}
+
+export const sessionCookie = (req: Request) =>
+  (req.headers.get("cookie") ?? "").match(new RegExp(`(?:^|;\\s*)${ADMIN_COOKIE}=([^;]+)`))?.[1];
+
+// Route handlers.
+export const isAdminRequest = (req: Request) => isAdmin(sessionCookie(req));
 
 // Login throttle in Redis; without Redis (local dev) it's off.
 const failKey = (ip: string) => `admin:fail:${ip}`;

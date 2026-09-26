@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { hasRedis } from "@/lib/redis";
-import { ADMIN_COOKIE, adminConfigured, checkPassword, clientIp, loginBlocked, newSession, noteFailure } from "@/lib/admin";
+import { ADMIN_COOKIE, adminConfigured, checkPassword, clientIp, isAdminRequest, loginBlocked, newSession, noteFailure, revokeSessions } from "@/lib/admin";
 
 // POST {password}: the palette's `sudo su` and /admin's form both land here. DELETE logs out.
 export async function POST(req: Request) {
@@ -25,7 +25,9 @@ export async function POST(req: Request) {
   return new Response(null, { status: 204 });
 }
 
-export async function DELETE() {
+// Logging out ends every session (not just this browser's), but only a logged-in admin can do it.
+export async function DELETE(req: Request) {
+  if (await isAdminRequest(req)) await revokeSessions();
   (await cookies()).delete(ADMIN_COOKIE);
   return new Response(null, { status: 204 });
 }
