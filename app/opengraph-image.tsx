@@ -19,7 +19,6 @@ export default async function Image() {
         <div style={{ display: "flex", justifyContent: "space-between", color: muted, fontSize: 26 }}>
           <span>PRATHAM(1)</span>
           <span>User Commands</span>
-          <span>PRATHAM(1)</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <span style={{ fontSize: 28, fontWeight: 700 }}>NAME</span>
@@ -28,7 +27,7 @@ export default async function Image() {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 26, color: muted, borderTop: "1px solid #232B33", paddingTop: 20 }}>
           <span style={{ color: "#FFB547" }}>{site.url.replace(/^https?:\/\//, "")}</span>
-          <span>PRATHAM(1)</span>
+          <span>dxb · infrastructure · devops · backend</span>
         </div>
       </div>
     ),

@@ -13,6 +13,7 @@ import { site } from "@/content/site";
 import { activityStats } from "@/lib/github";
 import { getActivity } from "@/lib/activity";
 import { getLiveDevices, renderDate } from "@/lib/devices";
+import { ldJson, personLd } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -22,6 +23,7 @@ export default async function Home() {
 
   return (
     <ManPage title={site.manName} section={1} footLeft={site.handle} footMid={renderDate()}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(personLd()) }} />
       <Section name="NAME" plain>
         <SignalField />
         <div className="name-line">

@@ -1062,3 +1062,88 @@ html[data-theme="phosphor"] {
 .clock-text {
   color: var(--muted);
 }
+
+/* ---------- print: a clean black-on-white page (doubles as a one-page resume) ---------- */
+
+@media print {
+  :root,
+  html[data-theme="phosphor"] {
+    --ink: #fff;
+    --panel: #f3f3f3;
+    --line: #ccc;
+    --text: #111;
+    --muted: #555;
+    --amber: #8a5a00;
+    --ok: #1a7f4b;
+  }
+
+  html {
+    font-size: 10.5pt;
+  }
+
+  .boot,
+  .cursor,
+  .dock,
+  .clocks,
+  .skip,
+  .signal,
+  .dot-name canvas,
+  .heat-cursor,
+  .heat-tip,
+  .copy,
+  .row .go,
+  .man-edge .right {
+    display: none !important;
+  }
+
+  .man {
+    max-width: none;
+    padding: 0;
+  }
+
+  .dot-name,
+  .dot-name[data-dots] {
+    color: var(--text);
+    font-size: 26pt;
+  }
+
+  .man-section {
+    break-inside: avoid;
+    margin-top: 1.2rem;
+    animation: none !important;
+  }
+
+  a {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  /* external links print their address */
+  .man-body a[href^="http"]::after,
+  .see-also a[href^="http"]::after,
+  .see-also a[href^="mailto"]::after {
+    content: " <" attr(href) ">";
+    color: var(--muted);
+  }
+
+  .row {
+    padding: 0.3rem 0;
+  }
+
+  /* screenshots: the real image, not the dither */
+  .dither canvas {
+    display: none;
+  }
+
+  .figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .figures figure {
+    break-inside: avoid;
+  }
+
+  .heat canvas {
+    filter: invert(1) hue-rotate(180deg);
+  }
+}

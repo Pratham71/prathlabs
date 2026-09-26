@@ -7,6 +7,7 @@ import { StatusMark } from "@/components/StatusMark";
 import { DitherImage } from "@/components/DitherImage";
 import { getProject, projects } from "@/content/projects";
 import { site } from "@/content/site";
+import { ldJson, projectLd } from "@/lib/seo";
 
 export const dynamicParams = false;
 
@@ -29,6 +30,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <ManPage title={p.title} section={p.section} footLeft={site.handle} footMid={p.lang}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(projectLd(p)) }} />
       <Section name="NAME" plain>
         <h1 className="project-name">
           <ViewTransition name={`project-${p.slug}`} share="morph">
