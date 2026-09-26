@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ditherImage } from "@/lib/dither";
 import { onThemeChange } from "@/lib/theme";
-import { clientSettings } from "@/lib/client-settings";
 import type { NowPlaying as Track } from "@/lib/spotify";
 
 const ART = 48;
@@ -14,7 +13,7 @@ export function NowPlaying() {
   const [track, setTrack] = useState<Track | null>(null);
 
   useEffect(() => {
-    if (clientSettings().spotify === false) return;
+    // always ask the API (it reads the /admin switch live); the page's inlined settings can be a load behind
     let alive = true;
     const load = () =>
       fetch("/api/now-playing")
@@ -23,9 +22,12 @@ export function NowPlaying() {
         .catch(() => {});
     void load();
     const id = setInterval(load, 60_000);
+    const onShow = () => document.visibilityState === "visible" && load(); // coming back to the tab
+    document.addEventListener("visibilitychange", onShow);
     return () => {
       alive = false;
       clearInterval(id);
+      document.removeEventListener("visibilitychange", onShow);
     };
   }, []);
 
