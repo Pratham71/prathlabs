@@ -30,7 +30,7 @@
     "eslint-config-next": "16.3.6",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.11",
-    "typescript": "^5"
+    "typescript": "^7"
   },
   "license": "MIT"
 }
