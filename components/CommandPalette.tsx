@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
-import { currentTheme, setTheme } from "@/lib/theme";
+import { currentTheme, isGame, setTheme } from "@/lib/theme";
 
 type Entry = { cmd?: string; out: string[] };
 const PROMPT = "visitor@prathlab:~$";
@@ -95,6 +95,21 @@ export function CommandPalette() {
   const act = (a?: Action) => {
     if (!a) return;
     if (a.type === "clear") setLog([]);
+    if (a.type === "radio") {
+      const theme = currentTheme();
+      if (!isGame(theme)) {
+        // answer under the command itself (its entry was just added, empty)
+        setLog((l) => [...l.slice(0, -1), { ...l[l.length - 1], out: ["no station on this theme. try: theme gtav, gtavi or fortnite"] }]);
+        return;
+      }
+      void import("@/lib/radio").then((r) => {
+        if (a.op === "play") {
+          dispatchEvent(new CustomEvent("sound:set", { detail: true }));
+          void r.play(theme);
+        } else if (a.op === "pause") r.pause();
+        else r.skip(theme, a.op === "next" ? 1 : -1);
+      });
+    }
     if (a.type === "reboot") {
       // the inline boot script plays the intro again once this session hasn't "seen" it
       sessionStorage.removeItem("boot-seen");
@@ -223,7 +238,7 @@ export function CommandPalette() {
         <p className="term-hint muted" aria-hidden="true">
           {hints.length
             ? hints.join("   ")
-            : "help · projects · open <name> · github · mail · theme"}
+            : "help · projects · open <name> · theme · radio · reboot"}
         </p>
       </dialog>
     </>

@@ -10,6 +10,7 @@ export type Action =
   | { type: "fx"; name: Fx }
   | { type: "clear" }
   | { type: "reboot" }
+  | { type: "radio"; op: "play" | "pause" | "next" | "prev" }
   | { type: "close" }
   | { type: "shake" };
 
@@ -31,17 +32,21 @@ const HELP: [string, string][] = [
   ["projects", "list projects"],
   ["open <name>", "open a project (or: man <name>)"],
   ["cat about.txt", "who this is"],
+  ["hobbies", "off the keyboard"],
   ["github", "open github profile"],
   ["mail", "how to reach me"],
   ["sound on|off", "ambient sound"],
   ["theme [name]", "switch colours (theme lists them)"],
+  ["radio play|pause|next", "the station (game themes)"],
   ["reboot", "replay the intro"],
+  ["neofetch · fortune", "system info · a fortune"],
+  ["whoami · date · ping", "the usual"],
   ["clear", "clear the screen"],
   ["exit", "close this prompt"],
 ];
 
 // Words the prompt completes on Tab (first word, then project names after open/man/cd).
-export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune", "reboot"];
+export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune", "reboot", "hobbies", "radio"];
 
 export function complete(input: string): string[] {
   const parts = input.trimStart().split(/\s+/);
@@ -51,12 +56,14 @@ export function complete(input: string): string[] {
     cmd === "open" || cmd === "man" || cmd === "cd"
       ? ["pratham", ...projects.map((p) => p.slug)]
       : cmd === "cat"
-        ? ["about.txt", "contact.txt"]
+        ? ["about.txt", "contact.txt", "hobbies.txt"]
         : cmd === "sound"
           ? ["on", "off"]
           : cmd === "theme"
             ? [...THEMES]
-            : [];
+            : cmd === "radio"
+              ? ["play", "pause", "next", "prev"]
+              : [];
   return pool.filter((w) => w.startsWith(arg)).map((w) => `${cmd} ${w}`);
 }
 
@@ -73,11 +80,11 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: [] };
     case "help":
     case "?":
-      return { out: HELP.map(([c, d]) => `  ${pad(c, 22)}${d}`) };
+      return { out: HELP.map(([c, d]) => `${pad(c, 22)}${d}`) };
     case "ls":
-      return { out: ["projects/   about.txt   contact.txt"] };
+      return { out: ["projects/   about.txt   contact.txt   hobbies.txt"] };
     case "projects":
-      return { out: projects.map((p) => `  ${pad(`${p.slug}(${p.section})`, 14)}${pad(p.status, 10)}${p.summary}`) };
+      return { out: projects.map((p) => `${pad(`${p.slug}(${p.section})`, 14)}${pad(p.status, 10)}${p.summary}`) };
     case "open":
     case "man":
     case "cd": {
@@ -91,6 +98,7 @@ export function run(line: string, home = "your nearest edge"): Result {
     case "cat":
       if (arg === "about.txt") return { out: site.description };
       if (arg === "contact.txt") return run("mail");
+      if (arg === "hobbies.txt") return run("hobbies");
       return { out: [`cat: ${arg || "(nothing)"}: No such file`] };
     case "github":
       return { out: [`-> ${site.github}`], action: { type: "open", href: site.github } };
@@ -104,9 +112,14 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: ["usage: sound on|off"] };
     case "theme":
       if (isTheme(arg)) return { out: [`theme: ${THEME_LABEL[arg]}`], action: { type: "theme", name: arg } };
-      return { out: [...THEMES.map((t) => `  ${pad(t, 10)}${THEME_LABEL[t] === t ? "" : THEME_LABEL[t]}`), "usage: theme <name>"] };
+      return { out: [...THEMES.map((t) => `${pad(t, 10)}${THEME_LABEL[t] === t ? "" : THEME_LABEL[t]}`), "usage: theme <name>"] };
     case "clear":
       return { out: [], action: { type: "clear" } };
+    case "hobbies":
+      return { out: site.hobbies.map(([flag, what]) => `${pad(flag, 10)}${what}`) };
+    case "radio":
+      if (arg === "play" || arg === "pause" || arg === "next" || arg === "prev") return { out: [], action: { type: "radio", op: arg } };
+      return { out: ["usage: radio play|pause|next|prev (in a game theme)"] };
     case "reboot":
     case "intro":
     case "replay":
@@ -142,7 +155,7 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: ["418 I'm a teapot. (no coffee here; pre-workout only)"] };
     case "gym":
     case "lift":
-      return { out: ["gym.service: active (running) since 06:00", "  rest timer: 90s. phone: away. form: before ego."] };
+      return { out: ["gym.service: active (running) since 06:00", "rest timer: 90s. phone: away. form: before ego."] };
     case "legday":
       return { out: ["skipping leg day is not a supported configuration."] };
     case "hello":
@@ -153,14 +166,14 @@ export function run(line: string, home = "your nearest edge"): Result {
     case "neofetch":
       return {
         out: [
-          "   ___     visitor@prathlab",
-          "  | . |    ----------------",
-          "  |  _|    os: man-page 1.0 (next.js)",
-          "  |_|      host: " + home,
-          "           shell: this prompt",
-          "           theme: see `theme`",
-          "           cpu: one raspberry pi, one home server",
-          "           ram: enough. never enough.",
+          " ___     visitor@prathlab",
+          "| . |    ----------------",
+          "|  _|    os: man-page 1.0 (next.js)",
+          "|_|      host: " + home,
+          "         shell: this prompt",
+          "         theme: see `theme`",
+          "         cpu: one raspberry pi, one home server",
+          "         ram: enough. never enough.",
         ],
       };
     case "fortune":

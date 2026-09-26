@@ -1092,6 +1092,7 @@ html[data-theme="fortnite"] {
 
 .term-line {
   color: var(--muted);
+  padding-left: 2ch; /* every answer sits one step in from its command */
 }
 
 .term-ps {
