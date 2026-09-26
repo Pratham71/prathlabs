@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KONAMI, complete, run, type Action } from "@/lib/commands";
+import { KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
+import { currentTheme, setTheme } from "@/lib/theme";
 
 type Entry = { cmd?: string; out: string[] };
 const PROMPT = "visitor@prathlab:~$";
@@ -10,13 +11,32 @@ const GREETING: Entry = {
   out: ["type help for commands · Tab completes · ↑↓ history · Esc closes"],
 };
 
-export function setTheme(name: "amber" | "phosphor") {
-  const d = document.documentElement;
-  if (name === "phosphor") d.dataset.theme = "phosphor";
-  else delete d.dataset.theme;
-  try {
-    localStorage.setItem("theme", name);
-  } catch {}
+const FX_TEXT: Record<Exclude<Fx, "dance">, [string, string?]> = {
+  wasted: ["wasted"],
+  passed: ["mission passed", "respect +"],
+  victory: ["#1 victory royale"],
+};
+
+// Full-screen game moments from the eggs: a banner over the page for ~2.6s, or a little dance.
+function playFx(name: Fx) {
+  if (name === "dance") {
+    document.querySelector(".man")?.animate(
+      [{ transform: "none" }, { transform: "translateY(-6px) rotate(-0.6deg)" }, { transform: "none" }, { transform: "translateY(-6px) rotate(0.6deg)" }, { transform: "none" }],
+      { duration: 700, iterations: 3, easing: "ease-in-out" },
+    );
+    return;
+  }
+  document.querySelector(".fx-banner")?.remove();
+  const el = document.createElement("div");
+  el.className = "fx-banner";
+  el.dataset.fx = name;
+  el.setAttribute("role", "status");
+  const [title, sub] = FX_TEXT[name];
+  el.innerHTML = `<p class="fx-title"></p>${sub ? '<p class="fx-sub"></p>' : ""}`;
+  el.querySelector(".fx-title")!.textContent = title;
+  if (sub) el.querySelector(".fx-sub")!.textContent = sub;
+  document.body.append(el);
+  setTimeout(() => el.remove(), 2600);
 }
 
 // A terminal prompt over the page: `:`, `/` or Ctrl/Cmd+K opens it (also the dock button).
@@ -43,11 +63,7 @@ export function CommandPalette() {
       konami.push(e.key.length === 1 ? e.key.toLowerCase() : e.key);
       konami.splice(0, konami.length - KONAMI.length);
       if (konami.join() === KONAMI.join()) {
-        setTheme(
-          document.documentElement.dataset.theme === "phosphor"
-            ? "amber"
-            : "phosphor",
-        );
+        setTheme(currentTheme() === "phosphor" ? "amber" : "phosphor");
         konami.length = 0;
       }
       const t = e.target as HTMLElement;
@@ -93,6 +109,10 @@ export function CommandPalette() {
     if (a.type === "sound")
       dispatchEvent(new CustomEvent("sound:set", { detail: a.on }));
     if (a.type === "theme") setTheme(a.name);
+    if (a.type === "fx") {
+      dialog.current?.close();
+      playFx(a.name);
+    }
     if (a.type === "shake")
       dialog.current?.animate(
         [
@@ -192,7 +212,7 @@ export function CommandPalette() {
         <p className="term-hint muted" aria-hidden="true">
           {hints.length
             ? hints.join("   ")
-            : "help · projects · open <name> · github · mail · sound · theme"}
+            : "help · projects · open <name> · github · mail · theme"}
         </p>
       </dialog>
     </>

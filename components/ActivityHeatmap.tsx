@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Day } from "@/lib/github";
 import { inked } from "@/lib/dither";
+import { onThemeChange } from "@/lib/theme";
 
 const DOT = 2; // css px per dither dot
 const GAP = 2; // css px between day cells
@@ -81,6 +82,8 @@ export function ActivityHeatmap({ days }: { days: Day[] }) {
     ro.observe(wrap);
     return () => ro.disconnect();
   }, []);
+
+  useEffect(() => onThemeChange(draw), [draw]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

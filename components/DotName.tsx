@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
+import { onThemeChange } from "@/lib/theme";
 
 type Dot = { x: number; y: number; c: number; d: number; sx: number; sy: number; sz: number; o: number };
 
@@ -255,6 +256,10 @@ export function DotName({ text }: { text: string }) {
     addEventListener("pointerup", onUp);
     addEventListener("pointercancel", onUp);
     document.addEventListener("visibilitychange", onVis);
+    const offTheme = onThemeChange(() => {
+      col = colors();
+      if (start !== null) draw(performance.now()); // now, not next frame: the theme crossfade snapshots it
+    });
 
     let cancelled = false;
     document.fonts.ready.then(() => {
@@ -265,6 +270,7 @@ export function DotName({ text }: { text: string }) {
     });
 
     return () => {
+      offTheme();
       cancelled = true;
       cancelAnimationFrame(raf);
       io.disconnect();

@@ -2,6 +2,8 @@ import {
   isAuthorized,
   parseBeat,
   recordBeat,
+  parseMetrics,
+  CPU_SAMPLES,
   readOnline,
   liveDevices,
   formatUptime,
@@ -95,5 +97,27 @@ describe("liveDevices", () => {
   it("drops devices whose last beat is older than the TTL, even if a cached page still lists them", () => {
     const now = 10 * 60_000 + 1;
     expect(liveDevices([d("a", now - 1_000), d("b", 0)], now).map((x) => x.id)).toEqual(["a"]);
+  });
+});
+
+describe("metrics", () => {
+  it("keeps finite numbers, clamps them, drops the rest", () => {
+    expect(parseMetrics('{"device":"pi-01","cpu":12.6,"mem":140,"temp":"hot"}')).toEqual({ cpu: 13, mem: 100, temp: undefined });
+    expect(parseMetrics("nope")).toEqual({});
+  });
+
+  it("builds a bounded cpu history across beats", async () => {
+    const { store, data } = memoryStore();
+    for (let i = 0; i < CPU_SAMPLES + 5; i++) await recordBeat(store, "pi-01", 1000 + i, { cpu: i, mem: 40, temp: 50 });
+    const beat = data.get("hb:pi-01")!;
+    expect(beat.cpu).toHaveLength(CPU_SAMPLES);
+    expect(beat.cpu!.at(-1)).toBe(CPU_SAMPLES + 4);
+    expect(beat).toMatchObject({ mem: 40, temp: 50, since: 1000 });
+  });
+
+  it("a beat without readings still records", async () => {
+    const { store, data } = memoryStore();
+    await recordBeat(store, "homeserver", 5);
+    expect(data.get("hb:homeserver")).toEqual({ since: 5, ts: 5 });
   });
 });

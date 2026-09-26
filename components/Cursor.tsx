@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ditherImage } from "@/lib/dither";
+import { onThemeChange } from "@/lib/theme";
 
 type Mode = "block" | "caret" | "frame";
 
@@ -9,9 +10,10 @@ const TEXT = "p, li, h1, h2, h3, dd, dt, figcaption, code, .man-edge span, .man-
 const TARGET = "a, button, [data-cursor='frame']";
 const previews = new Map<string, Promise<string>>();
 
-// Dithered preview for a row's data-cursor-image, rendered once per image and cached.
+// Dithered preview for a row's data-cursor-image, rendered once per image and colour, and cached.
 function preview(src: string, color: string) {
-  let p = previews.get(src);
+  const key = `${src} ${color}`;
+  let p = previews.get(key);
   if (!p) {
     p = new Promise((resolve, reject) => {
       const img = new Image();
@@ -30,7 +32,7 @@ function preview(src: string, color: string) {
       img.onerror = reject;
       img.src = src;
     });
-    previews.set(src, p);
+    previews.set(key, p);
   }
   return p;
 }
@@ -48,7 +50,8 @@ export function Cursor() {
     if (!el || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     const html = document.documentElement;
     const snap = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const amber = getComputedStyle(html).getPropertyValue("--amber").trim();
+    let amber = getComputedStyle(html).getPropertyValue("--amber").trim();
+    const offTheme = onThemeChange(() => (amber = getComputedStyle(html).getPropertyValue("--amber").trim()));
     const want = { x: -100, y: -100, w: 10, h: 18 };
     const now = { ...want };
     const mouse = { x: -100, y: -100 };
@@ -123,6 +126,7 @@ export function Cursor() {
     addEventListener("pointerdown", onDown);
     html.addEventListener("pointerleave", onLeave);
     return () => {
+      offTheme();
       delete html.dataset.cursor;
       cancelAnimationFrame(raf);
       clearTimeout(idle);

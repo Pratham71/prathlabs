@@ -9,6 +9,8 @@ import { Cursor } from "@/components/Cursor";
 import { SoundToggle } from "@/components/SoundToggle";
 import { CommandPalette } from "@/components/CommandPalette";
 import { WorldClock } from "@/components/WorldClock";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { SideRail } from "@/components/SideRail";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -48,8 +50,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </ViewTransition>
         <WorldClock />
+        <SideRail />
         <div className="dock">
           <CommandPalette />
+          <ThemeToggle />
           <SoundToggle />
         </div>
         <Cursor />

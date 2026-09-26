@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ditherImage } from "@/lib/dither";
+import { onThemeChange } from "@/lib/theme";
 
 // Screenshot shown as an ordered dither; hover or focus clears to the real image underneath.
 // Without JS (or before the canvas draws) the real image simply shows.
@@ -14,9 +15,9 @@ export function DitherImage({ src, alt, width, height }: { src: string; alt: str
     const canvas = cv.current;
     const ctx = canvas?.getContext("2d");
     if (!image || !canvas || !ctx) return;
-    const color = getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
     let last = 0;
     const draw = () => {
+      const color = getComputedStyle(document.documentElement).getPropertyValue("--text").trim();
       const w = Math.round(image.clientWidth);
       const h = Math.round(image.clientHeight);
       if (!w || !image.complete || !image.naturalWidth || w === last) return;
@@ -32,7 +33,12 @@ export function DitherImage({ src, alt, width, height }: { src: string; alt: str
     ro.observe(image);
     image.addEventListener("load", draw);
     draw();
+    const offTheme = onThemeChange(() => {
+      last = 0;
+      draw();
+    });
     return () => {
+      offTheme();
       ro.disconnect();
       image.removeEventListener("load", draw);
     };

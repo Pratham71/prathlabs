@@ -910,7 +910,10 @@ html[data-cursor] * {
   pointer-events: none;
 }
 
-/* phosphor theme (command prompt `theme phosphor`, or the Konami code) */
+/* ---------- themes (lib/theme.ts; dock button, `theme <name>`, eggs) ----------
+   Same six tokens everywhere; --amber is "the accent", whatever colour it ends up. Palettes are
+   nods to the games (colours only, no logos or fonts). Muted text stays >= 4.5:1 on --ink. */
+
 html[data-theme="phosphor"] {
   --amber: #8dff9e;
   --text: #d6ffdc;
@@ -918,6 +921,67 @@ html[data-theme="phosphor"] {
   --line: #1f3326;
   --panel: #0f1a13;
   --ink: #070b08;
+}
+
+/* Solarized dark (base03 / base02 / yellow) */
+html[data-theme="solar"] {
+  --ink: #002b36;
+  --panel: #073642;
+  --line: #0f4a58;
+  --text: #eee8d5;
+  --muted: #93a1a1;
+  --amber: #e0b020;
+  --ok: #a3b82a;
+}
+
+/* red alert: incident mode */
+html[data-theme="blood"] {
+  --ink: #0e0607;
+  --panel: #180b0c;
+  --line: #3a1518;
+  --text: #f5e1e1;
+  --muted: #b08a8c;
+  --amber: #ff4040;
+  --ok: #ff9f43;
+}
+
+/* los santos (GTA V / Online): LS night, bank-note green, wanted-star gold as the ok state */
+html[data-theme="gtav"] {
+  --ink: #090d0b;
+  --panel: #111a15;
+  --line: #213028;
+  --text: #eef3ee;
+  --muted: #8fa396;
+  --amber: #7ccf5a;
+  --ok: #f2c94c;
+}
+
+/* vice city (GTA VI): neon dusk, hot pink over deep violet, ocean teal */
+html[data-theme="gtavi"] {
+  --ink: #12091c;
+  --panel: #1c1029;
+  --line: #3a2352;
+  --text: #fdeefe;
+  --muted: #b89ac8;
+  --amber: #ff5fae;
+  --ok: #3fe0d0;
+}
+
+/* battle bus (Fortnite): storm-sky blue, bus yellow, uncommon green */
+html[data-theme="fortnite"] {
+  --ink: #0a1030;
+  --panel: #111a47;
+  --line: #26347a;
+  --text: #f0f4ff;
+  --muted: #9dabe0;
+  --amber: #ffe03a;
+  --ok: #5fe36b;
+}
+
+/* theme swap: a quick crossfade (startViewTransition in lib/theme) instead of a hard cut */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--duration-slow);
 }
 
 /* ---------- command prompt (CommandPalette) ---------- */
@@ -1012,6 +1076,150 @@ html[data-theme="phosphor"] {
   }
 }
 
+/* ---------- right rail (SideRail): contents + homelab, mirrors the clocks ---------- */
+
+.rail {
+  display: none;
+}
+
+@media (min-width: 1400px) {
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 2.2rem;
+    position: fixed;
+    top: 50%;
+    right: max(1.5rem, calc(50vw - (var(--measure) + 4rem) / 2 - 12rem));
+    width: 11.5rem;
+    translate: 0 -50%;
+    z-index: 1;
+    font-size: 0.8rem;
+    animation: rise var(--duration-very-slow) var(--ease-smooth-out) 380ms backwards;
+  }
+}
+
+.rail-label {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.rail-index ol {
+  list-style: none;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.rail-index a {
+  display: block;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color var(--duration-quick) var(--ease-out), translate var(--duration-fast) var(--ease-smooth-out);
+}
+
+.rail-index a:hover,
+.rail-index a[aria-current] {
+  color: var(--text);
+}
+
+.rail-index a[aria-current] {
+  translate: 1ch 0;
+}
+
+.rail-index a[aria-current]::before {
+  content: ">";
+  color: var(--amber);
+  margin-left: -1.5ch;
+  margin-right: 0.5ch;
+}
+
+.rail-dev + .rail-dev {
+  margin-top: 1rem;
+}
+
+.rail-on {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--ok);
+  vertical-align: 1px;
+  animation: beat 2.4s ease-in-out infinite;
+}
+
+@keyframes beat {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.rail-trace {
+  display: block;
+  margin: 0.45rem 0 0.3rem;
+}
+
+/* ---------- egg effects (CommandPalette playFx) ---------- */
+
+.fx-banner {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+  background: linear-gradient(transparent 38%, color-mix(in srgb, var(--ink) 80%, transparent) 38% 62%, transparent 62%);
+  animation: fx-life 2.6s var(--ease-smooth-out) both;
+}
+
+.fx-title {
+  font-family: var(--font-mono);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--amber);
+  animation: fx-title 2.6s var(--ease-smooth-out) both;
+}
+
+.fx-sub {
+  color: var(--text);
+  margin-top: 0.4rem;
+}
+
+/* GTA "wasted": the page drains to grey behind a red title */
+.fx-banner[data-fx="wasted"] {
+  backdrop-filter: grayscale(1) brightness(0.7);
+}
+
+.fx-banner[data-fx="wasted"] .fx-title {
+  color: #e2383b;
+}
+
+@keyframes fx-life {
+  0% { opacity: 0; }
+  10%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fx-title {
+  0% { transform: scale(1.25); filter: blur(var(--blur-medium)); }
+  18% { transform: none; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-title { animation: none; }
+}
+
+/* dock theme button: a swatch of the current accent */
+.theme-toggle .swatch {
+  width: 0.7em;
+  height: 0.7em;
+  background: var(--amber);
+  box-shadow: 0.35em 0.35em 0 -0.1em var(--ok);
+}
+
 /* ---------- world clock (WorldClock) ---------- */
 
 /* gutter clocks only when the gutter is wide enough; otherwise the header's compact line */
@@ -1067,7 +1275,7 @@ html[data-theme="phosphor"] {
 
 @media print {
   :root,
-  html[data-theme="phosphor"] {
+  html[data-theme] {
     --ink: #fff;
     --panel: #f3f3f3;
     --line: #ccc;
@@ -1085,6 +1293,7 @@ html[data-theme="phosphor"] {
   .cursor,
   .dock,
   .clocks,
+  .rail,
   .skip,
   .signal,
   .dot-name canvas,

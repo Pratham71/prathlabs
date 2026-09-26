@@ -149,3 +149,9 @@ Tokens follow transitions.dev: stagger 40ms, micro 80ms, quick 150ms, fast 250ms
 - Don't add a second typeface, a second accent or gradients.
 - Don't show a device unless it has sent a heartbeat within 10 minutes.
 - Don't animate anything that has no reduced-motion fallback.
+
+## Themes, rail, eggs
+
+- **Themes** (`lib/theme.ts`, tokens in `globals.css`): amber (default), phosphor, solarized, red alert, los santos (GTA V), vice city (GTA VI), battle bus (Fortnite). Colours only, no game logos or fonts. Same six tokens in every theme; `--amber` is "the accent". Switch via the dock button, `theme <name>`, or eggs. Crossfades with a view transition. Every canvas/WebGL piece re-reads tokens through `onThemeChange`.
+- **Right rail** (≥1400px, mirrors the clocks): page contents with scroll-spy, then homelab: devices that beat in the last 10 min, a dithered cpu trace (2h), mem and temp. Devices send readings with `scripts/heartbeat.sh`.
+- **Eggs**: `hesoyam`, `wasted`, `mission`, `gta6`, `fortnite`, `gg`, `dance`, `gym`, `neofetch`, `fortune`, `sl`, `matrix`, `incident`, `sudo make me a sandwich`, Konami.

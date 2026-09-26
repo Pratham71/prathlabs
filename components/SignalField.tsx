@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { fullscreenShader, rgb } from "@/lib/gl";
+import { onThemeChange } from "@/lib/theme";
 
 const CELL = 3; // css px per dither cell (canvas renders at 1x and is scaled pixelated)
 
@@ -56,9 +57,12 @@ export function SignalField() {
     const sh = fullscreenShader(canvas, FRAG);
     if (!sh) return;
     const { gl } = sh;
-    const css = getComputedStyle(document.documentElement);
-    gl.uniform3f(sh.uniform("dim"), ...rgb(css.getPropertyValue("--muted")));
-    gl.uniform3f(sh.uniform("warm"), ...rgb(css.getPropertyValue("--amber")));
+    const colors = () => {
+      const css = getComputedStyle(document.documentElement);
+      gl.uniform3f(sh.uniform("dim"), ...rgb(css.getPropertyValue("--muted")));
+      gl.uniform3f(sh.uniform("warm"), ...rgb(css.getPropertyValue("--amber")));
+    };
+    colors();
     gl.uniform1f(sh.uniform("cell"), CELL);
     const uRes = sh.uniform("res");
     const uT = sh.uniform("t");
@@ -106,7 +110,12 @@ export function SignalField() {
     const onVis = () => !document.hidden && visible && kick();
     addEventListener("pointermove", onMove, { passive: true });
     document.addEventListener("visibilitychange", onVis);
+    const offTheme = onThemeChange(() => {
+      colors();
+      render(reduce ? 0 : performance.now());
+    });
     return () => {
+      offTheme();
       cancelAnimationFrame(raf);
       io.disconnect();
       ro.disconnect();

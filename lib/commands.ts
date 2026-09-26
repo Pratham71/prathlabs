@@ -1,16 +1,28 @@
 import { projects } from "@/content/projects";
 import { site } from "@/content/site";
+import { THEMES, THEME_LABEL, isTheme, type Theme } from "@/lib/theme";
 
 export type Action =
   | { type: "nav"; href: string }
   | { type: "open"; href: string }
   | { type: "sound"; on: boolean }
-  | { type: "theme"; name: "amber" | "phosphor" }
+  | { type: "theme"; name: Theme }
+  | { type: "fx"; name: Fx }
   | { type: "clear" }
   | { type: "close" }
   | { type: "shake" };
 
+export type Fx = "wasted" | "passed" | "victory" | "dance";
 export type Result = { out: string[]; action?: Action };
+
+const FORTUNES = [
+  "it works on my machine. the machine is a raspberry pi.",
+  "there is no cloud. it's just someone else's homelab.",
+  "a container a day keeps the dependency hell away. mostly.",
+  "the best time to write the backup script was yesterday.",
+  "DNS. it's always DNS.",
+  "rest days are part of the program.",
+];
 
 const HELP: [string, string][] = [
   ["help", "this list"],
@@ -21,13 +33,13 @@ const HELP: [string, string][] = [
   ["github", "open github profile"],
   ["mail", "how to reach me"],
   ["sound on|off", "ambient sound"],
-  ["theme amber|phosphor", "switch colours"],
+  ["theme [name]", "switch colours (theme lists them)"],
   ["clear", "clear the screen"],
   ["exit", "close this prompt"],
 ];
 
 // Words the prompt completes on Tab (first word, then project names after open/man/cd).
-export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping"];
+export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune"];
 
 export function complete(input: string): string[] {
   const parts = input.trimStart().split(/\s+/);
@@ -41,7 +53,7 @@ export function complete(input: string): string[] {
         : cmd === "sound"
           ? ["on", "off"]
           : cmd === "theme"
-            ? ["amber", "phosphor"]
+            ? [...THEMES]
             : [];
   return pool.filter((w) => w.startsWith(arg)).map((w) => `${cmd} ${w}`);
 }
@@ -89,8 +101,8 @@ export function run(line: string, home = "your nearest edge"): Result {
       if (arg === "on" || arg === "off") return { out: [`sound ${arg}`], action: { type: "sound", on: arg === "on" } };
       return { out: ["usage: sound on|off"] };
     case "theme":
-      if (arg === "amber" || arg === "phosphor") return { out: [`theme: ${arg}`], action: { type: "theme", name: arg } };
-      return { out: ["usage: theme amber|phosphor"] };
+      if (isTheme(arg)) return { out: [`theme: ${THEME_LABEL[arg]}`], action: { type: "theme", name: arg } };
+      return { out: [...THEMES.map((t) => `  ${pad(t, 10)}${THEME_LABEL[t]}`), "usage: theme <name>"] };
     case "clear":
       return { out: [], action: { type: "clear" } };
     case "exit":
@@ -107,7 +119,10 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: [`PING prathlab.com: 64 bytes from ${home}: time=2 ms`] };
     // --- easter eggs ---
     case "sudo":
+      if (arg === "make me a sandwich") return { out: ["okay."] };
       return { out: ["pratham is not in the sudoers file. This incident will be reported."] };
+    case "make":
+      return arg === "me a sandwich" ? { out: ["what? make it yourself."] } : { out: [`make: *** No rule to make target '${arg || "all"}'. Stop.`] };
     case "rm":
       return /-\w*r\w*f|-\w*f\w*r/.test(arg)
         ? { out: ["rm: /projects is mounted read-only. nice try."], action: { type: "shake" } }
@@ -118,12 +133,69 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: ["you are now trapped in vim. (kidding: type exit)"] };
     case "coffee":
     case "brew":
-      return { out: ["418 I'm a teapot"] };
+      return { out: ["418 I'm a teapot. (no coffee here; pre-workout only)"] };
+    case "gym":
+    case "lift":
+      return { out: ["gym.service: active (running) since 06:00", "  rest timer: 90s. phone: away. form: before ego."] };
+    case "legday":
+      return { out: ["skipping leg day is not a supported configuration."] };
     case "hello":
     case "hi":
       return { out: ["hi. try: help"] };
     case "uptime":
-      return { out: ["up since 2006, load average: coffee, code, homelab"] };
+      return { out: ["up since 2006, load average: gym, code, homelab"] };
+    case "neofetch":
+      return {
+        out: [
+          "   ___     visitor@prathlab",
+          "  | . |    ----------------",
+          "  |  _|    os: man-page 1.0 (next.js)",
+          "  |_|      host: " + home,
+          "           shell: this prompt",
+          "           theme: see `theme`",
+          "           cpu: one raspberry pi, one home server",
+          "           ram: enough. never enough.",
+        ],
+      };
+    case "fortune":
+      return { out: [FORTUNES[Math.floor(Math.random() * FORTUNES.length)]] };
+    case "sl":
+      return { out: ["choo choo. (you meant ls)", ...run("ls").out] };
+    case "xyzzy":
+      return { out: ["nothing happens."] };
+    case "42":
+      return { out: ["the answer. still working on the question."] };
+    case "ssh":
+      return { out: [`ssh: connect to host ${arg || "prathlab"} port 22: you're already here.`] };
+    case "matrix":
+      return { out: ["wake up, visitor..."], action: { type: "theme", name: "phosphor" } };
+    case "incident":
+    case "alert":
+      return { out: ["incident declared. paging pratham... (not really)"], action: { type: "theme", name: "blood" } };
+    // --- games ---
+    case "hesoyam":
+      return { out: ["cheat activated: health, armor, $250k."], action: { type: "theme", name: "gtav" } };
+    case "wasted":
+      return { out: ["wasted."], action: { type: "fx", name: "wasted" } };
+    case "mission":
+    case "passed":
+      return { out: ["mission passed. respect +"], action: { type: "fx", name: "passed" } };
+    case "gta6":
+    case "gtavi":
+    case "vice":
+    case "leonida":
+      return { out: ["loading leonida... it'll be worth the wait."], action: { type: "theme", name: "gtavi" } };
+    case "fortnite":
+    case "bus":
+      return { out: ["thank the bus driver."], action: { type: "theme", name: "fortnite" } };
+    case "drop":
+      return { out: ["where we droppin'? (the homelab. it's always the homelab.)"] };
+    case "gg":
+    case "victory":
+      return { out: ["#1 victory royale"], action: { type: "fx", name: "victory" } };
+    case "dance":
+    case "emote":
+      return { out: ["*default dance*"], action: { type: "fx", name: "dance" } };
     default:
       return { out: [`command not found: ${cmd}. Try: help`] };
   }

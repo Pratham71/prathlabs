@@ -7,7 +7,10 @@ export const DEVICES = {
 } as const;
 
 export type DeviceId = keyof typeof DEVICES;
-export type Beat = { since: number; ts: number };
+// Optional readings a device may send with its beat. Numbers only, clamped; anything else is dropped.
+export type Metrics = { cpu?: number; mem?: number; temp?: number };
+export type Beat = { since: number; ts: number; cpu?: number[]; mem?: number; temp?: number };
+export const CPU_SAMPLES = 24; // 2h of 5-minute beats
 export type BeatStore = {
   get(key: string): Promise<Beat | null>;
   set(key: string, value: Beat, ttlSeconds: number): Promise<void>;
@@ -38,9 +41,24 @@ export function parseBeat(raw: string): DeviceId | null {
   }
 }
 
-export async function recordBeat(store: BeatStore, id: DeviceId, now: number): Promise<Beat> {
+const reading = (v: unknown, lo: number, hi: number) =>
+  typeof v === "number" && Number.isFinite(v) ? Math.round(Math.min(hi, Math.max(lo, v))) : undefined;
+
+export function parseMetrics(raw: string): Metrics {
+  try {
+    const b = JSON.parse(raw) as Record<string, unknown>;
+    return { cpu: reading(b.cpu, 0, 100), mem: reading(b.mem, 0, 100), temp: reading(b.temp, -40, 150) };
+  } catch {
+    return {};
+  }
+}
+
+export async function recordBeat(store: BeatStore, id: DeviceId, now: number, m: Metrics = {}): Promise<Beat> {
   const prev = await store.get(key(id));
-  const beat = { since: prev?.since ?? now, ts: now };
+  const beat: Beat = { since: prev?.since ?? now, ts: now };
+  if (m.cpu !== undefined) beat.cpu = [...(prev?.cpu ?? []), m.cpu].slice(-CPU_SAMPLES);
+  if (m.mem !== undefined) beat.mem = m.mem;
+  if (m.temp !== undefined) beat.temp = m.temp;
   await store.set(key(id), beat, TTL_SECONDS);
   return beat;
 }
@@ -49,11 +67,11 @@ export async function readOnline(store: BeatStore) {
   const beats = await store.mget(ids.map(key));
   return ids.flatMap((id, i) => {
     const beat = beats[i];
-    return beat ? [{ id, name: DEVICES[id], since: beat.since, ts: beat.ts }] : [];
+    return beat ? [{ id, name: DEVICES[id], since: beat.since, ts: beat.ts, cpu: beat.cpu, mem: beat.mem, temp: beat.temp }] : [];
   });
 }
 
-export type OnlineDevice = { id: string; name: string; since: number; ts: number };
+export type OnlineDevice = { id: string; name: string; since: number; ts: number; cpu?: number[]; mem?: number; temp?: number };
 
 // Cached HTML can outlive a device's key; re-check the last beat's age wherever the list is shown.
 export function liveDevices<T extends { ts: number }>(devices: T[], now: number): T[] {
