@@ -154,11 +154,12 @@ export function bootSfx(events: { at: number; ok: boolean }[]) {
 
 // One-shot stings for the themed reboots. They answer a command the visitor just typed, so they play
 // even with the ambient sound off (straight to the speakers, not through the master toggle).
-// A real clip at public/sfx/<kind>.mp3 plays if present; otherwise the synthesized one below.
+// `file` (content/music.ts REBOOT_SOUNDS) plays if it loads; otherwise the synthesized one below.
 export type Sting = "wasted" | "placed" | "slash" | "glitch" | "thwip" | "oof";
-export function sting(kind: Sting) {
-  const clip = new Audio(`/sfx/${kind}.mp3`);
-  clip.volume = kind === "wasted" ? 0.35 : 0.6; // the real wasted clip is mastered hot
+export function sting(kind: Sting, file?: { src: string; volume?: number }) {
+  if (!file) return synthSting(kind);
+  const clip = new Audio(file.src);
+  clip.volume = Math.min(1, Math.max(0, file.volume ?? 0.6));
   clip.play().catch(() => synthSting(kind));
 }
 

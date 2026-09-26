@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import { STATIONS, getAnalyser, off, pause, play, playlist, probe, skip, snapshot, subscribe } from "@/lib/radio";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { inked } from "@/lib/dither";
@@ -94,9 +94,9 @@ export function RadioPlayer() {
       <canvas ref={viz} className="radio-viz" aria-hidden="true" />
       <div className="radio-meta">
         <p className="radio-station">{station.name}</p>
-        <p className="radio-title" aria-live="polite">
+        <Scroll className="radio-title" live>
           {track.title}
-        </p>
+        </Scroll>
       </div>
       <div className="radio-ctl">
         <button type="button" onClick={() => skip(theme, -1)} aria-label="Previous track">
@@ -109,7 +109,36 @@ export function RadioPlayer() {
           &gt;&gt;
         </button>
       </div>
-      <p className="radio-note muted">{track.artist ?? "original loop, made for this site"}</p>
+      <Scroll className="radio-note muted">{track.artist ?? "original loop, made for this site"}</Scroll>
     </aside>
+  );
+}
+
+// One line of text; if it's wider than the card, it glides to its end and back (car-radio style),
+// so the full song name and artist are always readable. Reduced motion: it wraps instead.
+function Scroll({ className, live, children }: { className: string; live?: boolean; children: string }) {
+  const box = useRef<HTMLParagraphElement>(null);
+  const inner = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const b = box.current;
+    const i = inner.current;
+    if (!b || !i) return;
+    const fit = () => {
+      const over = i.scrollWidth - b.clientWidth;
+      if (over > 2) {
+        b.dataset.scroll = "";
+        b.style.setProperty("--over", `${-over}px`);
+        b.style.setProperty("--dur", `${Math.max(4, over / 18)}s`);
+      } else delete b.dataset.scroll;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(b);
+    return () => ro.disconnect();
+  }, [children]);
+  return (
+    <p ref={box} className={`${className} scroll-line`} aria-live={live ? "polite" : undefined} title={children}>
+      <span ref={inner}>{children}</span>
+    </p>
   );
 }

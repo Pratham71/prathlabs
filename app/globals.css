@@ -2548,11 +2548,38 @@ html[data-boot] .radio {
   min-width: 0; /* let the grid cell shrink so long names truncate instead of spilling */
 }
 
-.radio-station,
-.radio-note {
+.radio-station {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* title and artist: never cut; lines too long for the card glide to their end and back */
+.scroll-line {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.scroll-line > span {
+  display: inline-block;
+}
+
+.scroll-line[data-scroll] > span {
+  animation: radio-scroll var(--dur, 6s) ease-in-out 1s infinite alternate;
+}
+
+@keyframes radio-scroll {
+  0%, 15% { transform: none; }
+  85%, 100% { transform: translateX(var(--over)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-line {
+    white-space: normal;
+  }
+  .scroll-line[data-scroll] > span {
+    animation: none;
+  }
 }
 
 .radio-station {
@@ -2564,9 +2591,6 @@ html[data-boot] .radio {
 
 .radio-title {
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .radio-ctl {

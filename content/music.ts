@@ -10,6 +10,10 @@ export type RealTrack = { title: string; artist: string; src: string; start?: nu
 
 export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
   gtav: [
+    { title: "Lady (Hear Me Tonight)", artist: "Modjo", src: "/music/gtav/lady-hear-me-tonight.mp3" },
+    { title: "Meet Me Halfway", artist: "The Black Eyed Peas", src: "/music/gtav/meet-me-halfway.mp3" },
+    { title: "Music Sounds Better with You", artist: "Stardust", src: "/music/gtav/music-sounds-better-with-you.mp3" },
+    { title: "Moves Like Jagger", artist: "Maroon 5 feat. Christina Aguilera", src: "/music/gtav/moves-like-jagger.mp3" },
     { title: "Midnight City", artist: "M83", src: "/music/gtav/midnight-city.mp3" },
     { title: "Welcome to Los Santos", artist: "Oh No & The Alchemist", src: "/music/gtav/welcome-to-los-santos.mp3" },
     { title: "Sleepwalking", artist: "The Chain Gang of 1974", src: "/music/gtav/sleepwalking.mp3" },
@@ -33,4 +37,19 @@ export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
     { title: "Sweden", artist: "C418", src: "/music/minecraft/sweden.mp3" },
     { title: "Wet Hands", artist: "C418", src: "/music/minecraft/wet-hands.mp3" },
   ],
+};
+
+// What `reboot` plays in each theme before the intro replays (see AUDIO.md). `volume` is 0..1.
+// Point a theme at any file in public/sfx; if the file isn't there, the built-in synth sting plays.
+export type RebootSound = { src: string; volume?: number };
+
+export const REBOOT_SOUNDS: Partial<Record<Theme, RebootSound>> = {
+  gtav: { src: "/sfx/wasted.mp3", volume: 0.35 },
+  gtavi: { src: "/sfx/wasted.mp3", volume: 0.35 },
+  fortnite: { src: "/sfx/placed.mp3", volume: 0.6 },
+  blade: { src: "/sfx/slash.mp3", volume: 0.6 },
+  matrix: { src: "/sfx/system-failure.mp3", volume: 0.6 },
+  cyberpunk: { src: "/sfx/flatline.mp3", volume: 0.6 },
+  spiderman: { src: "/sfx/thwip.mp3", volume: 0.6 },
+  minecraft: { src: "/sfx/oof.mp3", volume: 0.6 },
 };

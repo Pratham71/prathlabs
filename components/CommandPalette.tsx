@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
 import { currentTheme, isGame, setTheme } from "@/lib/theme";
+import { REBOOT_SOUNDS } from "@/content/music";
 
 type Entry = { cmd?: string; out: string[] };
 const PROMPT = "visitor@prathlab:~$";
@@ -62,33 +63,33 @@ async function reboot() {
   let wait = 400;
   if (theme === "gtav" || theme === "gtavi") {
     playFx("wasted");
-    audio.sting("wasted");
+    audio.sting("wasted", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
     wait = 1800;
   } else if (theme === "fortnite") {
     const n = await visitorCount();
     playFx("placed", [`#${n}`, `you placed. ${n} ${n === 1 ? "player" : "players"} dropped in this week`]);
-    audio.sting("placed");
+    audio.sting("placed", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
     wait = 2000;
   } else if (theme === "blade") {
     playFx("slash");
-    audio.sting("slash");
+    audio.sting("slash", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
     wait = 900;
   } else if (theme === "matrix") {
     playFx("failure");
-    audio.sting("glitch");
+    audio.sting("glitch", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
     wait = 1800;
   } else if (theme === "cyberpunk") {
     playFx("flatline");
-    audio.sting("glitch");
+    audio.sting("glitch", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
     wait = 1600;
   } else if (theme === "spiderman") {
     playFx("tbc");
-    audio.sting("thwip");
+    audio.sting("thwip", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
     wait = 1800;
   } else if (theme === "minecraft") {
     const n = await visitorCount();
     playFx("died", ["you died!", `score: ${n}`]);
-    audio.sting("oof");
+    audio.sting("oof", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
     wait = 2000;
   }
   // the inline boot script plays the intro again once this session hasn't "seen" it

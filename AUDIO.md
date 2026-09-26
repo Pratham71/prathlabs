@@ -6,8 +6,11 @@ Drop files at exactly these paths. Nothing else to do: the site finds them on it
 Base folder on this machine:
 `C:\Users\prath\OneDrive\Desktop\Projects\Portfolio\Prathlabs.com\prathlabs\public`
 
-Format: `.mp3`, lowercase names, exactly as written. After adding files: `npm run build`
-(or just refresh during `npm run dev`).
+Format: `.mp3`, lowercase names, exactly as written.
+
+**After adding files, rebuild** (`npm run build`, then `npx next start`). The production server
+only serves files that were in `public/` at build time, so a file added later returns 404 until
+the next build. (`npm run dev` picks new files up on refresh.) On Vercel, every push rebuilds.
 
 ## Theme songs (`public/music/<theme>/`)
 
@@ -15,6 +18,10 @@ Each theme's radio plays these first, in this order, then its two built-in loops
 
 | Theme (dock label) | Save as | Song |
 |---|---|---|
+| los santos | `public/music/gtav/lady-hear-me-tonight.mp3` | Lady (Hear Me Tonight), Modjo |
+| los santos | `public/music/gtav/meet-me-halfway.mp3` | Meet Me Halfway, The Black Eyed Peas |
+| los santos | `public/music/gtav/music-sounds-better-with-you.mp3` | Music Sounds Better with You, Stardust |
+| los santos | `public/music/gtav/moves-like-jagger.mp3` | Moves Like Jagger, Maroon 5 feat. Christina Aguilera |
 | los santos | `public/music/gtav/midnight-city.mp3` | Midnight City, M83 |
 | los santos | `public/music/gtav/welcome-to-los-santos.mp3` | Welcome to Los Santos, Oh No & The Alchemist |
 | los santos | `public/music/gtav/sleepwalking.mp3` | Sleepwalking, The Chain Gang of 1974 |
@@ -36,16 +43,19 @@ Want a different song? Save it in the theme's folder and change the matching lin
 
 ## Reboot sounds (`public/sfx/`)
 
-Played by the `reboot` command before the intro replays.
+Played by the `reboot` command before the intro replays. Each theme has its own entry in
+`content/music.ts` (`REBOOT_SOUNDS`): change the file or the volume (0 to 1) per theme there.
 
-| Theme | Save as | What it is |
-|---|---|---|
-| los santos, vice city | `public/sfx/wasted.mp3` | the GTA "wasted" sound (plays at 35% volume) |
-| battle bus | `public/sfx/placed.mp3` | Fortnite elimination / placement sound |
-| blade | `public/sfx/slash.mp3` | sword slash |
-| matrix, night city | `public/sfx/glitch.mp3` | glitch / system failure |
-| spider-man | `public/sfx/thwip.mp3` | web-shooter "thwip" |
-| minecraft | `public/sfx/oof.mp3` | Minecraft damage / death sound |
+| Theme | Save as | Default volume | What it is |
+|---|---|---|---|
+| los santos | `public/sfx/wasted.mp3` | 0.35 | GTA "wasted" |
+| vice city | `public/sfx/wasted.mp3` (same file; point it elsewhere if you like) | 0.35 | GTA "wasted" |
+| battle bus | `public/sfx/placed.mp3` | 0.6 | Fortnite elimination / placement |
+| blade | `public/sfx/slash.mp3` | 0.6 | sword slash |
+| matrix | `public/sfx/system-failure.mp3` | 0.6 | system failure / glitch |
+| night city | `public/sfx/flatline.mp3` | 0.6 | flatline / glitch |
+| spider-man | `public/sfx/thwip.mp3` | 0.6 | web-shooter "thwip" |
+| minecraft | `public/sfx/oof.mp3` | 0.6 | Minecraft damage / death |
 
 ## Fonts (optional, `public/fonts/`)
 
