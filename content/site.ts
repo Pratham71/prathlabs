@@ -44,7 +44,7 @@ export const site = {
   ] as [string, string][],
   // Photo shown dithered beside DESCRIPTION (hover reveals it). Drop a file in public/ and set it here.
   portrait: null as { src: string; alt: string; width: number; height: number } | null,
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.prathlab.com").replace(/\/$/, ""),
+  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.prathlabs.com").replace(/\/$/, ""),
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "pn.prathamnagpal@gmail.com",
   // CONTACT section
   responseTime: "usually within 24 to 48 hours",
