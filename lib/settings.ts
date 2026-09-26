@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { getRedis } from "@/lib/redis";
+import { getRedis, hasRedis } from "@/lib/redis";
 import { THEMES, isTheme, type Theme } from "@/lib/theme";
 import type { RealTrack, RebootSound } from "@/content/music";
 
@@ -17,7 +17,6 @@ export const DEFAULT_SETTINGS: Settings = { defaultTheme: "amber", themes: [...T
 export const SETTINGS_TAG = "site-settings";
 const KEY = "site:settings";
 
-const hasRedis = () => Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
 // Whatever is stored, hand back a well-formed Settings (unknown themes dropped, amber always present).
 export function clean(raw: unknown): Settings {

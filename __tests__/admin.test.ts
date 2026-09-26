@@ -1,5 +1,5 @@
 jest.mock("next/cache", () => ({ unstable_cache: (f: unknown) => f }));
-jest.mock("@/lib/redis", () => ({ getRedis: () => ({}) }));
+jest.mock("@/lib/redis", () => ({ getRedis: () => ({}), hasRedis: () => false }));
 
 import { checkPassword, newSession, validSession } from "@/lib/admin";
 import { clean } from "@/lib/settings";

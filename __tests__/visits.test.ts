@@ -4,7 +4,7 @@ const fakeRedis = {
   ltrim: jest.fn(async (_k: string, a: number, b: number) => list.splice(b + 1)),
   lrange: jest.fn(async () => list),
 };
-jest.mock("@/lib/redis", () => ({ getRedis: () => fakeRedis }));
+jest.mock("@/lib/redis", () => ({ getRedis: () => fakeRedis, hasRedis: () => true }));
 
 import { GET, POST } from "@/app/api/visits/route";
 import { VISITS_WINDOW_MS, parseVisit, tallyVisits } from "@/lib/visits";
