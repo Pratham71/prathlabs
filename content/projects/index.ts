@@ -53,7 +53,7 @@ export const projects: Project[] = [
     name: "medical-appointment-system",
     status: "shipped",
     lang: "Python",
-    summary: "college infirmary appointments and records",
+    summary: "college infirmary booking and records",
     repo: "https://github.com/Pratham71/medical-appointment-system",
     stack: ["FastAPI", "MySQL", "raw SQL", "JWT", "Next.js", "TypeScript", "Tailwind"],
     images: [],
