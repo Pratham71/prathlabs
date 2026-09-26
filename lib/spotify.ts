@@ -21,7 +21,11 @@ async function accessToken(): Promise<string> {
     cache: "no-store",
   });
   // Spotify's error code only (e.g. invalid_grant = bad/revoked refresh token, invalid_client = wrong id/secret)
-  if (!res.ok) throw new Error(`token ${res.status} ${(await res.json().catch(() => ({})))?.error ?? ""}`.trim());
+  if (!res.ok) {
+    // Spotify's error code and description ("Invalid refresh token", "Refresh token revoked", ...); no secrets
+    const e = (await res.json().catch(() => ({}))) as { error?: string; error_description?: string };
+    throw new Error([`token ${res.status}`, e.error, e.error_description && `(${e.error_description})`].filter(Boolean).join(" "));
+  }
   return (await res.json()).access_token;
 }
 
