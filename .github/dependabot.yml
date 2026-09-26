@@ -1,0 +1,27 @@
+# Weekly dependency PRs. Minor/patch updates are grouped into one PR per ecosystem so CI runs once;
+# majors come separately (they can break things). Security fixes arrive as soon as they're published.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Dubai
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Dubai
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
