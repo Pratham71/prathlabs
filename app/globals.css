@@ -793,6 +793,20 @@ html[data-cursor] * {
   animation: none;
 }
 
+/* battle bus: links light up as a build blueprint (translucent blue with a grid) */
+html[data-theme="fortnite"] .cursor[data-mode="frame"] {
+  background:
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.28) 0 1px, transparent 1px 10px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.28) 0 1px, transparent 1px 10px),
+    rgb(61 155 255 / 0.28);
+  outline: 1.5px solid #9fd2ff;
+  box-shadow: 0 0 14px rgb(61 155 255 / 0.5);
+}
+
+html[data-theme="fortnite"] .cursor[data-mode="frame"] :is(.cursor-tl, .cursor-br) {
+  opacity: 0;
+}
+
 html[data-theme="gtavi"] .cursor-sprite {
   filter: drop-shadow(0 0 4px #ff4fa3);
 }

@@ -84,11 +84,12 @@ export function CommandPalette() {
   const [log, setLog] = useState<Entry[]>([GREETING]);
   const [value, setValue] = useState("");
   const history = useRef<string[]>([]);
+  const rebooting = useRef(false);
   const cursor = useRef(-1);
 
   const open = () => {
     const d = dialog.current;
-    if (!d || d.open) return;
+    if (!d || d.open || rebooting.current) return;
     d.showModal();
     input.current?.focus();
   };
@@ -147,7 +148,9 @@ export function CommandPalette() {
       });
     }
     if (a.type === "reboot") {
+      input.current?.blur();
       dialog.current?.close();
+      rebooting.current = true; // no reopening over the exit screen
       void reboot();
     }
     if (a.type === "close") dialog.current?.close();

@@ -1,7 +1,7 @@
 import type { Theme } from "@/lib/theme";
 
 // Pixel-art cursors for the station themes: drawn at 16x16 with smoothing off, shown at 2x.
-// Original drawings in each theme's spirit (GTA aim reticle, neon arrow, pickaxe, silver blade).
+// Original drawings in each theme's spirit (GTA aim reticle, neon arrow, build pencil, silver blade).
 type Sprite = { url: string; hx: number; hy: number }; // hotspot in shown (2x) pixels
 
 const line = (c: CanvasRenderingContext2D, pts: [number, number][], w: number, col: string) => {
@@ -41,20 +41,17 @@ const DRAW: Partial<Record<Theme, { hot: [number, number]; draw: (c: CanvasRende
     },
   },
   fortnite: {
-    hot: [1, 3],
+    hot: [1, 14], // the graphite tip
     draw(c) {
-      line(c, [[4, 4], [14, 14]], 2, "#8a5a2b"); // handle
-      line(c, [[12, 12], [14, 14]], 2, "#4a2e14"); // grip
-      c.lineCap = "round";
-      c.strokeStyle = "#1c2233";
-      c.lineWidth = 4;
-      c.beginPath();
-      c.moveTo(1, 9);
-      c.quadraticCurveTo(1, 1, 9, 1);
-      c.stroke();
-      c.strokeStyle = "#b8c4d6";
-      c.lineWidth = 2;
-      c.stroke();
+      line(c, [[3, 12], [12, 3]], 4, "#1c2233"); // outline
+      line(c, [[4, 11], [11, 4]], 2, "#ffe03a"); // body
+      line(c, [[11, 4], [12, 3]], 2, "#b8c4d6"); // ferrule
+      line(c, [[12, 3], [14, 1]], 3, "#1c2233");
+      line(c, [[12, 3], [13, 2]], 2, "#ff7aa8"); // eraser
+      c.fillStyle = "#f2c89b"; // sharpened wood
+      c.fillRect(2, 12, 2, 2);
+      c.fillStyle = "#1c2233";
+      c.fillRect(1, 14, 1, 1); // graphite
     },
   },
   blade: {
