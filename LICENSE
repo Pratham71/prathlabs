@@ -1,19 +1,27 @@
-Copyright (c) 2026 Pratham Nagpal. All rights reserved.
+MIT License
 
-This repository and the website built from it (the source code, visual design, layouts,
-illustrations, pixel art, animations, generated scenes, sound design and music compositions)
-are the original work of Pratham Nagpal.
+Copyright (c) 2026 Pratham Nagpal
 
-No license is granted. You may not copy, modify, distribute, publish, sublicense, sell, or
-use any part of this work, in whole or in part, including to train machine-learning models,
-without prior written permission from the author.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Viewing the source on GitHub or in a browser does not grant any right to reuse it.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Third-party names and marks referenced for fan theming (including Grand Theft Auto, Rockstar
-Games, Fortnite, Epic Games, Marvel, Blade, Spider-Man, The Matrix, Cyberpunk 2077 and
-Minecraft) belong to their respective owners. This project is not affiliated with or endorsed
-by them. Any third-party recordings placed in public/music or public/sfx are not covered by
-this notice and remain the property of their owners.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-Contact: https://github.com/Pratham71
+---
+Third-party names referenced for fan theming (Grand Theft Auto, Fortnite, Marvel,
+Blade, Spider-Man, The Matrix, Cyberpunk 2077, Minecraft) belong to their owners;
+this project is not affiliated with them. Audio files placed in public/music or
+public/sfx are not covered by this license.

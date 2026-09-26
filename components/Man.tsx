@@ -31,9 +31,9 @@ export function ManPage({
         <span className="mid">{footMid}</span>
       </footer>
       <p className="copyright">
-        © {new Date().getFullYear()} {site.name}. All rights reserved. Code, design, artwork and music on this site are
-        original work and may not be copied or reused without permission. Game, film and brand names belong to their
-        owners and are referenced for fan theming only.
+        © {new Date().getFullYear()} {site.name}. Open source under the{" "}
+        <a href={`${site.github}/prathlabs`}>MIT license</a>: take what’s useful. Game, film and brand names belong to
+        their owners and are referenced for fan theming only.
       </p>
     </div>
   );

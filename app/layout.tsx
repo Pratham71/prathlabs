@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: site.name, url: "/" },
   authors: [{ name: site.name, url: site.url }],
   creator: site.name,
-  other: { copyright: `© ${new Date().getFullYear()} ${site.name}. All rights reserved.` },
+  other: { copyright: `© ${new Date().getFullYear()} ${site.name}. MIT licensed.` },
 };
 
 export const viewport: Viewport = { themeColor: "#0a0d10", colorScheme: "dark" };

@@ -393,8 +393,27 @@ function bassNote(o: Out, m: number, t: number, dur: number, sub: boolean) {
 // ---- transport ----
 // One playlist per station: real files (content/music.ts) first, then the synth loops.
 export type Entry = { title: string; artist?: string; src?: string; start?: number; synth?: Track };
+// Real files count only once a HEAD check (probe) has found them; until then the station shows its loops.
+const found = new Set<string>();
+const probed = new Set<Theme>();
+
 export function playlist(theme: Theme): Entry[] {
-  return [...(MUSIC[theme] ?? []), ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
+  const real = (MUSIC[theme] ?? []).filter((r) => found.has(r.src));
+  return [...real, ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
+}
+
+// Once per theme per visit: ask which listed songs are actually in public/music.
+export async function probe(theme: Theme) {
+  if (probed.has(theme)) return;
+  probed.add(theme);
+  await Promise.all(
+    (MUSIC[theme] ?? []).map((r) =>
+      fetch(r.src, { method: "HEAD" })
+        .then((res) => res.ok && (res.headers.get("content-type") ?? "").startsWith("audio") && found.add(r.src))
+        .catch(() => {}),
+    ),
+  );
+  if (state.theme === theme && !state.playing) emit(); // the card can now show the real first song
 }
 
 type State = { theme: Theme | null; index: number; playing: boolean };

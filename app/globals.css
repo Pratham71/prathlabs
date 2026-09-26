@@ -1224,9 +1224,14 @@ html[data-theme="fortnite"] {
     width: 11.5rem;
     translate: 0 -50%;
     z-index: 1;
-    font-size: 0.8rem;
     animation: rise var(--duration-very-slow) var(--ease-smooth-out) 380ms backwards;
   }
+}
+
+/* size the text here, not on .rail: --measure is in ch, and ch follows the element's own font size,
+   so a smaller .rail would place itself against a narrower page and overlap it */
+.rail > * {
+  font-size: 0.8rem;
 }
 
 .rail-label {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { STATIONS, getAnalyser, off, pause, play, playlist, skip, snapshot, subscribe } from "@/lib/radio";
+import { STATIONS, getAnalyser, off, pause, play, playlist, probe, skip, snapshot, subscribe } from "@/lib/radio";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { inked } from "@/lib/dither";
 
@@ -26,7 +26,10 @@ export function RadioPlayer() {
       if (radio.theme) off();
       return;
     }
-    if (radio.theme !== theme && soundOn()) void play(theme, 0);
+    // check which real songs exist first, so the station starts on one if it's there
+    void probe(theme).then(() => {
+      if (snapshot().theme !== theme && soundOn()) void play(theme, 0);
+    });
     // radio.* intentionally not a dependency: react to theme changes only
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
