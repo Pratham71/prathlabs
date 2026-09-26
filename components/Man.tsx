@@ -20,7 +20,7 @@ export function ManPage({
     <div className="man">
       <header className="man-edge" aria-label="Manual page header" style={{ viewTransitionName: "man-head" }}>
         <span>{ref}</span>
-        <span className="mid">{section === 7 ? "Miscellaneous" : "User Commands"}</span>
+        <span className="mid">{section === 7 ? "Miscellaneous" : section === 8 ? "System Administration" : "User Commands"}</span>
         <span className="right">
           <ClockText />
         </span>

@@ -12,6 +12,12 @@ Format: `.mp3`, lowercase names, exactly as written.
 only serves files that were in `public/` at build time, so a file added later returns 404 until
 the next build. (`npm run dev` picks new files up on refresh.) On Vercel, every push rebuilds.
 
+## Or: upload from /admin
+
+`sudo su` in the command prompt (or go to `/admin`), then MUSIC or REBOOT SOUND. Uploads go to Vercel
+Blob, show up on the next page load, need no rebuild, and play before the repo's files. Remove deletes
+the file.
+
 ## Theme songs (`public/music/<theme>/`)
 
 Each theme's radio plays these first, in this order, then its two built-in loops.

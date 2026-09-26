@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatUptime, liveDevices, type OnlineDevice } from "@/lib/heartbeat";
 import { inked } from "@/lib/dither";
 import { onThemeChange } from "@/lib/theme";
+import { NowPlaying } from "@/components/NowPlaying";
 
 // Right gutter (>= 1400px, mirrors the clocks): the homelab, each device beating in the last 10 min
 // with a dithered cpu trace, mem and temp.
@@ -33,7 +34,7 @@ export function SideRail() {
   const live = devices ? liveDevices(devices, now) : [];
 
   return (
-    <aside className="rail" aria-label="Homelab">
+    <aside className="rail" aria-label="Homelab and now playing">
       {devices && (
         <section className="rail-lab" aria-label="Homelab status">
           <p className="rail-label">homelab</p>
@@ -56,6 +57,7 @@ export function SideRail() {
           )}
         </section>
       )}
+      <NowPlaying />
     </aside>
   );
 }

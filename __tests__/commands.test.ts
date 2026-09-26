@@ -28,7 +28,7 @@ test("easter eggs", () => {
   expect(run("reboot").action).toEqual({ type: "reboot" });
   expect(run("intro").action).toEqual({ type: "reboot" });
   expect(run("radio next").action).toEqual({ type: "radio", op: "next" });
-  expect(run("cat hobbies.txt").out[0]).toMatch(/^--gym/);
+  expect(run("cat hobbies.txt").out.join()).toMatch(/--gym/);
   expect(run("coffee").out[0]).toMatch(/pre-workout/);
   expect(run("uptime").out[0]).toMatch(/gym/);
 });

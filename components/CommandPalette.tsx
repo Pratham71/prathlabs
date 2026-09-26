@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
 import { currentTheme, isGame, setTheme } from "@/lib/theme";
 import { REBOOT_SOUNDS } from "@/content/music";
+import { clientSettings } from "@/lib/client-settings";
 
 type Entry = { cmd?: string; out: string[] };
 const PROMPT = "visitor@prathlab:~$";
@@ -60,36 +61,39 @@ async function visitorCount() {
 async function reboot() {
   const theme = document.documentElement.dataset.theme;
   const audio = await import("@/lib/audio");
+  // an upload from /admin wins over the repo's file
+  const t = theme as keyof typeof REBOOT_SOUNDS;
+  const sound = clientSettings().reboot?.[t] ?? REBOOT_SOUNDS[t];
   let wait = 400;
   if (theme === "gtav" || theme === "gtavi") {
     playFx("wasted");
-    audio.sting("wasted", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
+    audio.sting("wasted", sound);
     wait = 1800;
   } else if (theme === "fortnite") {
     const n = await visitorCount();
     playFx("placed", [`#${n}`, `you placed. ${n} ${n === 1 ? "player" : "players"} dropped in this week`]);
-    audio.sting("placed", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
+    audio.sting("placed", sound);
     wait = 2000;
   } else if (theme === "blade") {
     playFx("slash");
-    audio.sting("slash", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
+    audio.sting("slash", sound);
     wait = 900;
   } else if (theme === "matrix") {
     playFx("failure");
-    audio.sting("glitch", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
+    audio.sting("glitch", sound);
     wait = 1800;
   } else if (theme === "cyberpunk") {
     playFx("flatline");
-    audio.sting("glitch", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
+    audio.sting("glitch", sound);
     wait = 1600;
   } else if (theme === "spiderman") {
     playFx("tbc");
-    audio.sting("thwip", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
+    audio.sting("thwip", sound);
     wait = 1800;
   } else if (theme === "minecraft") {
     const n = await visitorCount();
     playFx("died", ["you died!", `score: ${n}`]);
-    audio.sting("oof", REBOOT_SOUNDS[theme as keyof typeof REBOOT_SOUNDS]);
+    audio.sting("oof", sound);
     wait = 2000;
   }
   // the inline boot script plays the intro again once this session hasn't "seen" it
@@ -108,6 +112,7 @@ export function CommandPalette() {
   const history = useRef<string[]>([]);
   const rebooting = useRef(false);
   const cursor = useRef(-1);
+  const [askPass, setAskPass] = useState(false); // `sudo su`: the input becomes a masked password field
 
   const open = () => {
     const d = dialog.current;
@@ -176,6 +181,12 @@ export function CommandPalette() {
       void reboot();
     }
     if (a.type === "close") dialog.current?.close();
+    if (a.type === "login") setAskPass(true);
+    if (a.type === "np")
+      void fetch("/api/now-playing")
+        .then((r) => r.json())
+        .then((d) => say(d.off ? ["spotify is off right now."] : [`${d.playing ? "now playing" : "last played"}: ${d.title} · ${d.artist}`, d.url]))
+        .catch(() => say(["couldn't reach spotify."]));
     if (a.type === "nav") {
       dialog.current?.close();
       router.push(a.href);
@@ -206,7 +217,28 @@ export function CommandPalette() {
       );
   };
 
+  // replace the output of the last command (async answers)
+  const say = (out: string[]) => setLog((l) => [...l.slice(0, -1), { ...l[l.length - 1], out }]);
+
+  const login = async () => {
+    const password = value;
+    setValue("");
+    setAskPass(false);
+    setLog((l) => [...l, { out: ["[sudo] password for pratham: "] }]);
+    const r = await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password }) }).catch(() => null);
+    if (r?.ok) {
+      say(["[sudo] password for pratham: ", "root access granted."]);
+      dialog.current?.close();
+      router.push("/admin");
+    } else {
+      const err = r ? ((await r.json().catch(() => ({}))).error ?? "Sorry, try again.") : "network error";
+      say(["[sudo] password for pratham: ", err]);
+      act({ type: "shake" });
+    }
+  };
+
   const submit = () => {
+    if (askPass) return void login();
     const line = value;
     const r = run(line, document.documentElement.dataset.bootHome);
     if (line.trim()) history.current.push(line);
@@ -219,6 +251,7 @@ export function CommandPalette() {
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") return submit();
+    if (askPass) return; // no completion or history on a password
     if (e.key === "Tab") {
       e.preventDefault();
       const c = complete(value);
@@ -241,7 +274,7 @@ export function CommandPalette() {
     }
   };
 
-  const hints = value.trim() ? complete(value).slice(0, 6) : [];
+  const hints = value.trim() && !askPass ? complete(value).slice(0, 6) : [];
 
   return (
     <>
@@ -259,6 +292,7 @@ export function CommandPalette() {
         className="term"
         aria-label="Command prompt"
         onClick={(e) => e.target === dialog.current && dialog.current?.close()}
+        onClose={() => setAskPass(false)}
       >
         <header className="term-bar">
           <span>
@@ -283,8 +317,9 @@ export function CommandPalette() {
           ))}
         </div>
         <label className="term-in">
-          <span className="term-ps">{PROMPT}</span>
+          <span className="term-ps">{askPass ? "[sudo] password:" : PROMPT}</span>
           <input
+            type={askPass ? "password" : "text"}
             ref={input}
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -298,7 +333,9 @@ export function CommandPalette() {
         <p className="term-hint muted" aria-hidden="true">
           {hints.length
             ? hints.join("   ")
-            : "help · projects · open <name> · theme · radio · reboot"}
+            : askPass
+              ? "enter to submit · esc to cancel"
+              : "help · projects · open <name> · theme · radio · reboot"}
         </p>
       </dialog>
     </>

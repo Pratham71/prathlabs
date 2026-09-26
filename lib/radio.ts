@@ -4,6 +4,7 @@
 // through lib/audio's master, so the dock's sound toggle still silences it.
 import { bedOn, graph } from "@/lib/audio";
 import { MUSIC } from "@/content/music";
+import { clientSettings } from "@/lib/client-settings";
 import type { Theme } from "@/lib/theme";
 
 type Drum = "kick" | "snare" | "clap" | "hat";
@@ -398,8 +399,10 @@ const found = new Set<string>();
 const probed = new Set<Theme>();
 
 export function playlist(theme: Theme): Entry[] {
+  // songs uploaded in /admin (Blob URLs, known to exist) play before the repo's files
+  const uploaded = clientSettings().music?.[theme] ?? [];
   const real = (MUSIC[theme] ?? []).filter((r) => found.has(r.src));
-  return [...real, ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
+  return [...uploaded, ...real, ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
 }
 
 // Once per theme per visit: ask which listed songs are actually in public/music.

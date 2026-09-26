@@ -12,11 +12,16 @@ export const site = {
   ],
   // HOBBIES: flag-style lines, like the SYNOPSIS. Edit freely.
   hobbies: [
+    ["--gaming", "gta, fortnite, minecraft; the dock's theme button has all three"],
     ["--gym", "lifting most mornings; rest days are part of the program"],
-    ["--games", "gta and fortnite; the dock's theme button has both"],
+    ["--homelab", "tinkering with the raspberry pi and the home server, self-hosting whatever looks fun"],
   ] as [string, string][],
   // Photo shown dithered beside DESCRIPTION (hover reveals it). Drop a file in public/ and set it here.
   portrait: null as { src: string; alt: string; width: number; height: number } | null,
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.prathlab.com").replace(/\/$/, ""),
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || null,
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "pn.prathamnagpal@gmail.com",
+  // CONTACT section
+  responseTime: "usually within 24 to 48 hours",
+  location: "Dubai, UAE",
+  timezone: "GST, UTC+4",
 };

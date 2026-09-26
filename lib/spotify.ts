@@ -1,0 +1,44 @@
+// Spotify "now playing": a long-lived refresh token (scripts/spotify-auth.mjs gets it once) buys a
+// short access token, then currently-playing, falling back to the last played track.
+export type NowPlaying = { playing: boolean; title: string; artist: string; url: string; art: string | null };
+
+export const spotifyConfigured = () =>
+  Boolean(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET && process.env.SPOTIFY_REFRESH_TOKEN);
+
+async function accessToken(): Promise<string> {
+  const basic = Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString("base64");
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: process.env.SPOTIFY_REFRESH_TOKEN! }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`spotify token ${res.status}`);
+  return (await res.json()).access_token;
+}
+
+type SpotifyTrack = { name: string; external_urls: { spotify: string }; artists: { name: string }[]; album: { images: { url: string; width: number }[] } };
+
+const shape = (t: SpotifyTrack, playing: boolean): NowPlaying => ({
+  playing,
+  title: t.name,
+  artist: t.artists.map((a) => a.name).join(", "),
+  url: t.external_urls.spotify,
+  // smallest cover; it gets dithered down to a few dozen dots anyway
+  art: [...t.album.images].sort((a, b) => a.width - b.width)[0]?.url ?? null,
+});
+
+export async function nowPlaying(): Promise<NowPlaying | null> {
+  const token = await accessToken();
+  const get = (path: string) => fetch(`https://api.spotify.com/v1/me/${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  const now = await get("player/currently-playing");
+  if (now.status === 200) {
+    const j = await now.json();
+    // podcasts and ads come back without a track; fall through to the last song
+    if (j?.item?.type === "track") return shape(j.item, Boolean(j.is_playing));
+  }
+  const recent = await get("player/recently-played?limit=1");
+  if (!recent.ok) return null;
+  const item = (await recent.json())?.items?.[0]?.track;
+  return item ? shape(item, false) : null;
+}

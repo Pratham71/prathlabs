@@ -1,6 +1,8 @@
 // Colour themes. Tokens live in globals.css under html[data-theme="<id>"]; amber is the default (no attribute).
 // Every theme except amber is a "station theme": its own intro, radio station, cursor, scenery and page
 // structure. CSS targets them all with html[data-theme] (amber never sets the attribute).
+import { clientSettings } from "@/lib/client-settings";
+
 export const THEMES = ["amber", "matrix", "cyberpunk", "spiderman", "minecraft", "blade", "gtav", "gtavi", "fortnite"] as const;
 export type Theme = (typeof THEMES)[number];
 
@@ -41,7 +43,11 @@ export function setTheme(name: Theme) {
   document.startViewTransition(apply);
 }
 
-export const nextTheme = (t: Theme): Theme => THEMES[(THEMES.indexOf(t) + 1) % THEMES.length];
+// Cycles the themes switched on in /admin (all of them by default).
+export function nextTheme(t: Theme): Theme {
+  const list = clientSettings().themes ?? THEMES;
+  return list[(list.indexOf(t) + 1) % list.length];
+}
 
 // Canvas/WebGL components read CSS tokens into pixels; they call this to re-read when the theme flips.
 export function onThemeChange(cb: () => void) {

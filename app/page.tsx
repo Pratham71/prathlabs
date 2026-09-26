@@ -106,18 +106,32 @@ export default async function Home() {
 
       <Devices devices={devices} renderedAt={renderedAt} />
 
-      <Section name="SEE ALSO">
-        <ul className="see-also">
-          <li>
-            <a href={site.github}>github(1)</a>
-          </li>
-          {site.email && (
-            <li>
-              <a href={`mailto:${site.email}`}>mail(1)</a>
+      <Section name="CONTACT" id="contact">
+        <dl className="contact">
+          <div>
+            <dt className="flag">--mail</dt>
+            <dd>
+              <a href={`mailto:${site.email}`}>{site.email}</a>
               <CopyEmail email={site.email} />
-            </li>
-          )}
-        </ul>
+            </dd>
+          </div>
+          <div>
+            <dt className="flag">--github</dt>
+            <dd>
+              <a href={site.github}>{site.github.replace(/^https?:\/\//, "")}</a>
+            </dd>
+          </div>
+          <div>
+            <dt className="flag">--reply</dt>
+            <dd>{site.responseTime}</dd>
+          </div>
+          <div>
+            <dt className="flag">--from</dt>
+            <dd>
+              {site.location} <span className="muted">({site.timezone})</span>
+            </dd>
+          </div>
+        </dl>
       </Section>
     </ManPage>
   );

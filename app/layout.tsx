@@ -16,6 +16,7 @@ import { ThemeAccents } from "@/components/ThemeAccents";
 import { ThemeIcon } from "@/components/ThemeIcon";
 import { ThemeScenery } from "@/components/ThemeScenery";
 import { site } from "@/content/site";
+import { getSettings } from "@/lib/settings";
 import "./globals.css";
 
 // Route changes update this boundary; Link transitionTypes pick the slide direction.
@@ -48,10 +49,13 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#0a0d10", colorScheme: "dark" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // /admin's settings, inlined for the boot script, the theme button, the radio and reboot
+  const settings = JSON.stringify(await getSettings()).replace(/</g, "\\u003c");
   return (
     <html lang="en" className={`${mono.variable} ${anton.variable} ${kaushan.variable} ${pixel.variable}`} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `window.__site=${settings}` }} />
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body>

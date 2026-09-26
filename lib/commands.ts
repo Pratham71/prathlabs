@@ -12,6 +12,8 @@ export type Action =
   | { type: "reboot" }
   | { type: "radio"; op: "play" | "pause" | "next" | "prev" }
   | { type: "close" }
+  | { type: "login" }
+  | { type: "np" }
   | { type: "shake" };
 
 export type Fx = "wasted" | "passed" | "victory" | "dance" | "placed" | "slash" | "failure" | "flatline" | "tbc" | "died";
@@ -39,6 +41,7 @@ const HELP: [string, string][] = [
   ["theme [name]", "switch colours (theme lists them)"],
   ["radio play|pause|next", "the station (game themes)"],
   ["reboot", "replay the intro"],
+  ["spotify", "what i'm listening to"],
   ["neofetch · fortune", "system info · a fortune"],
   ["whoami · date · ping", "the usual"],
   ["clear", "clear the screen"],
@@ -46,7 +49,7 @@ const HELP: [string, string][] = [
 ];
 
 // Words the prompt completes on Tab (first word, then project names after open/man/cd).
-export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune", "reboot", "hobbies", "radio"];
+export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune", "reboot", "hobbies", "radio", "spotify"];
 
 export function complete(input: string): string[] {
   const parts = input.trimStart().split(/\s+/);
@@ -107,6 +110,9 @@ export function run(line: string, home = "your nearest edge"): Result {
       return site.email
         ? { out: [`-> ${site.email}`], action: { type: "open", href: `mailto:${site.email}` } }
         : { out: ["mail isn't public yet; reach me through github(1) for now."] };
+    case "reply":
+    case "eta":
+      return { out: [`i reply ${site.responseTime} (${site.timezone}).`] };
     case "sound":
       if (arg === "on" || arg === "off") return { out: [`sound ${arg}`], action: { type: "sound", on: arg === "on" } };
       return { out: ["usage: sound on|off"] };
@@ -137,8 +143,15 @@ export function run(line: string, home = "your nearest edge"): Result {
     case "ping":
       return { out: [`PING prathlab.com: 64 bytes from ${home}: time=2 ms`] };
     // --- easter eggs ---
+    case "spotify":
+    case "np":
+      return { out: ["checking spotify..."], action: { type: "np" } };
+    // the way into /admin: asks for ADMIN_PASSWORD (checked server-side)
+    case "su":
+      return { out: [], action: { type: "login" } };
     case "sudo":
       if (arg === "make me a sandwich") return { out: ["okay."] };
+      if (arg === "su" || arg === "-i") return { out: [], action: { type: "login" } };
       return { out: ["pratham is not in the sudoers file. This incident will be reported."] };
     case "make":
       return arg === "me a sandwich" ? { out: ["what? make it yourself."] } : { out: [`make: *** No rule to make target '${arg || "all"}'. Stop.`] };
