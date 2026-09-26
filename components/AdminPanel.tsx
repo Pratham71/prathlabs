@@ -10,7 +10,6 @@ import type { Settings } from "@/lib/settings";
 
 // /admin, logged out: same password as the palette's `sudo su`.
 export function AdminLogin({ configured }: { configured: boolean }) {
-  const router = useRouter();
   const [err, setErr] = useState("");
   if (!configured) return <p>Set ADMIN_PASSWORD and ADMIN_SECRET in the environment, then redeploy.</p>;
   return (
@@ -20,7 +19,7 @@ export function AdminLogin({ configured }: { configured: boolean }) {
         e.preventDefault();
         const password = new FormData(e.currentTarget).get("password");
         const r = await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password }) });
-        if (r.ok) router.refresh();
+        if (r.ok) location.reload(); // full load so the page renders with the new session cookie
         else setErr((await r.json().catch(() => ({}))).error ?? "Sorry, try again.");
       }}
     >

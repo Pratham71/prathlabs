@@ -13,7 +13,8 @@ async function accessToken(): Promise<string> {
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: process.env.SPOTIFY_REFRESH_TOKEN! }),
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`spotify token ${res.status}`);
+  // Spotify's error code only (e.g. invalid_grant = bad/revoked refresh token, invalid_client = wrong id/secret)
+  if (!res.ok) throw new Error(`token ${res.status} ${(await res.json().catch(() => ({})))?.error ?? ""}`.trim());
   return (await res.json()).access_token;
 }
 
@@ -37,8 +38,10 @@ export async function nowPlaying(): Promise<NowPlaying | null> {
     // podcasts and ads come back without a track; fall through to the last song
     if (j?.item?.type === "track") return shape(j.item, Boolean(j.is_playing));
   }
+  if (now.status !== 200 && now.status !== 204) throw new Error(`currently-playing ${now.status}`);
   const recent = await get("player/recently-played?limit=1");
-  if (!recent.ok) return null;
+  // 403 here usually means the refresh token lacks user-read-recently-played: rerun scripts/spotify-auth.mjs
+  if (!recent.ok) throw new Error(`recently-played ${recent.status}`);
   const item = (await recent.json())?.items?.[0]?.track;
   return item ? shape(item, false) : null;
 }
