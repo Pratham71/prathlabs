@@ -8,6 +8,7 @@ import { Scramble } from "@/components/Scramble";
 import { SignalField } from "@/components/SignalField";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { CopyEmail } from "@/components/CopyEmail";
+import { DitherImage } from "@/components/DitherImage";
 import { projects } from "@/content/projects";
 import { site } from "@/content/site";
 import { activityStats } from "@/lib/github";
@@ -40,6 +41,11 @@ export default async function Home() {
       </Section>
 
       <Section name="DESCRIPTION">
+        {site.portrait && (
+          <figure className="portrait">
+            <DitherImage {...site.portrait} />
+          </figure>
+        )}
         {site.description.map((p, i) => (
           <p key={i} style={i ? { marginTop: "0.9rem" } : undefined}>
             {p}
@@ -66,6 +72,17 @@ export default async function Home() {
             </li>
           ))}
         </ul>
+      </Section>
+
+      <Section name="HOBBIES">
+        <dl className="hobbies">
+          {site.hobbies.map(([flag, what]) => (
+            <div key={flag}>
+              <dt className="flag">{flag}</dt>
+              <dd>{what}</dd>
+            </div>
+          ))}
+        </dl>
       </Section>
 
       <Section name="ACTIVITY">

@@ -2,6 +2,7 @@ import { THEMES } from "@/lib/theme";
 import { BOOT_T, NODES, bootLines } from "@/lib/boot-lines";
 import { BootGlobe } from "@/components/BootGlobe";
 import { CrtOverlay } from "@/components/CrtOverlay";
+import { GameIntro } from "@/components/GameIntro";
 
 const KEY = "boot-seen";
 const PLAY_MS = BOOT_T.man + 950;
@@ -31,6 +32,37 @@ export function Boot() {
             {l.text}
           </p>
         ))}
+      </div>
+      {/* game themes swap the login for a loading screen; CSS shows the one matching html[data-theme] */}
+      <GameIntro />
+      <div className="gi gi-gtav">
+        <p className="gi-title">
+          pratham
+          <br />
+          nagpal
+        </p>
+        <p className="gi-tips">
+          <span>tip: press : to open the prompt.</span>
+          <span>tip: type hesoyam in the prompt.</span>
+          <span>tip: the homelab is always on. mostly.</span>
+        </p>
+        <p className="gi-load">
+          <i className="gi-spin" /> loading portfolio
+        </p>
+      </div>
+      <div className="gi gi-gtavi">
+        <p className="gi-script">Pratham</p>
+        <p className="gi-sub">leonida edition</p>
+        <p className="gi-load">
+          <i className="gi-spin" /> loading portfolio
+        </p>
+      </div>
+      <div className="gi gi-fortnite">
+        <p className="gi-bus">
+          the battle bus is launching in <b className="gi-count" />
+        </p>
+        <p className="gi-title">pratham</p>
+        <p className="gi-sub">thank the bus driver</p>
       </div>
       <p className="skip-hint">press any key to skip</p>
       <CrtOverlay />

@@ -1,41 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
 import { formatUptime, liveDevices, type OnlineDevice } from "@/lib/heartbeat";
 import { inked } from "@/lib/dither";
 import { onThemeChange } from "@/lib/theme";
 
-type Entry = { id: string; name: string };
-
-// Right gutter (>= 1400px, mirrors the clocks): the page's man sections with scroll-spy, then the
-// homelab: each device beating in the last 10 min with a dithered cpu trace, mem and temp.
+// Right gutter (>= 1400px, mirrors the clocks): the homelab, each device beating in the last 10 min
+// with a dithered cpu trace, mem and temp.
 export function SideRail() {
-  const pathname = usePathname();
-  const [sections, setSections] = useState<Entry[]>([]);
-  const [active, setActive] = useState<string | null>(null);
   const [devices, setDevices] = useState<OnlineDevice[] | null>(null);
   const [now, setNow] = useState(0);
-
-  useEffect(() => {
-    const labels = [...document.querySelectorAll<HTMLElement>("main .man-label")];
-    const first = setTimeout(() => setSections(labels.map((l) => ({ id: l.id, name: l.textContent ?? "" }))), 0);
-    // active = the last section whose label has passed the upper third of the viewport
-    const seen = new Map<string, boolean>();
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => seen.set(e.target.id, e.boundingClientRect.top < innerHeight * 0.35));
-        const passed = labels.filter((l) => seen.get(l.id));
-        setActive((passed.at(-1) ?? labels[0])?.id ?? null);
-      },
-      { rootMargin: "0px 0px -65% 0px", threshold: [0, 1] },
-    );
-    labels.forEach((l) => io.observe(l));
-    return () => {
-      clearTimeout(first);
-      io.disconnect();
-    };
-  }, [pathname]);
 
   useEffect(() => {
     let alive = true;
@@ -59,21 +33,7 @@ export function SideRail() {
   const live = devices ? liveDevices(devices, now) : [];
 
   return (
-    <aside className="rail" aria-label="On this page">
-      {sections.length > 1 && (
-        <nav className="rail-index">
-          <p className="rail-label">contents</p>
-          <ol>
-            {sections.map((s) => (
-              <li key={s.id}>
-                <a href={`#${s.id}`} aria-current={s.id === active ? "location" : undefined}>
-                  {s.name.toLowerCase()}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-      )}
+    <aside className="rail" aria-label="Homelab">
       {devices && (
         <section className="rail-lab" aria-label="Homelab status">
           <p className="rail-label">homelab</p>

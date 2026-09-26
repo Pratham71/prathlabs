@@ -11,6 +11,7 @@ const BED_GAIN = 0.018; // pad level; everything else is set relative to "barely
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
+let bedBus: GainNode | null = null; // whole bed (pad, hum, pings); muted while the radio plays
 let voices: OscillatorNode[][] = [];
 const timers: number[] = [];
 let wanted = false;
@@ -29,7 +30,20 @@ function ensure() {
   return ac;
 }
 
-function bed(ac: AudioContext, out: GainNode) {
+// Shared graph for lib/radio: same context, same master (so the sound toggle still silences everything).
+export function graph() {
+  const ac = ensure();
+  return { ac, master: master! };
+}
+
+export function bedOn(on: boolean) {
+  if (!ctx || !bedBus) return;
+  bedBus.gain.setTargetAtTime(on ? 1 : 0, ctx.currentTime, 0.4);
+}
+
+function bed(ac: AudioContext, dest: GainNode) {
+  const out = (bedBus = ac.createGain());
+  out.connect(dest);
   const bus = ac.createGain();
   bus.gain.value = BED_GAIN;
   const lp = ac.createBiquadFilter();
@@ -99,9 +113,9 @@ function bed(ac: AudioContext, out: GainNode) {
   timers.push(window.setTimeout(ping, 2500));
 }
 
-function blip(freq: number, gain: number, dur: number, type: OscillatorType = "square") {
+function blip(freq: number, gain: number, dur: number, type: OscillatorType = "square", at?: number) {
   if (!ctx || !master || ctx.state !== "running") return;
-  const t = ctx.currentTime;
+  const t = at ?? ctx.currentTime;
   const o = ctx.createOscillator();
   const g = ctx.createGain();
   o.type = type;
@@ -123,6 +137,21 @@ export const sfx = {
   },
 };
 
+// Boot-log sounds, scheduled on the audio clock (sample-accurate; timers would drift while the intro
+// renders). `events` are ms from now. False if audio isn't running yet.
+export function bootSfx(events: { at: number; ok: boolean }[]) {
+  if (!ctx || ctx.state !== "running") return false;
+  const now = ctx.currentTime + 0.01;
+  for (const e of events) {
+    const t = now + e.at / 1000;
+    if (e.ok) {
+      blip(880, 0.02, 0.25, "sine", t);
+      blip(1318.5, 0.018, 0.35, "sine", t + 0.07);
+    } else blip(1400 + Math.random() * 300, 0.01, 0.025, "square", t);
+  }
+  return true;
+}
+
 // Must be called from a user gesture (click/key) the first time; browsers block audio before one.
 export async function start() {
   wanted = true;
@@ -132,7 +161,7 @@ export async function start() {
   await ac.resume().catch(() => {});
   if (ac.state !== "running") return false;
   master.gain.cancelScheduledValues(ac.currentTime);
-  master.gain.setTargetAtTime(1, ac.currentTime, 0.6);
+  master.gain.setTargetAtTime(1, ac.currentTime, 0.12); // quick: boot sounds land on their lines
   return true;
 }
 

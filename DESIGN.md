@@ -153,5 +153,12 @@ Tokens follow transitions.dev: stagger 40ms, micro 80ms, quick 150ms, fast 250ms
 ## Themes, rail, eggs
 
 - **Themes** (`lib/theme.ts`, tokens in `globals.css`): amber (default), phosphor, solarized, red alert, los santos (GTA V), vice city (GTA VI), battle bus (Fortnite). Colours only, no game logos or fonts. Same six tokens in every theme; `--amber` is "the accent". Switch via the dock button, `theme <name>`, or eggs. Crossfades with a view transition. Every canvas/WebGL piece re-reads tokens through `onThemeChange`.
-- **Right rail** (≥1400px, mirrors the clocks): page contents with scroll-spy, then homelab: devices that beat in the last 10 min, a dithered cpu trace (2h), mem and temp. Devices send readings with `scripts/heartbeat.sh`.
+- **Right rail** (≥1400px, mirrors the clocks): homelab: devices that beat in the last 10 min, a dithered cpu trace (2h), mem and temp. Devices send readings with `scripts/heartbeat.sh`.
 - **Eggs**: `hesoyam`, `wasted`, `mission`, `gta6`, `fortnite`, `gg`, `dance`, `gym`, `neofetch`, `fortune`, `sl`, `matrix`, `incident`, `sudo make me a sandwich`, Konami.
+
+## Game themes (branch game-themes)
+
+- **Intros**: with a game theme saved, the boot is a loading screen instead of the ssh login. `GameIntro` draws a dithered scene (4px Bayer over a small palette): los santos sunset over hills and skyline, vice city striped sun over the ocean, the battle bus crossing the sky. Titles are HTML over it (Anton / Kaushan Script / Luckiest Guy, loaded only in those themes). Exits: GTA cuts to black, the bus closes a storm eye.
+- **Radio** (`lib/radio.ts`, `RadioPlayer`): original loops written for this site in each game's style, synthesized live with a step sequencer. No recordings or samples of the real songs. Two tracks per station; the dithered spectrum reads an AnalyserNode. In game themes the station replaces the ambient bed; the dock's sound toggle still silences everything.
+- **Accents**: GTA wanted stars and FN shield bar fill with scroll (CSS scroll-driven), vice sunset glow along the bottom, section labels restyled per game, FN rarity edges on project rows.
+- `reboot` in the prompt replays the intro.

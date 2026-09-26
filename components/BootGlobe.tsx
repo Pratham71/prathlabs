@@ -1,5 +1,6 @@
 "use client";
 
+import { isGame } from "@/lib/theme";
 import { useEffect, useRef } from "react";
 import { BOOT_T, NODES } from "@/lib/boot-lines";
 import { fullscreenShader, rgb } from "@/lib/gl";
@@ -73,7 +74,8 @@ export function BootGlobe() {
     const glCanvas = glRef.current;
     const fx = fxRef.current;
     const ctx = fx?.getContext("2d");
-    if (!glCanvas || !fx || !ctx || html.dataset.boot !== "1") return;
+    // ponytail: game themes skip the globe (and so don't record the visit region); fine for a rare path
+    if (!glCanvas || !fx || !ctx || html.dataset.boot !== "1" || isGame(html.dataset.theme)) return;
     const home = NODES.find((n) => n.id === html.dataset.bootHome) ?? NODES[0];
     const homeV = vec(home.lat, home.lon);
     const t0 = (window as { __bootT0?: number }).__bootT0 ?? performance.now();

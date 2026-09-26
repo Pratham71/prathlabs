@@ -25,6 +25,7 @@ test("easter eggs", () => {
   expect(run("rm -fr /").action).toEqual({ type: "shake" });
   expect(run("rm notes.txt").action).toBeUndefined();
   expect(run(":q").action).toEqual({ type: "close" });
+  expect(run("reboot").action).toEqual({ type: "reboot" });
   expect(run("coffee").out[0]).toMatch(/pre-workout/);
   expect(run("uptime").out[0]).toMatch(/gym/);
 });

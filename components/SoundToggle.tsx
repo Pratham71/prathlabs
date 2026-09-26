@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { currentTheme, isGame } from "@/lib/theme";
 
 const KEY = "sound";
 
@@ -17,7 +18,11 @@ export function SoundToggle() {
     } catch {}
     if (!stored) return;
     const t = setTimeout(() => setOn(true), 0);
-    const resume = () => void import("@/lib/audio").then((a) => a.start());
+    const resume = () => {
+      const theme = currentTheme();
+      if (isGame(theme)) void import("@/lib/radio").then((r) => r.play(theme));
+      else void import("@/lib/audio").then((a) => a.start());
+    };
     addEventListener("pointerdown", resume, { once: true });
     addEventListener("keydown", resume, { once: true });
     return () => {
@@ -38,22 +43,24 @@ export function SoundToggle() {
     };
     addEventListener("pointerover", onOver, { passive: true });
 
-    const timers: number[] = [];
+    // Boot-log sounds for lines still to print (server-login intro only). Load the engine and wait for
+    // it to run first, then measure: the chunk fetch and resume used to push every sound late.
     const t0 = (window as { __bootT0?: number }).__bootT0;
-    if (document.documentElement.dataset.boot === "1" && t0 !== undefined) {
-      const lines = document.querySelectorAll<HTMLElement>(".boot-log p");
-      const elapsed = performance.now() - t0;
-      lines.forEach((p) => {
-        const at = parseFloat(p.style.getPropertyValue("--t")) - elapsed;
-        if (at < 0) return;
-        const ok = p.classList.contains("ok-line") || p.textContent?.startsWith("route");
-        timers.push(window.setTimeout(() => void import("@/lib/audio").then((a) => (ok ? a.sfx.ok() : a.sfx.key())), at));
+    const html = document.documentElement;
+    if (html.dataset.boot === "1" && t0 !== undefined && !isGame(html.dataset.theme)) {
+      void import("@/lib/audio").then(async (a) => {
+        if (!(await a.start())) return;
+        const elapsed = performance.now() - t0;
+        const events = [...document.querySelectorAll<HTMLElement>(".boot-log p")]
+          .map((p) => ({
+            at: parseFloat(p.style.getPropertyValue("--t")) - elapsed,
+            ok: p.classList.contains("ok-line") || !!p.textContent?.startsWith("route"),
+          }))
+          .filter((e) => e.at >= 0);
+        a.bootSfx(events);
       });
     }
-    return () => {
-      removeEventListener("pointerover", onOver);
-      timers.forEach(clearTimeout);
-    };
+    return () => removeEventListener("pointerover", onOver);
   }, [on]);
 
   const set = async (next: boolean) => {
@@ -64,6 +71,13 @@ export function SoundToggle() {
     const a = await import("@/lib/audio");
     if (next) await a.start();
     else a.stop();
+    // game themes: the station is the sound, not the ambient bed
+    const theme = currentTheme();
+    if (isGame(theme)) {
+      const radio = await import("@/lib/radio");
+      if (next) void radio.play(theme);
+      else radio.pause();
+    }
   };
 
   // the command prompt's `sound on|off` arrives here

@@ -9,6 +9,7 @@ export type Action =
   | { type: "theme"; name: Theme }
   | { type: "fx"; name: Fx }
   | { type: "clear" }
+  | { type: "reboot" }
   | { type: "close" }
   | { type: "shake" };
 
@@ -34,12 +35,13 @@ const HELP: [string, string][] = [
   ["mail", "how to reach me"],
   ["sound on|off", "ambient sound"],
   ["theme [name]", "switch colours (theme lists them)"],
+  ["reboot", "replay the intro"],
   ["clear", "clear the screen"],
   ["exit", "close this prompt"],
 ];
 
 // Words the prompt completes on Tab (first word, then project names after open/man/cd).
-export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune"];
+export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune", "reboot"];
 
 export function complete(input: string): string[] {
   const parts = input.trimStart().split(/\s+/);
@@ -102,9 +104,13 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: ["usage: sound on|off"] };
     case "theme":
       if (isTheme(arg)) return { out: [`theme: ${THEME_LABEL[arg]}`], action: { type: "theme", name: arg } };
-      return { out: [...THEMES.map((t) => `  ${pad(t, 10)}${THEME_LABEL[t]}`), "usage: theme <name>"] };
+      return { out: [...THEMES.map((t) => `  ${pad(t, 10)}${THEME_LABEL[t] === t ? "" : THEME_LABEL[t]}`), "usage: theme <name>"] };
     case "clear":
       return { out: [], action: { type: "clear" } };
+    case "reboot":
+    case "intro":
+    case "replay":
+      return { out: ["broadcast message: the system is going down for reboot NOW"], action: { type: "reboot" } };
     case "exit":
     case "quit":
     case "q":

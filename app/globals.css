@@ -229,6 +229,36 @@ a:hover {
   gap: 1.5ch;
 }
 
+/* HOBBIES: option list, like a man page's OPTIONS */
+.hobbies div {
+  display: grid;
+  grid-template-columns: 12ch 1fr;
+  gap: 1.5ch;
+}
+
+.hobbies div + div {
+  margin-top: 0.4rem;
+}
+
+/* portrait beside DESCRIPTION, dithered like the project figures */
+.portrait {
+  float: right;
+  width: min(34%, 220px);
+  margin: 0 0 1rem 2ch;
+}
+
+@media (max-width: 640px) {
+  .hobbies div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .portrait {
+    float: none;
+    width: 60%;
+    margin: 0 0 1rem;
+  }
+}
+
 /* SEE ALSO: siblings recede while one link is hovered or focused (after amicro FocusBlur, MIT) */
 .see-also {
   display: flex;
@@ -988,15 +1018,16 @@ html[data-theme="fortnite"] {
 
 .term {
   margin: auto;
-  width: min(760px, calc(100vw - 2rem));
-  max-height: min(560px, calc(100dvh - 4rem));
+  width: min(720px, calc(100vw - 2rem));
+  height: min(460px, calc(100dvh - 4rem)); /* fixed: output scrolls inside instead of the window growing */
   padding: 0;
+  font-size: 0.875rem;
   color: var(--text);
   background: var(--ink);
   border: 1px solid var(--line);
   border-radius: 6px;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 12%, transparent), 0 24px 80px rgb(0 0 0 / 0.6);
-  font: inherit;
+  font-family: inherit;
   overflow: hidden;
   display: none;
   flex-direction: column;
@@ -1020,11 +1051,38 @@ html[data-theme="fortnite"] {
   }
 }
 
+.term-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 2ch;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.term-bar strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .term-out {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem 1.25rem 0.25rem;
-  min-height: 8rem;
+  padding: 1rem 1.25rem 0.5rem;
+  /* older lines fade under the title bar instead of being sliced */
+  mask-image: linear-gradient(transparent, #000 1.25rem);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.term-out > div + div {
+  margin-top: 0.7rem;
+}
+
+.term-out p {
+  line-height: 1.55;
 }
 
 .term-out p {
@@ -1043,7 +1101,8 @@ html[data-theme="fortnite"] {
 .term-in {
   display: flex;
   gap: 1ch;
-  padding: 0.25rem 1.25rem 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-top: 1px solid var(--line);
 }
 
 .term-in input {
@@ -1058,9 +1117,8 @@ html[data-theme="fortnite"] {
 }
 
 .term-hint {
-  padding: 0.5rem 1.25rem 0.75rem;
-  border-top: 1px solid var(--line);
-  font-size: 0.85rem;
+  padding: 0 1.25rem 0.65rem;
+  font-size: 0.78rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1076,7 +1134,7 @@ html[data-theme="fortnite"] {
   }
 }
 
-/* ---------- right rail (SideRail): contents + homelab, mirrors the clocks ---------- */
+/* ---------- right rail (SideRail): homelab, mirrors the clocks ---------- */
 
 .rail {
   display: none;
@@ -1104,35 +1162,6 @@ html[data-theme="fortnite"] {
   font-size: 0.85rem;
   letter-spacing: 0.04em;
   margin-bottom: 0.5rem;
-}
-
-.rail-index ol {
-  list-style: none;
-  display: grid;
-  gap: 0.2rem;
-}
-
-.rail-index a {
-  display: block;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color var(--duration-quick) var(--ease-out), translate var(--duration-fast) var(--ease-smooth-out);
-}
-
-.rail-index a:hover,
-.rail-index a[aria-current] {
-  color: var(--text);
-}
-
-.rail-index a[aria-current] {
-  translate: 1ch 0;
-}
-
-.rail-index a[aria-current]::before {
-  content: ">";
-  color: var(--amber);
-  margin-left: -1.5ch;
-  margin-right: 0.5ch;
 }
 
 .rail-dev + .rail-dev {
@@ -1271,6 +1300,511 @@ html[data-theme="fortnite"] {
   color: var(--muted);
 }
 
+/* ---------- game themes: intros (GameIntro + Boot markup) ---------- */
+
+.gi-scene,
+.gi {
+  display: none;
+}
+
+html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) :is(.boot-log, .boot-globe, .boot .crt) {
+  display: none;
+}
+
+html[data-boot]:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot {
+  padding: 0;
+}
+
+html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .gi-scene {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  animation: gi-in 900ms var(--ease-smooth-out) both;
+}
+
+html[data-theme="gtav"] .gi-gtav,
+html[data-theme="gtavi"] .gi-gtavi,
+html[data-theme="fortnite"] .gi-fortnite {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+html:is([data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot .skip-hint {
+  position: absolute;
+  left: 2rem;
+  bottom: 1.25rem;
+  margin: 0;
+  color: #fff;
+  opacity: 0.7;
+  z-index: 1;
+}
+
+@keyframes gi-in {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+/* shared: GTA-style loading spinner, bottom right */
+.gi-load {
+  position: absolute;
+  right: 2rem;
+  bottom: 3.5rem; /* clears the dock */
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+.gi-spin {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgb(255 255 255 / 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: gi-spin 900ms linear infinite;
+}
+
+@keyframes gi-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* los santos: loading-screen title bottom left, rotating tips */
+.gi-gtav .gi-title {
+  position: absolute;
+  left: 2rem;
+  bottom: 4.5rem;
+  font-family: var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 11vw, 9rem);
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: #fff;
+  transform: skewX(-6deg);
+  text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+  animation: gi-title 900ms var(--ease-smooth-out) 250ms both;
+}
+
+.gi-tips {
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  translate: -50% 0;
+  width: min(60ch, 60vw);
+  height: 1.5em;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+.gi-tips span {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: gi-tip 1.8s ease both;
+}
+
+.gi-tips span:nth-child(2) {
+  animation-delay: 1.8s;
+}
+
+.gi-tips span:nth-child(3) {
+  animation-delay: 3.6s;
+  animation-fill-mode: backwards;
+  animation-name: gi-tip-last;
+}
+
+@keyframes gi-tip {
+  0%, 100% { opacity: 0; }
+  15%, 85% { opacity: 1; }
+}
+
+@keyframes gi-tip-last {
+  0% { opacity: 0; }
+  15%, 100% { opacity: 1; }
+}
+
+@keyframes gi-title {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+
+/* vice city: neon script over the sunset */
+.gi-gtavi {
+  text-align: center;
+}
+
+.gi-script {
+  margin-top: 12vh;
+  font-family: var(--font-vice), cursive;
+  font-size: clamp(3.5rem, 12vw, 9.5rem);
+  line-height: 1.1;
+  padding-bottom: 0.1em;
+  color: #fff0fa;
+  text-shadow: 0 0 6px #ff4f9a, 0 0 22px #ff4f9a, 0 0 48px #ff8a5c;
+  transform: rotate(-6deg);
+  animation: gi-neon 2.4s steps(1) both;
+}
+
+.gi-gtavi .gi-sub {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.9rem 0.2rem 1.5rem;
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgb(18 9 28 / 0.7);
+  animation: gi-title 900ms var(--ease-smooth-out) 600ms both;
+}
+
+/* neon tube flickering on */
+@keyframes gi-neon {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  10% { opacity: 0.2; }
+  14% { opacity: 1; }
+  17% { opacity: 0.4; }
+  20%, 100% { opacity: 1; }
+}
+
+/* battle bus: countdown banner, chunky title */
+.gi-fortnite {
+  text-align: center;
+}
+
+.gi-bus {
+  display: inline-block;
+  margin-top: 2rem;
+  padding: 0.5rem 1.2rem;
+  color: #fff;
+  background: rgb(10 20 64 / 0.75);
+  border: 2px solid #ffe03a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transform: skewX(-8deg);
+}
+
+.gi-count::after {
+  content: "5";
+  color: #ffe03a;
+  animation: gi-count 5s steps(1, end) forwards;
+}
+
+@keyframes gi-count {
+  0% { content: "5"; }
+  20% { content: "4"; }
+  40% { content: "3"; }
+  60% { content: "2"; }
+  80% { content: "1"; }
+  100% { content: "go"; }
+}
+
+.gi-fortnite .gi-title {
+  margin-top: 30vh;
+  font-family: var(--font-bus), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  text-transform: uppercase;
+  color: #ffe03a;
+  transform: skewX(-8deg) rotate(-3deg);
+  text-shadow: 0 6px 0 #16307e, 4px 4px 0 #0a1440, -3px -3px 0 #0a1440, 3px -3px 0 #0a1440, -3px 3px 0 #0a1440;
+  animation: gi-pop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 300ms both;
+}
+
+.gi-fortnite .gi-sub {
+  margin-top: 1rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: 0 2px 0 #0a1440;
+}
+
+@keyframes gi-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+/* exits: GTA cuts to black; the bus drops you in through a closing storm eye */
+html[data-boot="out"]:is([data-theme="gtav"], [data-theme="gtavi"]) .boot {
+  animation: gi-fade 450ms ease forwards;
+}
+
+html[data-boot="out"][data-theme="fortnite"] .boot {
+  animation: gi-eye 450ms cubic-bezier(0.55, 0, 0.3, 1) forwards;
+}
+
+@keyframes gi-fade {
+  50% {
+    filter: brightness(0);
+  }
+  to {
+    opacity: 0;
+    filter: brightness(0);
+  }
+}
+
+@keyframes gi-eye {
+  from {
+    clip-path: circle(75% at 50% 50%);
+  }
+  to {
+    clip-path: circle(0% at 50% 50%);
+  }
+}
+
+@media (max-width: 640px) {
+  .gi-tips {
+    display: none;
+  }
+  .gi-gtav .gi-title {
+    left: 1rem;
+  }
+}
+
+/* ---------- game themes: page accents (ThemeAccents) ---------- */
+
+.acc {
+  display: none;
+}
+
+/* los santos: mission-title section labels, wanted stars that fill as you scroll */
+html[data-theme="gtav"] .man-label {
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.03em;
+  text-shadow: 2px 2px 0 #000;
+}
+
+html[data-theme="gtav"] .acc-wanted {
+  display: flex;
+  gap: 4px;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+}
+
+.acc-wanted i {
+  width: 18px;
+  height: 18px;
+  background: var(--line);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+@supports (animation-timeline: scroll()) {
+  .acc-wanted i {
+    animation: star linear both;
+    animation-timeline: scroll(root);
+  }
+  .acc-wanted i:nth-child(1) { animation-range: 0% 20%; }
+  .acc-wanted i:nth-child(2) { animation-range: 20% 40%; }
+  .acc-wanted i:nth-child(3) { animation-range: 40% 60%; }
+  .acc-wanted i:nth-child(4) { animation-range: 60% 80%; }
+  .acc-wanted i:nth-child(5) { animation-range: 80% 99%; }
+}
+
+@keyframes star {
+  0%, 99% { background: var(--line); }
+  100% { background: var(--ok); }
+}
+
+/* vice city: script labels in neon, a sunset glow along the bottom edge */
+html[data-theme="gtavi"] .man-label {
+  font-family: var(--font-vice), cursive;
+  font-weight: 400;
+  font-size: 1.35rem;
+  text-transform: lowercase;
+  color: var(--amber);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--amber) 70%, transparent);
+  padding-bottom: 0.1em;
+}
+
+html[data-theme="gtavi"] .man-label::first-letter {
+  text-transform: uppercase;
+}
+
+html[data-theme="gtavi"] .acc-horizon {
+  display: block;
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 28vh;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to top, transparent 0 7px, var(--ink) 7px 9px),
+    linear-gradient(to top, color-mix(in srgb, #ff5fae 22%, transparent), color-mix(in srgb, #ff8a5c 8%, transparent) 60%, transparent);
+  mask: linear-gradient(to top, #000 30%, transparent);
+}
+
+/* battle bus: labels as tilted banners, rarity on project rows, health and shield bars */
+html[data-theme="fortnite"] .man-label {
+  display: inline-block;
+  font-family: var(--font-bus), sans-serif;
+  font-weight: 400;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--amber);
+  padding: 0.15rem 0.7rem 0;
+  transform: skewX(-8deg);
+}
+
+html[data-theme="fortnite"] .rows li:nth-child(1) .row {
+  box-shadow: inset 3px 0 0 #f7a93b; /* legendary */
+  background: linear-gradient(90deg, color-mix(in srgb, #f7a93b 14%, transparent), transparent 60%);
+}
+
+html[data-theme="fortnite"] .rows li:nth-child(2) .row {
+  box-shadow: inset 3px 0 0 #b65cf5; /* epic */
+  background: linear-gradient(90deg, color-mix(in srgb, #b65cf5 14%, transparent), transparent 60%);
+}
+
+html[data-theme="fortnite"] .acc-hud {
+  display: grid;
+  gap: 4px;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+  width: 150px;
+}
+
+.acc-hud i {
+  display: block;
+  height: 8px;
+  transform: skewX(-12deg);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.acc-hud i::before {
+  content: "";
+  display: block;
+  height: 100%;
+  background: #5fe36b;
+}
+
+.acc-hud i:first-child::before {
+  background: #3d9bff;
+  transform-origin: left;
+}
+
+@supports (animation-timeline: scroll()) {
+  .acc-hud i:first-child::before {
+    animation: shield linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+@keyframes shield {
+  from {
+    transform: scaleX(0.08);
+  }
+}
+
+/* ---------- theme radio (RadioPlayer) ---------- */
+
+.radio {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1ch;
+  align-items: center;
+  width: 17rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  animation: rise var(--duration-slow) var(--ease-smooth-out) both;
+}
+
+html[data-boot] .radio {
+  display: none; /* the intro owns the screen */
+}
+
+.radio[data-playing] {
+  border-color: color-mix(in srgb, var(--amber) 50%, var(--line));
+}
+
+.radio-viz {
+  grid-row: span 2;
+  image-rendering: pixelated;
+}
+
+.radio-station {
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.04em;
+}
+
+.radio-title {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radio-ctl {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.radio-ctl button {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0.1rem 0.8ch;
+  cursor: pointer;
+  transition: color var(--duration-quick) var(--ease-out), border-color var(--duration-quick) var(--ease-out);
+}
+
+.radio-ctl button:hover,
+.radio-ctl button[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.radio-ctl button:active {
+  translate: 0 1px;
+}
+
+.radio-note {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+}
+
+@media (max-width: 640px) {
+  .radio {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 3.2rem;
+    width: auto;
+  }
+  .radio-note {
+    display: none;
+  }
+}
+
 /* ---------- print: a clean black-on-white page (doubles as a one-page resume) ---------- */
 
 @media print {
@@ -1294,6 +1828,8 @@ html[data-theme="fortnite"] {
   .dock,
   .clocks,
   .rail,
+  .radio,
+  .acc,
   .skip,
   .signal,
   .dot-name canvas,

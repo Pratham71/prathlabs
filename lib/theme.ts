@@ -45,3 +45,7 @@ export function onThemeChange(cb: () => void) {
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   return () => mo.disconnect();
 }
+
+// Themes with their own intro, radio station and page accents.
+export const GAME_THEMES: readonly Theme[] = ["gtav", "gtavi", "fortnite"];
+export const isGame = (t: string | undefined): t is Theme => !!t && GAME_THEMES.includes(t as Theme);

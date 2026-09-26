@@ -1,0 +1,381 @@
+// Theme radio: original loops in the spirit of each game's music, synthesized live (no files, no samples).
+// A 16th-note step sequencer with a lookahead scheduler; drums, bass, chords and a lead, all Web Audio.
+// Browser only. Plays through lib/audio's master, so the dock's sound toggle still silences it.
+import { bedOn, graph } from "@/lib/audio";
+import type { Theme } from "@/lib/theme";
+
+type Drum = "kick" | "snare" | "clap" | "hat";
+type Voice = "keys" | "saw" | "bell" | "pluck" | "brass" | "square";
+
+export type Track = {
+  title: string;
+  bpm: number;
+  swing?: number; // 0..0.3 of a 16th, delays the off-beats
+  drums: Partial<Record<Drum, string>>; // 16 chars per bar, "x" hit, "o" soft; repeats
+  chords: string[]; // one chord per bar, e.g. "D3 F3 A3 C4"; loop length = chords.length bars
+  chord: Voice;
+  bass: string; // steps: note, "." rest, "r" = chord root an octave down, "R" = chord root
+  lead?: string; // same notation as bass (space separated), any length that divides the loop
+  leadVoice?: Voice;
+};
+
+export type Station = { name: string; tracks: Track[] };
+
+const bar = (s: string) => s.replace(/\s+/g, "");
+
+// ---- the music (original compositions) ----
+export const STATIONS: Partial<Record<Theme, Station>> = {
+  gtav: {
+    name: "vinewood fm",
+    tracks: [
+      {
+        title: "grove street, 2am",
+        bpm: 92,
+        swing: 0.22,
+        drums: { kick: "x.....x...x.....", snare: "....x.......x...", hat: "x.x.x.xox.x.x.xo" },
+        chords: ["D3 F3 A3 C4 E4", "G2 F3 B3 E4", "C3 E3 G3 B3 D4", "A2 G3 C#4 E4"],
+        chord: "keys",
+        bass: bar("r... ..r. r... .... r... ..r. r.r. .... r... ..r. r... .... r... ..r. r... r..."),
+        lead: ". . . . A4 . C5 . . . . . G4 . . . . . . . E4 . D4 . . . . . . . . . . . . . G4 . A4 . . . E4 . . . . . . . . . . . . . . C#5 . . . . . . .",
+        leadVoice: "bell",
+      },
+      {
+        title: "freeway lights",
+        bpm: 106,
+        drums: { kick: "x...x...x...x...", snare: "....x.......x...", hat: "..x...x...x...x.", clap: "....x.......x..." },
+        chords: ["E3 G3 B3 D4", "C3 E3 G3 B3", "G3 B3 D4 F#4", "D3 F#3 A3 C#4"],
+        chord: "saw",
+        bass: bar("r.r.r.r.r.r.r.r. r.r.r.r.r.r.r.r. r.r.r.r.r.r.r.r. r.r.r.r.r.r.r.r."),
+        lead: "B4 . E5 . G5 . E5 . B4 . E5 . G5 . A5 . G5 . E5 . C5 . E5 . G5 . E5 . C5 . B5 . A5 . G5 . D5 . G5 . B4 . D5 . F#5 . A5 . F#5 . D5 . A4 . D5 . F#5 . C#5 .",
+        leadVoice: "saw",
+      },
+    ],
+  },
+  gtavi: {
+    name: "ocean drive fm",
+    tracks: [
+      {
+        title: "neon causeway",
+        bpm: 116,
+        drums: { kick: "x.......x.......", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x." },
+        chords: ["F3 A3 C4 E4", "E3 G3 B3 D4", "D3 F3 A3 C4", "C3 E3 G3 B3"],
+        chord: "saw",
+        bass: "rRrRrRrRrRrRrRrR", // octave bounce on the root
+        lead: "C5 . A4 . F4 . A4 . C5 . E5 . . . B4 . G4 . E4 . G4 . B4 . D5 . . . A4 . F4 . D4 . F4 . A4 . C5 . . . G4 . E4 . C4 . E4 . G4 . B4 . C5 .",
+        leadVoice: "bell",
+      },
+      {
+        title: "leonida after dark",
+        bpm: 84,
+        swing: 0.12,
+        drums: { kick: "x.........x.....", snare: "....x.......x...", hat: "x...x...x...x.o." },
+        chords: ["A2 E3 G3 C4 E4", "F2 C3 E3 A3", "D3 F3 A3 C4", "E2 D3 G#3 B3"],
+        chord: "keys",
+        bass: bar("r.......r...r... r.......r....... r.......r...r... r.......r...r.r."),
+        lead: ". . E5 . D5 . C5 . . . A4 . . . . . . . C5 . D5 . E5 . . . G5 . E5 . . . . . F5 . E5 . D5 . . . C5 . . . . . B4 . . . . . . . . . . . . . . .",
+        leadVoice: "bell",
+      },
+    ],
+  },
+  fortnite: {
+    name: "lobby radio",
+    tracks: [
+      {
+        title: "ready up",
+        bpm: 124,
+        drums: { kick: "x.......x.x.....", snare: "....x.......x.x.", hat: "x.xxx.xxx.xxx.xx" },
+        chords: ["C3 E3 G3 C4", "F3 A3 C4 F4", "G3 B3 D4 G4", "C3 E3 G3 C4", "A2 C3 E3 A3", "F3 A3 C4 F4", "D3 F#3 A3 D4", "G3 B3 D4 F4"],
+        chord: "brass",
+        bass: bar(
+          "r...G2..r...G2.. r...C3..r...C3.. r...D3..r...D3.. r...G2..r...G2.. r...E2..r...E2.. r...C3..r...C3.. r...A2..r...A2.. r...D3..r...B2..",
+        ),
+        lead: "E5 . G5 . C6 . . . G5 . E5 . . . F5 . A5 . C6 . . . A5 . F5 . . . G5 . B5 . D6 . . . B5 . G5 . . . E5 . D5 . C5 . . . . . . . . . . E5 . A5 . C6 . . . A5 . E5 . . . F5 . A5 . C6 . . . A5 . F5 . . . F#5 . A5 . D6 . . . A5 . F#5 . . . G5 . . . F5 . . . D5 . . . B4 . . .",
+        leadVoice: "pluck",
+      },
+      {
+        title: "the storm is shrinking",
+        bpm: 138,
+        drums: { kick: "x..x..x...x..x..", snare: "....x.......x...", hat: "xxxxxxxxxxxxxxxx" },
+        chords: ["D3 F3 A3", "D3 F3 A#3", "C3 E3 G3", "A2 C#3 E3 A3"],
+        chord: "square",
+        bass: bar("rrrrrrrrrrrrrrrr rrrrrrrrrrrrrrrr rrrrrrrrrrrrrrrr rrrrrrrrrrrrrrrr"),
+        lead: "D5 . . D5 . . F5 . . . E5 . D5 . C5 . D5 . . D5 . . A#5 . . . A5 . G5 . F5 . E5 . . E5 . . G5 . . . F5 . E5 . D5 . C#5 . . . E5 . . . A5 . . . . . . .",
+        leadVoice: "square",
+      },
+    ],
+  },
+};
+
+// ---- notation ----
+const NOTE: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+export function midi(n: string): number | null {
+  const m = /^([A-G])(#|b)?(-?\d)$/.exec(n);
+  if (!m) return null;
+  return 12 * (Number(m[3]) + 1) + NOTE[m[1]] + (m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0);
+}
+const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
+
+// "r... D3.." -> per-step tokens; single-char tokens for r/./x, note names kept whole
+export function steps(s: string): string[] {
+  if (s.includes(" ")) return s.trim().split(/\s+/);
+  return s.match(/[A-G]#?\d|./g) ?? [];
+}
+
+// ---- instruments ----
+type Out = { ac: AudioContext; bus: GainNode; noise: AudioBuffer };
+
+function env(g: GainNode, t: number, peak: number, a: number, d: number) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + a);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+}
+
+function drum(o: Out, kind: Drum, t: number, vel: number) {
+  const { ac, bus } = o;
+  const g = ac.createGain();
+  g.connect(bus);
+  if (kind === "kick") {
+    const osc = ac.createOscillator();
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+    env(g, t, 0.9 * vel, 0.003, 0.32);
+    osc.connect(g);
+    osc.start(t);
+    osc.stop(t + 0.4);
+    return;
+  }
+  const src = ac.createBufferSource();
+  src.buffer = o.noise;
+  const f = ac.createBiquadFilter();
+  src.connect(f).connect(g);
+  if (kind === "hat") {
+    f.type = "highpass";
+    f.frequency.value = 7500;
+    env(g, t, 0.18 * vel, 0.001, 0.045);
+  } else {
+    f.type = "bandpass";
+    f.frequency.value = kind === "clap" ? 1300 : 1900;
+    f.Q.value = kind === "clap" ? 1.2 : 0.7;
+    env(g, t, (kind === "clap" ? 0.35 : 0.45) * vel, 0.002, kind === "clap" ? 0.12 : 0.17);
+    if (kind === "snare") {
+      const body = ac.createOscillator();
+      const bg = ac.createGain();
+      body.type = "triangle";
+      body.frequency.value = 190;
+      env(bg, t, 0.25 * vel, 0.002, 0.08);
+      body.connect(bg).connect(bus);
+      body.start(t);
+      body.stop(t + 0.12);
+    }
+  }
+  src.start(t);
+  src.stop(t + 0.3);
+}
+
+function tone(o: Out, voice: Voice, m: number, t: number, dur: number, peak: number) {
+  const { ac, bus } = o;
+  const g = ac.createGain();
+  const f = ac.createBiquadFilter();
+  f.type = "lowpass";
+  f.connect(g).connect(bus);
+  const f0 = hz(m);
+  const osc = (type: OscillatorType, freq: number, detune = 0) => {
+    const x = ac.createOscillator();
+    x.type = type;
+    x.frequency.value = freq;
+    x.detune.value = detune;
+    x.connect(f);
+    x.start(t);
+    x.stop(t + dur + 0.6);
+    return x;
+  };
+  switch (voice) {
+    case "keys": // electric-piano-ish: sine + soft triangle, bell-like decay
+      f.frequency.value = 2400;
+      osc("sine", f0);
+      osc("triangle", f0 * 2, 4);
+      env(g, t, peak, 0.005, dur * 1.6);
+      break;
+    case "saw": // detuned supersaw pad/lead
+      f.frequency.setValueAtTime(900, t);
+      f.frequency.linearRampToValueAtTime(2600, t + 0.08);
+      osc("sawtooth", f0, -9);
+      osc("sawtooth", f0, 9);
+      env(g, t, peak * 0.6, 0.02, dur);
+      break;
+    case "bell": { // two-operator FM bell (80s keyboard flavour)
+      f.frequency.value = 6000;
+      const car = osc("sine", f0);
+      const mod = ac.createOscillator();
+      const mg = ac.createGain();
+      mod.frequency.value = f0 * 3.5;
+      mg.gain.setValueAtTime(f0 * 2.2, t);
+      mg.gain.exponentialRampToValueAtTime(1, t + dur * 1.5);
+      mod.connect(mg).connect(car.frequency);
+      mod.start(t);
+      mod.stop(t + dur + 0.6);
+      env(g, t, peak, 0.003, dur * 1.8);
+      break;
+    }
+    case "pluck":
+      f.frequency.setValueAtTime(4000, t);
+      f.frequency.exponentialRampToValueAtTime(500, t + 0.25);
+      osc("triangle", f0);
+      osc("square", f0, 3);
+      env(g, t, peak * 0.7, 0.002, 0.28);
+      break;
+    case "brass": // synth brass: filter swells open
+      f.frequency.setValueAtTime(400, t);
+      f.frequency.linearRampToValueAtTime(2200, t + 0.12);
+      osc("sawtooth", f0, -5);
+      osc("sawtooth", f0, 5);
+      env(g, t, peak * 0.55, 0.05, dur);
+      break;
+    case "square":
+      f.frequency.value = 1800;
+      osc("square", f0);
+      env(g, t, peak * 0.4, 0.004, dur);
+      break;
+  }
+}
+
+function bassNote(o: Out, m: number, t: number, dur: number, sub: boolean) {
+  const { ac, bus } = o;
+  const g = ac.createGain();
+  const f = ac.createBiquadFilter();
+  const x = ac.createOscillator();
+  x.type = sub ? "sine" : "sawtooth";
+  x.frequency.value = hz(m);
+  f.type = "lowpass";
+  f.frequency.setValueAtTime(sub ? 400 : 1100, t);
+  f.frequency.exponentialRampToValueAtTime(220, t + dur);
+  x.connect(f).connect(g).connect(bus);
+  env(g, t, sub ? 0.5 : 0.32, 0.005, dur);
+  x.start(t);
+  x.stop(t + dur + 0.1);
+}
+
+// ---- transport ----
+type State = { theme: Theme | null; index: number; playing: boolean };
+let state: State = { theme: null, index: 0, playing: false };
+const listeners = new Set<() => void>();
+const emit = () => listeners.forEach((l) => l());
+export const subscribe = (l: () => void) => (listeners.add(l), () => void listeners.delete(l));
+export const snapshot = () => state;
+
+let out: Out | null = null;
+let analyser: AnalyserNode | null = null;
+let timer = 0;
+let step = 0;
+let nextAt = 0;
+
+export const getAnalyser = () => analyser;
+
+function setup(): Out {
+  if (out) return out;
+  const { ac, master } = graph();
+  const bus = ac.createGain();
+  bus.gain.value = 0;
+  const comp = ac.createDynamicsCompressor();
+  comp.threshold.value = -18;
+  comp.ratio.value = 4;
+  analyser = ac.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.75;
+  const level = ac.createGain();
+  level.gain.value = 0.16; // under the page, not over it
+  bus.connect(comp).connect(analyser).connect(level).connect(master);
+  const noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+  const d = noise.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return (out = { ac, bus, noise });
+}
+
+function schedule(o: Out, tr: Track, s: number, t: number) {
+  const beat = 60 / tr.bpm;
+  const sixteenth = beat / 4;
+  const inBar = s % 16;
+  const barN = Math.floor(s / 16) % tr.chords.length;
+  for (const [k, pat] of Object.entries(tr.drums) as [Drum, string][]) {
+    const c = pat[inBar % pat.length];
+    if (c === "x" || c === "o") drum(o, k, t, c === "x" ? 1 : 0.5);
+  }
+  const chord = tr.chords[barN].split(" ").map(midi).filter((m): m is number => m !== null);
+  if (inBar === 0) chord.forEach((m) => tone(o, tr.chord, m, t, beat * (tr.chord === "keys" || tr.chord === "saw" ? 3.6 : 1.8), 0.11));
+  if (tr.chord === "brass" && inBar === 8) chord.forEach((m) => tone(o, "brass", m, t, beat * 1.5, 0.09));
+  if (tr.chord === "square" && inBar % 4 === 2) chord.forEach((m) => tone(o, "square", m + 12, t, sixteenth * 1.5, 0.07));
+  const bs = steps(tr.bass);
+  const b = bs[s % bs.length];
+  if (b && b !== ".") {
+    const m = b === "r" ? chord[0] - 12 : b === "R" ? chord[0] : midi(b);
+    if (m !== null) bassNote(o, m, t, sixteenth * 1.8, tr.bpm < 100);
+  }
+  if (tr.lead) {
+    const ls = steps(tr.lead);
+    const n = ls[s % ls.length];
+    const m = n && n !== "." ? midi(n) : null;
+    if (m !== null) tone(o, tr.leadVoice ?? "bell", m, t, sixteenth * 2.5, 0.12);
+  }
+}
+
+function run() {
+  const o = setup();
+  const tr = state.theme && STATIONS[state.theme]?.tracks[state.index];
+  if (!tr) return;
+  const sixteenth = 60 / tr.bpm / 4;
+  while (nextAt < o.ac.currentTime + 0.12) {
+    const swing = step % 2 ? (tr.swing ?? 0) * sixteenth : 0;
+    schedule(o, tr, step, nextAt + swing);
+    step++;
+    nextAt += sixteenth;
+  }
+}
+
+function startClock() {
+  const o = setup();
+  clearInterval(timer);
+  step = 0;
+  nextAt = o.ac.currentTime + 0.08;
+  timer = window.setInterval(run, 25);
+  run();
+}
+
+// Must follow a user gesture the first time (audio.start() resumes the context).
+export async function play(theme: Theme, index = state.index) {
+  const station = STATIONS[theme];
+  if (!station) return;
+  const audio = await import("@/lib/audio");
+  if (!(await audio.start())) return;
+  const o = setup();
+  const same = state.playing && state.theme === theme && state.index === index;
+  state = { theme, index: (index + station.tracks.length) % station.tracks.length, playing: true };
+  emit();
+  bedOn(false);
+  o.bus.gain.setTargetAtTime(1, o.ac.currentTime, 0.05);
+  if (!same) startClock();
+}
+
+export function pause() {
+  if (out) out.bus.gain.setTargetAtTime(0, out.ac.currentTime, 0.08);
+  clearInterval(timer);
+  state = { ...state, playing: false };
+  emit();
+}
+
+// Leaving the game themes: stop the station and let the ambient bed back in.
+export function off() {
+  pause();
+  state = { ...state, theme: null, index: 0 };
+  emit();
+  bedOn(true);
+}
+
+export function skip(theme: Theme, dir: 1 | -1) {
+  const n = STATIONS[theme]?.tracks.length ?? 1;
+  const index = (state.index + dir + n) % n;
+  if (state.playing) void play(theme, index);
+  else {
+    state = { ...state, theme, index };
+    emit();
+  }
+}

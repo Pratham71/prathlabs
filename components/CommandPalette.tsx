@@ -95,6 +95,11 @@ export function CommandPalette() {
   const act = (a?: Action) => {
     if (!a) return;
     if (a.type === "clear") setLog([]);
+    if (a.type === "reboot") {
+      // the inline boot script plays the intro again once this session hasn't "seen" it
+      sessionStorage.removeItem("boot-seen");
+      setTimeout(() => location.reload(), 400);
+    }
     if (a.type === "close") dialog.current?.close();
     if (a.type === "nav") {
       dialog.current?.close();
@@ -180,6 +185,12 @@ export function CommandPalette() {
         aria-label="Command prompt"
         onClick={(e) => e.target === dialog.current && dialog.current?.close()}
       >
+        <header className="term-bar">
+          <span>
+            <strong>visitor@prathlab</strong>: ~
+          </span>
+          <span>esc to close</span>
+        </header>
         <div className="term-out" role="log" aria-live="polite">
           {log.map((e, i) => (
             <div key={i}>
