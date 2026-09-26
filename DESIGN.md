@@ -113,6 +113,12 @@ An ssh login plays over a rotating dithered globe (3px ordered dither, 30deg gra
 ### Dot-field name (hero)
 The NAME h1 is redrawn as a halftone dot relief (after benday, MIT): the text is rasterized, distance-transformed and sampled into a dot grid. The dots assemble from a scatter once per load, and a contour wave runs from outline to core. The relief tilts in 3D toward the pointer, and dots near the cursor lift away and turn amber. The real text stays in the DOM.
 
+### Terminal cursor
+Fine pointers only. At rest it is an amber block that blinks when idle. Over copy it narrows to a text-height caret. Over links and buttons it becomes a bracket frame snapped to the target. Project rows carry a dithered cover screenshot beside it.
+
+### Figures
+Project screenshots are shown as ordered dither in `--text` on ink. The black point sits at the image median, so backgrounds drop out. Hover or focus reveals the real image.
+
 ### Scramble refs
 Project refs decode left to right on hover or focus (after amicro ScrambleHover, MIT).
 

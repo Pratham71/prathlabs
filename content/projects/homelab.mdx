@@ -1,12 +1,6 @@
-A multi-node self-hosted stack running on my own hardware: a Raspberry Pi and a home server.
-Services run in Docker, deployed through Coolify, with Grafana and Prometheus for monitoring
-and remote access over Tailscale.
+Two machines at home, a Raspberry Pi and a 16-core home server, running my own services in Docker.
+It is being rebuilt from scratch, so it is mostly off; when a machine is up it shows under DEVICES.
 
-The lab is being rebuilt from scratch, so most of it is powered off right now. When a machine
-is up it reports in, and it shows under DEVICES on the home page.
-
-## NOTES
-
-- Everything runs on Debian with Docker; no managed cloud services.
-- Remote access goes through Tailscale, so nothing is exposed to the public internet.
-- n8n handles the automation glue between services.
+- One dashboard, live logs and uptime checks across both hosts.
+- Local AI through Open WebUI on Ollama; automation in n8n.
+- Remote access over Tailscale, nothing exposed publicly.

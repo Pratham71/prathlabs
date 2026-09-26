@@ -2,7 +2,7 @@ import { BOOT_T, NODES, bootLines } from "@/lib/boot-lines";
 import { BootGlobe } from "@/components/BootGlobe";
 
 const KEY = "boot-seen";
-const PLAY_MS = BOOT_T.last + 800;
+const PLAY_MS = BOOT_T.man + 950;
 const FADE_MS = 150;
 const INTRO_MS = 1400; // page sections' staggered rise (globals.css), then client navs stop replaying it
 
@@ -25,7 +25,7 @@ export function Boot() {
       <div className="boot-log">
         {lines.map((l, i) => (
           // suppressHydrationWarning: the inline fill script rewrote this text for the visitor; keep it.
-          <p key={i} suppressHydrationWarning className={l.ok ? "ok-line" : undefined} style={{ "--t": `${l.t}ms` } as React.CSSProperties}>
+          <p key={i} suppressHydrationWarning className={l.ok ? "ok-line" : l.prompt ? "prompt" : undefined} style={{ "--t": `${l.t}ms` } as React.CSSProperties}>
             {l.text}
           </p>
         ))}

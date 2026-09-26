@@ -4,6 +4,7 @@ import { ViewTransition } from "react";
 import { notFound } from "next/navigation";
 import { ManPage, Section } from "@/components/Man";
 import { StatusMark } from "@/components/StatusMark";
+import { DitherImage } from "@/components/DitherImage";
 import { getProject, projects } from "@/content/projects";
 import { site } from "@/content/site";
 
@@ -42,6 +43,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
       <Section name="DESCRIPTION">
         <div className="man-body">
           <Body />
+        </div>
+      </Section>
+      <Section name="FIGURES">
+        <div className="figures">
+          {p.images.map((im, i) => (
+            <figure key={im.src}>
+              <DitherImage src={im.src} alt={im.alt} width={im.width} height={im.height} />
+              <figcaption>
+                <span className="muted">fig.{i + 1}</span> {im.caption}
+              </figcaption>
+            </figure>
+          ))}
         </div>
       </Section>
       <Section name="STACK">

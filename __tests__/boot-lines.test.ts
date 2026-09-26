@@ -6,7 +6,7 @@ test("routes to the region nearest the visitor's timezone at ~2ms", () => {
   const { home, lines } = bootLines(NODES, "Asia/Dubai", now, BOOT_T);
   expect(home).toBe("dxb1");
   expect(lines.find((l) => l.text.startsWith("route"))?.text).toBe("route  dxb1 (dubai), 2 ms");
-  expect(lines.at(-1)?.text).toBe("Last login: Sat Sep 26 2026 09:05 from Asia/Dubai");
+  expect(lines.find((l) => l.text.startsWith("Last login"))?.text).toBe("Last login: Sat Sep 26 2026 09:05 from Asia/Dubai");
 });
 
 test("far regions report more latency than near ones; unknown timezones fall back to fra1", () => {

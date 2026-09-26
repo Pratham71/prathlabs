@@ -47,7 +47,7 @@ export default async function Home() {
         <ul className="rows">
           {projects.map((p) => (
             <li key={p.slug}>
-              <Link className="row" href={`/projects/${p.slug}`} transitionTypes={["nav-forward"]}>
+              <Link className="row" href={`/projects/${p.slug}`} transitionTypes={["nav-forward"]} data-cursor-image={p.images[0]?.src}>
                 <ViewTransition name={`project-${p.slug}`} share="morph">
                   <span className="ref">
                     <Scramble text={`${p.slug}(${p.section})`} />

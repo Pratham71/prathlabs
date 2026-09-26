@@ -360,7 +360,7 @@ html[data-boot] .boot {
   cursor: default;
   overflow: hidden;
   transition: opacity var(--duration-quick) var(--ease-out);
-  animation: boot-failsafe 1ms 4.5s forwards;
+  animation: boot-failsafe 1ms 7s forwards;
 }
 
 @keyframes boot-failsafe {
@@ -405,8 +405,12 @@ html[data-boot="out"] .boot {
   animation-delay: var(--t);
 }
 
-.boot-log p:first-child {
+.boot-log .prompt {
   color: var(--amber);
+}
+
+.boot-log .prompt:not(:first-child) {
+  margin-top: 0.6rem;
 }
 
 .boot-log .ok-line::before {
@@ -640,5 +644,142 @@ main > .man-section:nth-child(n + 7) { --i: 7; }
   ::view-transition-image-pair(*) {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
+  }
+}
+
+/* ---------- terminal cursor (Cursor) ---------- */
+
+html[data-cursor],
+html[data-cursor] * {
+  cursor: none !important;
+}
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--amber);
+  mix-blend-mode: difference;
+  transition: opacity var(--duration-quick) var(--ease-out), background-color var(--duration-quick) var(--ease-out);
+}
+
+.cursor[data-on] {
+  opacity: 1;
+}
+
+.cursor[data-mode="block"][data-idle="true"] {
+  animation: cursor-blink 1.06s steps(1) infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.cursor[data-mode="caret"] {
+  background: var(--text);
+}
+
+/* frame: brackets at two corners instead of a filled block */
+.cursor[data-mode="frame"] {
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  mix-blend-mode: normal;
+}
+
+.cursor-tl,
+.cursor-br {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+  transition: opacity var(--duration-quick) var(--ease-out);
+}
+
+.cursor-tl {
+  top: 0;
+  left: 0;
+  border-top: 1.5px solid var(--amber);
+  border-left: 1.5px solid var(--amber);
+}
+
+.cursor-br {
+  right: 0;
+  bottom: 0;
+  border-right: 1.5px solid var(--amber);
+  border-bottom: 1.5px solid var(--amber);
+}
+
+.cursor[data-mode="frame"] .cursor-tl,
+.cursor[data-mode="frame"] .cursor-br {
+  opacity: 1;
+}
+
+.cursor-preview {
+  position: absolute;
+  left: calc(var(--mx, 0px) + 20px);
+  top: calc(var(--my, 0px) + 20px);
+  width: 280px;
+  max-width: none;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  padding: 6px;
+  animation: rise var(--duration-fast) var(--ease-smooth-out);
+}
+
+/* ---------- FIGURES (DitherImage) ---------- */
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1.5ch;
+}
+
+.figures figure:first-child {
+  grid-column: 1 / -1;
+}
+
+.figures figcaption {
+  margin-top: 0.35rem;
+}
+
+.dither {
+  position: relative;
+  display: block;
+  border: 1px solid var(--line);
+  background: var(--ink);
+}
+
+.dither img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dither canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-smooth-out);
+}
+
+.dither canvas[data-ready] {
+  opacity: 1;
+}
+
+.dither:hover canvas,
+.dither:focus-visible canvas {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .figures {
+    grid-template-columns: 1fr;
   }
 }

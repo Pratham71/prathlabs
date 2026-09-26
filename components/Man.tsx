@@ -1,4 +1,4 @@
-// Man page chrome: "NAME(1)   User Commands   NAME(1)" header and footer.
+// Man page chrome. The ref (PRATHAM(1)) shows once, top left; real man pages repeat it, this one doesn't.
 export function ManPage({
   title,
   section,
@@ -18,13 +18,11 @@ export function ManPage({
       <header className="man-edge" aria-label="Manual page header" style={{ viewTransitionName: "man-head" }}>
         <span>{ref}</span>
         <span className="mid">{section === 7 ? "Miscellaneous" : "User Commands"}</span>
-        <span className="right">{ref}</span>
       </header>
       <main id="main">{children}</main>
       <footer className="man-edge man-edge--foot">
         <span>{footLeft}</span>
         <span className="mid">{footMid}</span>
-        <span className="right">{ref}</span>
       </footer>
     </div>
   );

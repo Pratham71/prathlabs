@@ -16,9 +16,12 @@ export const NODES: BootNode[] = [
 ];
 
 // Line timings (ms from boot start). Probe rows land PROBE + row * STEP; the globe draws arcs on the same clock.
-export const BOOT_T = { resolve: 240, probeHead: 440, probe: 560, step: 100, route: 1160, tls: 1380, auth: 1600, ok: 1860, last: 2060 };
+export const BOOT_T = {
+  resolve: 450, probeHead: 800, probe: 950, step: 170, route: 1900, tls: 2200, auth: 2500, ok: 2850, last: 3100,
+  start: 3450, mount: 3750, activity: 4000, devices: 4250, man: 4600,
+};
 
-export type BootLine = { t: number; text: string; ok?: boolean };
+export type BootLine = { t: number; text: string; ok?: boolean; prompt?: boolean };
 
 // Self-contained on purpose: it is serialized into an inline script that fills in the visitor's timezone before
 // paint, so no imports, object spreads or outer references.
@@ -49,7 +52,7 @@ export function bootLines(nodes: BootNode[], tz: string, now: Date, T: typeof BO
   const probe = (n: BootNode) => n.id + String(rtt(n)).padStart(5) + " ms";
   const pad = (x: number) => String(x).padStart(2, "0");
   const lines: BootLine[] = [
-    { t: 0, text: "$ ssh pratham@prathlab.com" },
+    { t: 0, text: "$ ssh pratham@prathlab.com", prompt: true },
     { t: T.resolve, text: "resolving prathlab.com ... anycast, " + nodes.length + " edge regions" },
     { t: T.probeHead, text: "probing edges (rtt)" },
   ];
@@ -68,6 +71,11 @@ export function bootLines(nodes: BootNode[], tz: string, now: Date, T: typeof BO
       t: T.last,
       text: "Last login: " + now.toDateString() + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + " from " + tz,
     },
+    { t: T.start, text: "$ systemctl start portfolio", prompt: true },
+    { t: T.mount, text: "mounted /projects", ok: true },
+    { t: T.activity, text: "started activity.service", ok: true },
+    { t: T.devices, text: "started devices.service", ok: true },
+    { t: T.man, text: "$ man pratham", prompt: true },
   );
   return { home: home.id, lines };
 }
