@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Boot, bootScript } from "@/components/Boot";
 import { Cursor } from "@/components/Cursor";
+import { SoundToggle } from "@/components/SoundToggle";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ViewTransition update={SLIDE} default="none">
           {children}
         </ViewTransition>
+        <SoundToggle />
         <Cursor />
         <Analytics />
         <SpeedInsights />
