@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-26T00:00:00Z",
+  "title": "Design System: prathlab",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "neutral", "displayName": "Ink" },
+      "panel": { "role": "neutral", "displayName": "Panel" },
+      "line": { "role": "neutral", "displayName": "Line" },
+      "text": { "role": "neutral", "displayName": "Text" },
+      "muted": { "role": "neutral", "displayName": "Muted" },
+      "amber": { "role": "primary", "displayName": "Amber" },
+      "ok": { "role": "secondary", "displayName": "OK Green" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The NAME h1 only; wdth 112.5." },
+      "label": { "displayName": "Label", "purpose": "Section names and project titles." },
+      "body": { "displayName": "Body", "purpose": "Everything else." }
+    },
+    "motion": [
+      { "name": "duration-stagger", "value": "40ms", "purpose": "Per-item stagger." },
+      { "name": "duration-micro", "value": "80ms", "purpose": "First-paint section stagger." },
+      { "name": "duration-quick", "value": "150ms", "purpose": "Hover fades, route exit." },
+      { "name": "duration-fast", "value": "250ms", "purpose": "Tooltip travel, route enter, header crossfade." },
+      { "name": "duration-slow", "value": "400ms", "purpose": "Route slide and name morph." },
+      { "name": "duration-very-slow", "value": "500ms", "purpose": "First-paint section rise." },
+      { "name": "ease-smooth-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Position changes and reveals." }
+    ],
+    "breakpoints": [
+      { "name": "heatmap-half-year", "value": "520px" },
+      { "name": "mobile", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Project row",
+      "kind": "custom",
+      "refersTo": "project-row",
+      "description": "Whole-row link to a project page.",
+      "html": "<a class=\"row\" href=\"#\"><span class=\"ref\">vessel(1)</span><span>shipped</span><span>minimal interactive java notebook</span><span class=\"go\">-&gt;</span></a>",
+      "css": ".row{display:grid;grid-template-columns:16ch 12ch 1fr auto;gap:1.5ch;padding:.7rem .5ch;color:#e6edf3;text-decoration:none;font-family:ui-monospace,monospace;background:#0a0d10;border-block:1px solid #232b33;transition:background-color 150ms ease-out}.row:hover{background:#12171c}.row .ref{color:#ffb547}.row .go{color:#7d8a96;transition:transform 250ms cubic-bezier(.22,1,.36,1)}.row:hover .go{transform:translateX(4px);color:#ffb547}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Stack item on project pages.",
+      "html": "<span class=\"chip\">Docker</span>",
+      "css": ".chip{border:1px solid #232b33;border-radius:4px;padding:0 .75ch;color:#e6edf3;background:#0a0d10;font-family:ui-monospace,monospace}"
+    }
+  ],
+  "narrative": {
+    "northStar": "man pratham",
+    "overview": "A portfolio set as a Unix manual page: one monospace family, near-black ground, one amber accent for anything actionable or data.",
+    "keyCharacteristics": ["Man-page chrome and sections", "Single amber accent", "Dithered contribution calendar", "Boot-log intro", "Directional route transitions"],
+    "rules": [{ "name": "One Accent Rule", "body": "Amber marks links and data only; never a wash or gradient.", "section": "colors" }],
+    "dos": ["Keep pages inside ManPage/Section.", "Tag internal links with nav-forward / nav-back.", "Use the motion tokens."],
+    "donts": ["No second typeface or accent.", "No stale devices shown as online.", "No motion without a reduced-motion fallback."]
+  }
+}

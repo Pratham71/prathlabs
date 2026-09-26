@@ -1,61 +1,2831 @@
-@import "tailwindcss";
+:root {
+  /* Brand tokens, shared with the GitHub profile README. */
+  --ink: #0a0d10;
+  --panel: #12171c;
+  --line: #232b33;
+  --text: #e6edf3;
+  --muted: #7d8a96;
+  --amber: #ffb547;
+  --ok: #3ddc97;
 
-* {
+  /* Motion tokens (transitions.dev scale). */
+  --duration-stagger: 40ms;
+  --duration-quick: 150ms;
+  --duration-micro: 80ms;
+  --duration-fast: 250ms;
+  --duration-slow: 400ms;
+  --duration-very-slow: 500ms;
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: ease-out;
+  --distance-medium: 12px;
+  --blur-medium: 3px;
+
+  --name: var(--text); /* the dotted name; game themes paint it in their accent */
+  --indent: 5ch;
+  --measure: 80ch;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+html {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  scrollbar-color: var(--line) var(--ink);
+  scrollbar-width: thin;
+}
+
 body {
+  min-height: 100dvh;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--ink);
+}
+
+a {
+  color: var(--amber);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--amber) 40%, transparent);
+  text-underline-offset: 0.25em;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color var(--duration-quick) var(--ease-out);
+}
+
+a:hover {
+  text-decoration-color: var(--amber);
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-}
-
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.4); }
-  50% { box-shadow: 0 0 20px 6px rgba(255, 255, 255, 0.9); }
-}
-
-.btn-glow {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-@keyframes blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-
-.blink {
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
-}
-
-.marquee-inner {
-  display: inline-block;
-  animation: marquee 12s linear infinite;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
-@keyframes construction-flash {
-  0%, 100% { background-color: #ffcc00; color: #000; }
-  50% { background-color: #000; color: #ffcc00; }
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--amber);
+  color: var(--ink);
+  z-index: 20;
 }
 
-.construction-banner {
-  animation: construction-flash 0.8s step-end infinite;
+.skip:focus-visible {
+  top: 1rem;
 }
 
-body.retro {
-  background-color: #000080;
-  background-image: repeating-linear-gradient(
-    45deg,
-    #000080 0px,
-    #000080 10px,
-    #0000aa 10px,
-    #0000aa 20px
-  );
-  overflow: auto;
+/* ---------- man page frame ---------- */
+
+.man {
+  max-width: calc(var(--measure) + 4rem);
+  margin: 0 auto;
+  padding: 2.5rem 2rem 3rem;
+}
+
+.man-edge {
+  display: flex;
+  justify-content: space-between;
+  gap: 1ch;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.man-edge .mid {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.man-edge--foot {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.man-section {
+  margin-top: 2.25rem;
+}
+
+.man-section > .man-label {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.man-section > .body {
+  padding-left: var(--indent);
+  max-width: calc(var(--indent) + 72ch);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* NAME: the one display moment on the page */
+.name-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1.5ch;
+}
+
+.display-name {
+  font-size: clamp(1.9rem, 1rem + 4.2vw, 3.6rem);
+  line-height: 1.05;
+  font-weight: 800;
+  font-variation-settings: "wdth" 112.5;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.flag {
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+/* PROJECTS: whole-row links */
+.rows {
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.rows li {
+  border-bottom: 1px solid var(--line);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 16ch 12ch 1fr auto;
+  align-items: baseline;
+  gap: 1.5ch;
+  padding: 0.7rem 0.5ch;
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color var(--duration-quick) var(--ease-out);
+}
+
+.row:hover {
+  background: var(--panel);
+}
+
+.row .ref {
+  color: var(--amber);
+}
+
+.row .go {
+  color: var(--muted);
+  transition: transform var(--duration-fast) var(--ease-smooth-out), color var(--duration-quick) var(--ease-out);
+}
+
+.row:hover .go,
+.row:focus-visible .go {
+  transform: translateX(4px);
+  color: var(--amber);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75ch;
+  white-space: nowrap;
+}
+
+.status svg {
+  flex: none;
+}
+
+/* DEVICES */
+.devices {
+  list-style: none;
+}
+
+.devices li {
+  display: grid;
+  grid-template-columns: 16ch 1fr;
+  gap: 1.5ch;
+}
+
+.copyright {
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* EXPERIENCE: one block per job */
+.job ul {
+  margin: 0.4rem 0 0;
+  padding-left: 2ch;
+}
+
+.job + .job {
+  margin-top: 1.2rem;
+}
+
+.opts + .muted {
+  margin-top: 0.6rem;
+}
+
+/* HOBBIES, CONTACT, EDUCATION, SKILLS, AWARDS: option lists, like a man page's OPTIONS */
+:is(.hobbies, .contact, .opts) div {
+  display: grid;
+  grid-template-columns: 12ch 1fr;
+  gap: 1.5ch;
+}
+
+:is(.hobbies, .contact, .opts) div + div {
+  margin-top: 0.4rem;
+}
+
+/* portrait beside DESCRIPTION, dithered like the project figures */
+.portrait {
+  float: right;
+  width: min(34%, 220px);
+  margin: 0 0 1rem 2ch;
+}
+
+@media (max-width: 640px) {
+  :is(.hobbies, .contact, .opts) div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .portrait {
+    float: none;
+    width: 60%;
+    margin: 0 0 1rem;
+  }
+}
+
+/* SEE ALSO: siblings recede while one link is hovered or focused (after amicro FocusBlur, MIT) */
+.see-also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5ch 2.5ch;
+  list-style: none;
+}
+
+.see-also a {
+  transition: opacity var(--duration-quick) var(--ease-out), filter var(--duration-quick) var(--ease-out);
+}
+
+.see-also:has(a:hover, a:focus-visible) a:not(:hover, :focus-visible) {
+  opacity: 0.4;
+  filter: blur(1.5px);
+}
+
+.copy {
+  margin-left: 1ch;
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 0.75ch;
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  vertical-align: baseline;
+}
+
+.copy:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.copy > span {
+  grid-area: 1 / 1;
+  transition: opacity var(--duration-fast) var(--ease-smooth-out), filter var(--duration-fast) var(--ease-smooth-out),
+    transform var(--duration-fast) var(--ease-smooth-out);
+}
+
+.copy > [data-shown="false"] {
+  opacity: 0;
+  filter: blur(2px);
+  transform: scale(0.8);
+}
+
+/* ---------- ACTIVITY heatmap ---------- */
+
+.heat {
+  position: relative;
+  margin-top: 0.25rem;
+}
+
+.heat canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+/* Reserve the grid's height before the canvas measures itself (no layout shift). */
+.heat-frame:not([data-measured]) {
+  aspect-ratio: 53 / 7;
+}
+
+@media (max-width: 600px) {
+  .heat-frame:not([data-measured]) {
+    aspect-ratio: 26 / 7;
+  }
+}
+
+.heat-frame:focus-visible {
+  outline-offset: 6px;
+}
+
+.heat-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 1px solid var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform var(--duration-fast) var(--ease-smooth-out), opacity var(--duration-quick) var(--ease-out);
+}
+
+.heat-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.15rem 0.75ch;
+  background: var(--text);
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform var(--duration-fast) var(--ease-smooth-out), opacity var(--duration-quick) var(--ease-out);
+}
+
+.heat[data-active="true"] .heat-cursor,
+.heat[data-active="true"] .heat-tip {
+  opacity: 1;
+}
+
+.heat-legend {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 2ch;
+  flex-wrap: wrap;
+}
+
+/* ---------- boot overlay: ssh login over a dithered globe ---------- */
+
+.boot {
+  display: none;
+}
+
+html[data-boot] .boot {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--ink);
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 3rem 3.5rem; /* inside the CRT glass's rounded corners */
+  cursor: default;
+  overflow: hidden;
+  transition: opacity var(--duration-quick) var(--ease-out);
+  animation: boot-failsafe 1ms 7s forwards;
+}
+
+@keyframes boot-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* exit: the tube powers off, collapsing to a bright line, then a point */
+html[data-boot="out"] .boot {
+  pointer-events: none;
+  animation: tv-off 450ms cubic-bezier(0.55, 0, 0.3, 1) forwards;
+}
+
+@keyframes tv-off {
+  0% {
+    transform: none;
+    filter: none;
+  }
+  55% {
+    transform: scale(1, 0.004);
+    filter: brightness(3);
+  }
+  100% {
+    transform: scale(0, 0.004);
+    filter: brightness(5);
+    opacity: 0;
+  }
+}
+
+.boot-globe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: boot-globe var(--duration-very-slow) var(--ease-smooth-out) backwards;
+}
+
+.boot-globe--gl {
+  image-rendering: pixelated; /* rendered at 1x; the dither cells stay crisp */
+}
+
+@keyframes boot-globe {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(var(--blur-medium));
+  }
+}
+
+.boot-log,
+.boot .skip-hint {
+  position: relative;
+  max-width: 100%;
+}
+
+.boot-log p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  animation: rise var(--duration-fast) var(--ease-smooth-out) forwards;
+  animation-delay: var(--t);
+}
+
+.boot-log .prompt {
+  color: var(--amber);
+}
+
+.boot-log .prompt:not(:first-child) {
+  margin-top: 0.6rem;
+}
+
+.boot-log .ok-line::before {
+  content: "[ OK ] ";
+  color: var(--ok);
+}
+
+.boot .skip-hint {
+  margin-top: 1.5rem;
+  color: var(--muted);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--distance-medium));
+    filter: blur(var(--blur-medium));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@media (max-width: 640px) {
+  html[data-boot] .boot {
+    padding: 1.25rem 1rem;
+    font-size: 11px;
+  }
+}
+
+/* ---------- NAME as a dot field (DotName) ---------- */
+
+.dot-name {
+  position: relative;
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.dot-name canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0; /* sized by DotName once the grid is built */
+  height: 0;
+  pointer-events: none;
+}
+
+.dot-name[data-dots] {
+  color: transparent;
+}
+
+/* ---------- project page body (MDX) ---------- */
+
+.man-body p + p,
+.man-body ul,
+.man-body p + ul {
+  margin-top: 0.9rem;
+}
+
+.man-body ul {
+  list-style: none;
+}
+
+.man-body li::before {
+  content: "- ";
+  color: var(--muted);
+}
+
+.man-body h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.35rem;
+}
+
+.man-body code {
+  color: var(--amber);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1ch;
+  list-style: none;
+}
+
+.chips li {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 0.75ch;
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 640px) {
+  :root {
+    --indent: 2ch;
+  }
+
+  html {
+    font-size: 14px;
+  }
+
+  .man {
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .man-edge .mid,
+  .man-edge .right {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: 1fr auto;
+    row-gap: 0.1rem;
+  }
+
+  .row .summary {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    color: var(--muted);
+  }
+
+  .row .go {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .devices li {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+}
+
+.project-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: inherit;
+}
+
+.project-ref {
+  display: inline-block;
+}
+
+/* ---------- first paint: sections rise in order (transitions.dev texts reveal) ---------- */
+
+/* Starts as the boot overlay begins fading, or straight away when there is no boot. */
+html[data-intro]:not([data-boot="1"]) :is(.man-edge, .man-section) {
+  animation: rise var(--duration-very-slow) var(--ease-smooth-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--duration-micro));
+}
+
+main > .man-section:nth-child(1) { --i: 1; }
+main > .man-section:nth-child(2) { --i: 2; }
+main > .man-section:nth-child(3) { --i: 3; }
+main > .man-section:nth-child(4) { --i: 4; }
+main > .man-section:nth-child(5) { --i: 5; }
+main > .man-section:nth-child(6) { --i: 6; }
+main > .man-section:nth-child(n + 7) { --i: 7; }
+.man-edge--foot { --i: 8; }
+
+/* ---------- route changes (React ViewTransition) ---------- */
+
+/* Content slides the way you're going; old leaves fast, new arrives after it. */
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation:
+    var(--duration-quick) var(--ease-out) both vt-fade reverse,
+    var(--duration-slow) var(--ease-smooth-out) both vt-slide reverse;
+}
+
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation:
+    var(--duration-fast) var(--ease-out) var(--duration-quick) both vt-fade,
+    var(--duration-slow) var(--ease-smooth-out) both vt-slide;
+}
+
+::view-transition-old(.nav-forward) { --slide: -32px; }
+::view-transition-new(.nav-forward) { --slide: 32px; }
+::view-transition-old(.nav-back) { --slide: 32px; }
+::view-transition-new(.nav-back) { --slide: -32px; }
+
+/* The project's name travels from its row to the page title. */
+::view-transition-group(.morph) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-smooth-out);
+}
+
+::view-transition-image-pair(.morph) {
+  animation-name: vt-via-blur;
+}
+
+/* The header stays put; only its title crossfades. */
+::view-transition-group(man-head) {
+  animation-duration: var(--duration-fast);
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+    filter: blur(var(--blur-medium));
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--slide) 0;
+  }
+}
+
+@keyframes vt-via-blur {
+  30% {
+    filter: blur(var(--blur-medium));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* ---------- terminal cursor (Cursor) ---------- */
+
+html[data-cursor],
+html[data-cursor] * {
+  cursor: none !important;
+}
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--amber);
+  mix-blend-mode: difference;
+  transition: opacity var(--duration-quick) var(--ease-out), background-color var(--duration-quick) var(--ease-out);
+}
+
+.cursor[data-on] {
+  opacity: 1;
+}
+
+.cursor[data-mode="block"][data-idle="true"] {
+  animation: cursor-blink 1.06s steps(1) infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.cursor[data-mode="caret"] {
+  background: var(--text);
+}
+
+/* frame: brackets at two corners instead of a filled block */
+.cursor[data-mode="frame"] {
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  mix-blend-mode: normal;
+}
+
+.cursor-tl,
+.cursor-br {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+  transition: opacity var(--duration-quick) var(--ease-out);
+}
+
+.cursor-tl {
+  top: 0;
+  left: 0;
+  border-top: 1.5px solid var(--amber);
+  border-left: 1.5px solid var(--amber);
+}
+
+.cursor-br {
+  right: 0;
+  bottom: 0;
+  border-right: 1.5px solid var(--amber);
+  border-bottom: 1.5px solid var(--amber);
+}
+
+.cursor[data-mode="frame"] .cursor-tl,
+.cursor[data-mode="frame"] .cursor-br {
+  opacity: 1;
+}
+
+/* station themes: pixel sprite at the pointer instead of the block/caret */
+.cursor-sprite {
+  display: none;
+  position: absolute;
+  left: calc(var(--mx, 0px) - var(--hx, 0px));
+  top: calc(var(--my, 0px) - var(--hy, 0px));
+  width: 32px;
+  height: 32px;
+  background: var(--sprite) no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.6));
+}
+
+.cursor[data-sprite] .cursor-sprite {
+  display: block;
+}
+
+.cursor[data-sprite]:is([data-mode="block"], [data-mode="caret"]) {
+  background: transparent;
+  mix-blend-mode: normal;
+  animation: none;
+}
+
+/* battle bus: links light up as a build blueprint (translucent blue with a grid) */
+html[data-theme="fortnite"] .cursor[data-mode="frame"] {
+  background:
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.28) 0 1px, transparent 1px 10px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.28) 0 1px, transparent 1px 10px),
+    rgb(61 155 255 / 0.28);
+  outline: 1.5px solid #9fd2ff;
+  box-shadow: 0 0 14px rgb(61 155 255 / 0.5);
+}
+
+html[data-theme="fortnite"] .cursor[data-mode="frame"] :is(.cursor-tl, .cursor-br) {
+  opacity: 0;
+}
+
+html[data-theme="gtavi"] .cursor-sprite {
+  filter: drop-shadow(0 0 4px #ff4fa3);
+}
+
+.cursor-preview {
+  position: absolute;
+  left: calc(var(--mx, 0px) + 20px);
+  top: calc(var(--my, 0px) + 20px);
+  width: 280px;
+  max-width: none;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  padding: 6px;
+  animation: rise var(--duration-fast) var(--ease-smooth-out);
+}
+
+/* ---------- FIGURES (DitherImage) ---------- */
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1.5ch;
+}
+
+.figures figure:first-child {
+  grid-column: 1 / -1;
+}
+
+.figures figcaption {
+  margin-top: 0.35rem;
+}
+
+.dither {
+  position: relative;
+  display: block;
+  border: 1px solid var(--line);
+  background: var(--ink);
+}
+
+.dither img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dither canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-smooth-out);
+}
+
+.dither canvas[data-ready] {
+  opacity: 1;
+}
+
+.dither:hover canvas,
+.dither:focus-visible canvas {
+  opacity: 0;
+}
+
+@media (max-width: 640px) {
+  .figures {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- sound toggle ---------- */
+
+/* bottom-right dock: command prompt + sound. Above the boot overlay so sound can be turned on mid-intro. */
+.dock {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sound-toggle,
+.dock-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9ch;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--ink) 85%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.2rem 0.9ch;
+  cursor: pointer;
+  transition: color var(--duration-quick) var(--ease-out), border-color var(--duration-quick) var(--ease-out);
+}
+
+.dock-btn span {
+  color: var(--amber);
+}
+
+.sound-toggle:hover,
+.dock-btn:hover,
+.sound-toggle[data-on] {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+
+.eq i {
+  width: 2px;
+  height: 3px;
+  background: currentColor;
+}
+
+.sound-toggle[data-on] .eq i {
+  background: var(--amber);
+  animation: eq 1.1s var(--ease-in-out, ease-in-out) infinite alternate;
+}
+
+.sound-toggle[data-on] .eq i:nth-child(2) {
+  animation-delay: -0.4s;
+}
+
+.sound-toggle[data-on] .eq i:nth-child(3) {
+  animation-delay: -0.75s;
+}
+
+@keyframes eq {
+  to {
+    height: 10px;
+  }
+}
+
+/* ---------- shaders ---------- */
+
+/* CRT glass over the intro (CrtOverlay) */
+.crt {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.boot-log {
+  text-shadow: 0 0 6px color-mix(in srgb, var(--text) 35%, transparent);
+}
+
+/* signal field behind NAME + SYNOPSIS (SignalField); stays inside the page gutter so it never scrolls sideways */
+.man-section:has(.signal) {
+  position: relative;
+  isolation: isolate;
+}
+
+.signal {
+  position: absolute;
+  z-index: -1;
+  top: -1.5rem;
+  bottom: -9rem;
+  left: -1rem;
+  right: -1rem;
+  width: calc(100% + 2rem);
+  height: calc(100% + 10.5rem);
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* ---------- themes (lib/theme.ts; dock button, `theme <name>`, eggs) ----------
+   Same six tokens everywhere; --amber is "the accent", whatever colour it ends up. Palettes are
+   nods to the games (colours only, no logos or fonts). Muted text stays >= 4.5:1 on --ink. */
+
+/* matrix: green rain on black (the Konami code lands here) */
+html[data-theme="matrix"] {
+  --ink: #020604;
+  --panel: #07120a;
+  --line: #0f2a16;
+  --text: #c8ffd4;
+  --muted: #62a877;
+  --amber: #22ff66;
+  --ok: #9dffb5;
+}
+
+/* night city (Cyberpunk 2077): signal yellow, netrunner cyan */
+html[data-theme="cyberpunk"] {
+  --ink: #0a0a12;
+  --panel: #13131f;
+  --line: #2a2540;
+  --text: #eaf7ff;
+  --muted: #8c94b3;
+  --amber: #fcee0a;
+  --ok: #00f0ff;
+}
+
+/* amazing spider-man (Andrew Garfield): suit red, deep suit blue, NYC night, web silver */
+html[data-theme="spiderman"] {
+  --ink: #070b16;
+  --panel: #0e1526;
+  --line: #1f2c4a;
+  --text: #f1f4fa;
+  --muted: #93a0bd;
+  --amber: #e0243a;
+  --ok: #4a8df0;
+}
+
+/* minecraft: dark dirt, grass green, gold */
+html[data-theme="minecraft"] {
+  --ink: #16130f;
+  --panel: #2b2620;
+  --line: #4a4035;
+  --text: #f4f1e8;
+  --muted: #aaa191;
+  --amber: #7fc94f;
+  --ok: #ffc933;
+}
+
+/* blade (Marvel's daywalker): black leather, silver, blood red */
+html[data-theme="blade"] {
+  --ink: #070506;
+  --panel: #120a0b;
+  --line: #2e1416;
+  --text: #ecebee;
+  --muted: #a1969a;
+  --amber: #e3121b;
+  --ok: #c9ccd3;
+}
+
+/* los santos (GTA V / Online): LS night, bank-note green, wanted-star gold as the ok state */
+html[data-theme="gtav"] {
+  --ink: #090d0b;
+  --panel: #111a15;
+  --line: #213028;
+  --text: #eef3ee;
+  --muted: #8fa396;
+  --amber: #7ccf5a;
+  --ok: #f2c94c;
+}
+
+/* vice city (GTA VI): neon dusk, hot pink over deep violet, ocean teal */
+html[data-theme="gtavi"] {
+  --ink: #12091c;
+  --panel: #1c1029;
+  --line: #3a2352;
+  --text: #fdeefe;
+  --muted: #b89ac8;
+  --amber: #ff5fae;
+  --ok: #3fe0d0;
+}
+
+/* battle bus (Fortnite): storm-sky blue, bus yellow, uncommon green */
+html[data-theme="fortnite"] {
+  --ink: #0a1030;
+  --panel: #111a47;
+  --line: #26347a;
+  --text: #f0f4ff;
+  --muted: #9dabe0;
+  --amber: #ffe03a;
+  --ok: #5fe36b;
+}
+
+/* theme swap: a quick crossfade (startViewTransition in lib/theme) instead of a hard cut */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--duration-slow);
+}
+
+/* ---------- command prompt (CommandPalette) ---------- */
+
+.term {
+  margin: auto;
+  width: min(720px, calc(100vw - 2rem));
+  height: min(460px, calc(100dvh - 4rem)); /* fixed: output scrolls inside instead of the window growing */
+  padding: 0;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--amber) 12%, transparent), 0 24px 80px rgb(0 0 0 / 0.6);
+  font-family: inherit;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+}
+
+.term[open] {
+  display: flex;
+  animation: term-in var(--duration-fast) var(--ease-smooth-out);
+}
+
+.term::backdrop {
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes term-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    filter: blur(var(--blur-small, 2px));
+  }
+}
+
+.term-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 2ch;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.term-bar strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.term-out {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 0.5rem;
+  /* older lines fade under the title bar instead of being sliced */
+  mask-image: linear-gradient(transparent, #000 1.25rem);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.term-out > div + div {
+  margin-top: 0.7rem;
+}
+
+.term-out p {
+  line-height: 1.55;
+}
+
+.term-out p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.term-line {
+  color: var(--muted);
+  padding-left: 2ch; /* every answer sits one step in from its command */
+}
+
+.term-ps {
+  color: var(--amber);
+}
+
+.term-in {
+  display: flex;
+  gap: 1ch;
+  padding: 0.65rem 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.term-in input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  outline: none;
+  caret-color: var(--amber);
+}
+
+.term-hint {
+  padding: 0 1.25rem 0.65rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .term-ps {
+    display: none;
+  }
+  .term-in::before {
+    content: "$";
+    color: var(--amber);
+  }
+}
+
+/* ---------- right rail (SideRail): homelab, mirrors the clocks ---------- */
+
+.rail {
+  display: none;
+}
+
+@media (min-width: 1400px) {
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 2.2rem;
+    position: fixed;
+    top: 50%;
+    right: max(1.5rem, calc(50vw - (var(--measure) + 4rem) / 2 - 12rem));
+    width: 11.5rem;
+    translate: 0 -50%;
+    z-index: 1;
+    animation: rise var(--duration-very-slow) var(--ease-smooth-out) 380ms backwards;
+  }
+}
+
+/* size the text here, not on .rail: --measure is in ch, and ch follows the element's own font size,
+   so a smaller .rail would place itself against a narrower page and overlap it */
+.rail > * {
+  font-size: 0.8rem;
+}
+
+.rail-label {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.rail-dev + .rail-dev {
+  margin-top: 1rem;
+}
+
+.rail-on {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--ok);
+  vertical-align: 1px;
+  animation: beat 2.4s ease-in-out infinite;
+}
+
+@keyframes beat {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.rail-trace {
+  display: block;
+  margin: 0.45rem 0 0.3rem;
+}
+
+/* /admin (AdminPanel): plain terminal-ish forms */
+.admin-form,
+.admin-form fieldset,
+.admin-checks {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+  border: 0;
+  padding: 0;
+  margin: 0.8rem 0;
+}
+
+.admin-checks {
+  grid-template-columns: repeat(auto-fill, minmax(12ch, 1fr));
+  justify-items: stretch;
+}
+
+.admin-form legend,
+.admin-checks legend {
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.admin-row {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+.admin-list {
+  margin: 0.3rem 0 1rem;
+  padding-left: 2ch;
+}
+
+.admin :is(input:not([type="checkbox"], [type="range"]), select, button) {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 0.2rem 0.5rem;
+}
+
+.admin button:not(:disabled) {
+  cursor: pointer;
+}
+
+.admin button:hover:not(:disabled) {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.admin :is(input, select, button):disabled {
+  opacity: 0.5;
+}
+
+.admin input[type="checkbox"] {
+  accent-color: var(--amber);
+}
+
+/* now playing (NowPlaying): dithered cover + title/artist, two lines max each */
+.np {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.np > span {
+  display: grid;
+  min-width: 0;
+}
+
+.np-title,
+.np-artist {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.np:hover .np-title {
+  color: var(--amber);
+}
+
+.np-art {
+  display: block;
+}
+
+/* ---------- egg effects (CommandPalette playFx) ---------- */
+
+.fx-banner {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+  background: linear-gradient(transparent 38%, color-mix(in srgb, var(--ink) 80%, transparent) 38% 62%, transparent 62%);
+  animation: fx-life 2.6s var(--ease-smooth-out) both;
+}
+
+.fx-title {
+  font-family: var(--font-mono);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--amber);
+  animation: fx-title 2.6s var(--ease-smooth-out) both;
+}
+
+.fx-sub {
+  color: var(--text);
+  margin-top: 0.4rem;
+}
+
+/* GTA "wasted": the page drains to grey behind a red title */
+.fx-banner[data-fx="wasted"] {
+  backdrop-filter: grayscale(1) brightness(0.7);
+}
+
+.fx-banner[data-fx="wasted"] .fx-title {
+  color: #e2383b;
+}
+
+/* fortnite: the placement number in bus yellow on a dark plate */
+.fx-banner[data-fx="placed"] .fx-title {
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
+  font-size: clamp(3rem, 12vw, 8rem);
+  color: #ffe03a;
+  text-shadow: 0 4px 0 #0a1440;
+}
+
+.fx-banner[data-fx="placed"] .fx-sub {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+/* blade: one red cut across the screen */
+.fx-banner[data-fx="slash"] {
+  background: none;
+}
+
+.fx-banner[data-fx="slash"]::after {
+  content: "";
+  position: fixed;
+  left: -10vw;
+  right: -10vw;
+  top: 50%;
+  height: 5px;
+  background: linear-gradient(90deg, #e3121b, #fff 50%, #e3121b);
+  box-shadow: 0 0 18px #e3121b;
+  rotate: -18deg;
+  transform-origin: left;
+  animation: gi-cut 200ms cubic-bezier(0.7, 0, 0.2, 1) both;
+}
+
+/* matrix: the red failure box on a green-dimmed screen */
+.fx-banner[data-fx="failure"] {
+  background: rgb(1 3 2 / 0.9);
+}
+
+.fx-banner[data-fx="failure"] .fx-title {
+  padding: 0.3rem 1.2rem;
+  color: #effff3;
+  border: 3px solid #22ff66;
+  text-shadow: 0 0 10px #22ff66;
+  animation: fx-title 2.6s var(--ease-smooth-out) both, fx-blink 0.5s steps(1) 0.4s 4;
+}
+
+@keyframes fx-blink {
+  50% { opacity: 0.2; }
+}
+
+/* night city: yellow FLATLINED, chromatic split, the screen losing signal */
+.fx-banner[data-fx="flatline"] {
+  backdrop-filter: saturate(0.3) contrast(1.3);
+}
+
+.fx-banner[data-fx="flatline"] .fx-title {
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  color: #fcee0a;
+  text-shadow: -5px 0 #00f0ff, 5px 0 #ff2a6d;
+  animation: fx-title 2.6s var(--ease-smooth-out) both, gi-glitch 0.9s steps(1) infinite;
+}
+
+/* spider-man: a comic "to be continued" caption, freeze-frame tint */
+.fx-banner[data-fx="tbc"] {
+  backdrop-filter: sepia(0.6) contrast(1.1);
+  background: none;
+  place-content: end start;
+  padding: 0 0 12vh 6vw;
+  text-align: left;
+}
+
+.fx-banner[data-fx="tbc"] .fx-title {
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: clamp(1.8rem, 5vw, 3.4rem);
+  color: #f1f4fa;
+  background: #e0243a;
+  padding: 0.2rem 1rem;
+  transform: skewX(-8deg);
+}
+
+.fx-banner[data-fx="tbc"] .fx-sub {
+  color: #f1f4fa;
+  background: #1b3fa0;
+  padding: 0.15rem 1rem;
+  transform: skewX(-8deg);
+  justify-self: start;
+}
+
+/* minecraft: the red death screen, blocky title, score below */
+.fx-banner[data-fx="died"] {
+  background: rgb(160 0 0 / 0.45);
+}
+
+.fx-banner[data-fx="died"] :is(.fx-title, .fx-sub) {
+  font-family: var(--font-block), monospace;
+  text-transform: none;
+  color: #fff;
+  text-shadow: 3px 3px 0 #3f0000;
+}
+
+.fx-banner[data-fx="died"] .fx-sub::after {
+  content: "respawn";
+  display: block;
+  width: 14rem;
+  margin: 1.2rem auto 0;
+  padding: 0.35rem 0;
+  background: #6f6f6f;
+  border: 2px solid;
+  border-color: #aaa #333 #333 #aaa;
+  text-shadow: 2px 2px 0 #3f3f3f;
+}
+
+@keyframes fx-life {
+  0% { opacity: 0; }
+  10%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fx-title {
+  0% { transform: scale(1.25); filter: blur(var(--blur-medium)); }
+  18% { transform: none; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-title { animation: none; }
+}
+
+/* dock theme button: a swatch of the current accent */
+.theme-toggle .swatch {
+  width: 0.7em;
+  height: 0.7em;
+  background: var(--amber);
+  box-shadow: 0.35em 0.35em 0 -0.1em var(--ok);
+}
+
+/* ---------- world clock (WorldClock) ---------- */
+
+/* gutter clocks only when the gutter is wide enough; otherwise the header's compact line */
+.clocks {
+  display: none;
+}
+
+@media (min-width: 1400px) {
+  .clocks {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: fixed;
+    top: 50%;
+    left: max(1.5rem, calc(50vw - (var(--measure) + 4rem) / 2 - 12rem));
+    translate: 0 -50%;
+    z-index: 1;
+    animation: rise var(--duration-very-slow) var(--ease-smooth-out) 300ms backwards;
+  }
+
+  .man-edge .clock-text {
+    display: none;
+  }
+}
+
+.clock-label {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+}
+
+.clock-label .muted {
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.clock canvas {
+  display: block;
+}
+
+.clock-meta {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.clock-text {
+  color: var(--muted);
+}
+
+/* ---------- game fonts ----------
+   The real faces aren't bundled (Burbank is a paid House Industries font; Pricedown is Typodermic's).
+   Put licensed files at these paths (or have them installed) and they take over; Anton stands in. */
+@font-face {
+  font-family: "Pricedown";
+  src: local("Pricedown"), local("Pricedown Bl"), url("/fonts/pricedown.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Burbank Big Condensed";
+  src: local("Burbank Big Condensed Black"), local("BurbankBigCondensed-Black"), url("/fonts/burbank-big-condensed-black.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* ---------- game themes: intros (GameIntro + Boot markup) ---------- */
+
+.gi-scene,
+.gi {
+  display: none;
+}
+
+html[data-theme] :is(.boot-log, .boot-globe, .boot .crt) {
+  display: none;
+}
+
+html[data-boot][data-theme] .boot {
+  padding: 0;
+}
+
+html[data-theme] .gi-scene {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  animation: gi-in 900ms var(--ease-smooth-out) both;
+}
+
+html[data-theme="matrix"] .gi-matrix,
+html[data-theme="cyberpunk"] .gi-cyberpunk,
+html[data-theme="spiderman"] .gi-spiderman,
+html[data-theme="minecraft"] .gi-minecraft,
+html[data-theme="blade"] .gi-blade,
+html[data-theme="gtav"] .gi-gtav,
+html[data-theme="gtavi"] .gi-gtavi,
+html[data-theme="fortnite"] .gi-fortnite {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+html[data-theme] .boot .skip-hint {
+  position: absolute;
+  left: 2rem;
+  bottom: 1.25rem;
+  margin: 0;
+  padding: 0.15rem 0.6rem;
+  color: #fff;
+  background: rgb(0 0 0 / 0.6);
+  z-index: 1;
+}
+
+@keyframes gi-in {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+/* shared: GTA-style loading spinner, bottom right */
+.gi-load {
+  position: absolute;
+  right: 2rem;
+  bottom: 3.5rem; /* clears the dock */
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  padding: 0.25rem 0.7rem;
+  color: #fff;
+  background: rgb(0 0 0 / 0.6);
+}
+
+.gi-spin {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgb(255 255 255 / 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: gi-spin 900ms linear infinite;
+}
+
+@keyframes gi-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* los santos: loading-screen title bottom left, rotating tips */
+.gi-gtav .gi-title {
+  position: absolute;
+  left: 2rem;
+  bottom: 4.5rem;
+  font-family: "Pricedown", var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 11vw, 9rem);
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: #fff;
+  transform: skewX(-6deg);
+  text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+  animation: gi-title 900ms var(--ease-smooth-out) 250ms both;
+}
+
+.gi-tips {
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  translate: -50% 0;
+  width: min(60ch, 60vw);
+  height: 1.5em;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+.gi-tips span {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: gi-tip 1.8s ease both;
+}
+
+.gi-tips span:nth-child(2) {
+  animation-delay: 1.8s;
+}
+
+.gi-tips span:nth-child(3) {
+  animation-delay: 3.6s;
+  animation-fill-mode: backwards;
+  animation-name: gi-tip-last;
+}
+
+@keyframes gi-tip {
+  0%, 100% { opacity: 0; }
+  15%, 85% { opacity: 1; }
+}
+
+@keyframes gi-tip-last {
+  0% { opacity: 0; }
+  15%, 100% { opacity: 1; }
+}
+
+@keyframes gi-title {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+
+/* vice city: neon script over the sunset */
+.gi-gtavi {
+  text-align: center;
+}
+
+.gi-script {
+  margin-top: 12vh;
+  font-family: var(--font-vice), cursive;
+  font-size: clamp(3.5rem, 12vw, 9.5rem);
+  line-height: 1.1;
+  padding-bottom: 0.1em;
+  color: #fff0fa;
+  text-shadow: 0 0 6px #ff4f9a, 0 0 22px #ff4f9a, 0 0 48px #ff8a5c;
+  transform: rotate(-6deg);
+  animation: gi-neon 2.4s steps(1) both;
+}
+
+.gi-gtavi .gi-sub {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.9rem 0.2rem 1.5rem;
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgb(18 9 28 / 0.7);
+  animation: gi-title 900ms var(--ease-smooth-out) 600ms both;
+}
+
+/* neon tube flickering on */
+@keyframes gi-neon {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  10% { opacity: 0.2; }
+  14% { opacity: 1; }
+  17% { opacity: 0.4; }
+  20%, 100% { opacity: 1; }
+}
+
+/* battle bus: countdown banner, chunky title */
+.gi-fortnite {
+  text-align: center;
+}
+
+.gi-bus {
+  display: inline-block;
+  margin-top: 2rem;
+  padding: 0.5rem 1.2rem;
+  color: #fff;
+  background: rgb(10 20 64 / 0.75);
+  border: 2px solid #ffe03a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transform: skewX(-8deg);
+}
+
+.gi-count::after {
+  content: "5";
+  color: #ffe03a;
+  animation: gi-count 5s steps(1, end) forwards;
+}
+
+@keyframes gi-count {
+  0% { content: "5"; }
+  20% { content: "4"; }
+  40% { content: "3"; }
+  60% { content: "2"; }
+  80% { content: "1"; }
+  100% { content: "go"; }
+}
+
+.gi-fortnite .gi-title {
+  margin-top: 36vh;
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  text-transform: uppercase;
+  color: #ffe03a;
+  transform: skewX(-8deg) rotate(-3deg);
+  text-shadow: 0 6px 0 #16307e, 4px 4px 0 #0a1440, -3px -3px 0 #0a1440, 3px -3px 0 #0a1440, -3px 3px 0 #0a1440;
+  animation: gi-pop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 300ms both;
+}
+
+.gi-fortnite .gi-sub {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.3rem 1rem;
+  color: #fff;
+  background: rgb(10 20 64 / 0.78);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  transform: skewX(-8deg);
+}
+
+/* the title sits on a soft dark pool so it reads over bright cloud */
+.gi-fortnite::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 55% 28% at 50% 50%, rgb(10 20 64 / 0.55), transparent 70%);
+}
+
+.gi-fortnite > * {
+  position: relative;
+}
+
+@keyframes gi-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+/* blade: silver title, cut by a red slash when the blade crosses the screen */
+html[data-theme="blade"] .gi-blade {
+  display: grid; /* scoped: a bare .gi-blade rule would beat .gi's display: none in every intro */
+  place-content: center;
+  text-align: center;
+}
+
+.gi-blade-title {
+  position: relative;
+  font-family: var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(180deg, #ffffff, #b9bcc4 45%, #6d7079 55%, #d9dbe0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 4px 0 #000);
+  animation: gi-title 900ms var(--ease-smooth-out) 300ms both;
+}
+
+.gi-blade-title::after {
+  content: "";
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 52%;
+  height: 4px;
+  background: #e3121b;
+  box-shadow: 0 0 12px #e3121b;
+  rotate: -8deg;
+  transform-origin: left;
+  animation: gi-cut 220ms cubic-bezier(0.7, 0, 0.2, 1) 3s both;
+}
+
+@keyframes gi-cut {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.gi-blade .gi-sub {
+  margin-top: 1rem;
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  color: #d9dbe0;
+  animation: gi-title 900ms var(--ease-smooth-out) 700ms both;
+}
+
+html[data-boot="out"][data-theme="blade"] .boot {
+  animation: gi-slash 450ms cubic-bezier(0.7, 0, 0.3, 1) forwards;
+}
+
+/* exit: the screen is cut along the diagonal and falls away */
+@keyframes gi-slash {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 100%, 100% 0, 100% 0, 0 100%);
+    filter: brightness(1.6);
+  }
+}
+
+/* matrix: the line types itself, then the name resolves out of the rain */
+html[data-theme="matrix"] .gi-matrix {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+  color: #b8ffcc;
+  text-shadow: 0 0 8px #22ff66;
+}
+
+.gi-type {
+  display: inline-block;
+  justify-self: center;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid #22ff66;
+  font-size: 1.1rem;
+  width: 0;
+  animation: gi-typing 1.4s steps(19) 0.3s forwards, gi-caret 0.8s steps(1) infinite;
+}
+
+@keyframes gi-typing {
+  to { width: 19ch; }
+}
+
+@keyframes gi-caret {
+  50% { border-color: transparent; }
+}
+
+.gi-matrix .gi-title {
+  margin-top: 1.5rem;
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  font-weight: 800;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #effff3;
+  background: rgb(1 3 2 / 0.7);
+  padding: 0 0.3em;
+  animation: gi-title 900ms var(--ease-smooth-out) 2s both;
+}
+
+/* night city: yellow name with chromatic misregistration that twitches */
+html[data-theme="cyberpunk"] .gi-cyberpunk {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+}
+
+.gi-cyberpunk .gi-title {
+  position: relative;
+  font-family: var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fcee0a;
+  text-shadow: -4px 0 #00f0ff, 4px 0 #ff2a6d;
+  animation: gi-glitch 2.2s steps(1) 0.4s infinite both;
+}
+
+@keyframes gi-glitch {
+  0%, 88%, 100% { transform: none; clip-path: none; }
+  90% { transform: translateX(-6px) skewX(-8deg); clip-path: inset(10% 0 55% 0); }
+  93% { transform: translateX(5px); clip-path: inset(50% 0 20% 0); }
+  96% { transform: translateX(-2px); clip-path: none; }
+}
+
+.gi-cyberpunk .gi-sub {
+  justify-self: center;
+  margin-top: 1rem;
+  padding: 0.25rem 1rem;
+  color: #0a0a12;
+  background: #fcee0a;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  clip-path: polygon(0 0, 100% 0, 100% 60%, 94% 100%, 0 100%);
+}
+
+/* spider-man: metallic red title with a suit-blue edge */
+html[data-theme="spiderman"] .gi-spiderman {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+}
+
+.gi-spiderman .gi-title {
+  font-family: var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(180deg, #ff7a86, #e0243a 45%, #8a0f1f 55%, #e0243a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-stroke: 2px #1b3fa0;
+  filter: drop-shadow(0 4px 0 #04070f);
+  animation: gi-title 900ms var(--ease-smooth-out) 300ms both;
+}
+
+.gi-spiderman .gi-sub {
+  justify-self: center;
+  margin-top: 1rem;
+  padding: 0.2rem 1rem;
+  color: #dfe6f5;
+  background: rgb(4 7 17 / 0.7);
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+}
+
+/* minecraft: blocky title, a bouncing yellow splash, a loading bar */
+html[data-theme="minecraft"] .gi-minecraft {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+}
+
+.gi-minecraft .gi-title {
+  position: relative;
+  font-family: var(--font-block), monospace;
+  font-weight: 700;
+  font-size: clamp(3.5rem, 12vw, 9rem);
+  line-height: 1;
+  text-transform: uppercase;
+  color: #d8d8d8;
+  text-shadow: 0 6px 0 #3a3a3a, 0 10px 0 rgb(0 0 0 / 0.4);
+  animation: gi-title 900ms var(--ease-smooth-out) 300ms both;
+}
+
+.gi-splash {
+  justify-self: end;
+  margin-top: -1.5rem;
+  margin-right: -2rem;
+  font-family: var(--font-block), monospace;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #ffff55;
+  text-shadow: 2px 2px 0 #3f3f15;
+  rotate: -18deg;
+  animation: gi-splash 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes gi-splash {
+  to { scale: 1.1; }
+}
+
+.gi-bar {
+  justify-self: center;
+  margin-top: 3rem;
+  width: min(420px, 70vw);
+  padding: 0.5rem 0.75rem 0.75rem;
+  font-family: var(--font-block), monospace;
+  color: #fff;
+  background: rgb(0 0 0 / 0.55);
+}
+
+.gi-bar i {
+  display: block;
+  height: 8px;
+  margin-top: 0.4rem;
+  background: #4b4b4b;
+  box-shadow: inset 0 0 0 1px #000;
+}
+
+.gi-bar i::before {
+  content: "";
+  display: block;
+  height: 100%;
+  background: #7fc94f;
+  transform-origin: left;
+  animation: gi-fill 5s linear both;
+}
+
+@keyframes gi-fill {
+  from { transform: scaleX(0); }
+}
+
+html[data-boot="out"][data-theme="cyberpunk"] .boot {
+  animation: gi-glitch-out 450ms steps(6) forwards;
+}
+
+@keyframes gi-glitch-out {
+  0% { clip-path: inset(0); }
+  30% { clip-path: inset(20% 0 30% 0); transform: translateX(-12px); }
+  60% { clip-path: inset(45% 0 45% 0); transform: translateX(10px); filter: hue-rotate(90deg); }
+  100% { clip-path: inset(50% 0 50% 0); opacity: 0; }
+}
+
+html[data-boot="out"]:is([data-theme="matrix"], [data-theme="spiderman"], [data-theme="minecraft"]) .boot {
+  animation: gi-fade 450ms ease forwards;
+}
+
+/* exits: GTA cuts to black; the bus drops you in through a closing storm eye */
+html[data-boot="out"]:is([data-theme="gtav"], [data-theme="gtavi"]) .boot {
+  animation: gi-fade 450ms ease forwards;
+}
+
+html[data-boot="out"][data-theme="fortnite"] .boot {
+  animation: gi-eye 450ms cubic-bezier(0.55, 0, 0.3, 1) forwards;
+}
+
+@keyframes gi-fade {
+  50% {
+    filter: brightness(0);
+  }
+  to {
+    opacity: 0;
+    filter: brightness(0);
+  }
+}
+
+@keyframes gi-eye {
+  from {
+    clip-path: circle(75% at 50% 50%);
+  }
+  to {
+    clip-path: circle(0% at 50% 50%);
+  }
+}
+
+@media (max-width: 640px) {
+  .gi-tips {
+    display: none;
+  }
+  .gi-gtav .gi-title {
+    left: 1rem;
+  }
+}
+
+/* ---------- game themes: page accents (ThemeAccents) ---------- */
+
+html[data-theme] {
+  --name: var(--amber);
+}
+
+.acc {
+  display: none;
+}
+
+/* los santos: mission-title section labels, wanted stars that fill as you scroll */
+html[data-theme="gtav"] .man-label {
+  font-family: "Pricedown", var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.03em;
+  text-shadow: 2px 2px 0 #000;
+}
+
+html[data-theme="gtav"] .acc-wanted {
+  display: flex;
+  gap: 4px;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+}
+
+.acc-wanted i {
+  width: 18px;
+  height: 18px;
+  background: var(--line);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+@supports (animation-timeline: scroll()) {
+  .acc-wanted i {
+    animation: star linear both;
+    animation-timeline: scroll(root);
+  }
+  .acc-wanted i:nth-child(1) { animation-range: 0% 20%; }
+  .acc-wanted i:nth-child(2) { animation-range: 20% 40%; }
+  .acc-wanted i:nth-child(3) { animation-range: 40% 60%; }
+  .acc-wanted i:nth-child(4) { animation-range: 60% 80%; }
+  .acc-wanted i:nth-child(5) { animation-range: 80% 99%; }
+}
+
+@keyframes star {
+  0%, 99% { background: var(--line); }
+  100% { background: var(--ok); }
+}
+
+/* vice city: script labels in neon, a sunset glow along the bottom edge */
+html[data-theme="gtavi"] .man-label {
+  font-family: var(--font-vice), cursive;
+  font-weight: 400;
+  font-size: 1.35rem;
+  text-transform: lowercase;
+  color: var(--amber);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--amber) 70%, transparent);
+  padding-bottom: 0.1em;
+}
+
+html[data-theme="gtavi"] .man-label::first-letter {
+  text-transform: uppercase;
+}
+
+html[data-theme="gtavi"] .acc-horizon {
+  display: block;
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 28vh;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to top, transparent 0 7px, var(--ink) 7px 9px),
+    linear-gradient(to top, color-mix(in srgb, #ff5fae 22%, transparent), color-mix(in srgb, #ff8a5c 8%, transparent) 60%, transparent);
+  mask: linear-gradient(to top, #000 30%, transparent);
+}
+
+/* blade: steel labels underscored in red, blood dripping from the top edge */
+html[data-theme="blade"] .man-label {
+  display: inline-block;
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.14em;
+  padding-bottom: 0.1rem;
+  border-bottom: 2px solid var(--amber);
+}
+
+html[data-theme="blade"] .acc-drips {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 4px;
+  z-index: 20;
+  pointer-events: none;
+  background: linear-gradient(#e3121b, #7a0a10);
+}
+
+.acc-drips i {
+  position: absolute;
+  top: 3px;
+  width: 5px;
+  height: var(--h, 24px);
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(#7a0a10, #e3121b);
+  transform-origin: top;
+  animation: drip 2.4s cubic-bezier(0.4, 0, 0.2, 1) var(--d, 0s) both;
+}
+
+/* the drop at the tip */
+.acc-drips i::after {
+  content: "";
+  position: absolute;
+  left: -1.5px;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: #e3121b;
+}
+
+.acc-drips i:nth-child(1) { left: 4%; --h: 30px; --d: 0.1s; }
+.acc-drips i:nth-child(2) { left: 9%; --h: 12px; --d: 0.6s; }
+.acc-drips i:nth-child(3) { left: 17%; --h: 44px; --d: 0.3s; }
+.acc-drips i:nth-child(4) { left: 24%; --h: 18px; --d: 0.9s; }
+.acc-drips i:nth-child(5) { left: 31%; --h: 26px; --d: 0.2s; }
+.acc-drips i:nth-child(6) { left: 40%; --h: 10px; --d: 1.2s; }
+.acc-drips i:nth-child(7) { left: 47%; --h: 36px; --d: 0.5s; }
+.acc-drips i:nth-child(8) { left: 55%; --h: 14px; --d: 0.8s; }
+.acc-drips i:nth-child(9) { left: 63%; --h: 52px; --d: 0.15s; }
+.acc-drips i:nth-child(10) { left: 70%; --h: 20px; --d: 1s; }
+.acc-drips i:nth-child(11) { left: 78%; --h: 32px; --d: 0.4s; }
+.acc-drips i:nth-child(12) { left: 85%; --h: 12px; --d: 0.7s; }
+.acc-drips i:nth-child(13) { left: 91%; --h: 40px; --d: 0.25s; }
+.acc-drips i:nth-child(14) { left: 97%; --h: 16px; --d: 1.1s; }
+
+@keyframes drip {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* battle bus: labels as tilted banners, rarity on project rows, health and shield bars */
+html[data-theme="fortnite"] .man-label {
+  display: inline-block;
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--amber);
+  padding: 0.15rem 0.7rem 0;
+  transform: skewX(-8deg);
+}
+
+html[data-theme="fortnite"] .acc-hud {
+  display: grid;
+  gap: 4px;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+  width: 150px;
+}
+
+.acc-hud i {
+  display: block;
+  height: 8px;
+  transform: skewX(-12deg);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.acc-hud i::before {
+  content: "";
+  display: block;
+  height: 100%;
+  background: #5fe36b;
+}
+
+.acc-hud i:first-child::before {
+  background: #3d9bff;
+  transform-origin: left;
+}
+
+@supports (animation-timeline: scroll()) {
+  .acc-hud i:first-child::before {
+    animation: shield linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+@keyframes shield {
+  from {
+    transform: scaleX(0.08);
+  }
+}
+
+/* ---------- game themes: page structure ----------
+   Same markup, rebuilt per theme. NAME (with the signal field) stays open in every theme. */
+
+/* los santos: pause-menu panels; the selected row is a white bar with black text */
+html[data-theme="gtav"] main > .man-section:not(:has(.signal)) {
+  background: rgb(0 0 0 / 0.5);
+  border-top: 3px solid var(--amber);
+  padding: 0.8rem 1.1rem 1.1rem;
+}
+
+html[data-theme="gtav"] main > .man-section:not(:has(.signal)) > .body {
+  padding-left: 1ch;
+}
+
+html[data-theme="gtav"] :is(.rows, .rows li) {
+  border-color: transparent;
+}
+
+html[data-theme="gtav"] .row:is(:hover, :focus-visible) {
+  background: #f0f0f0;
+}
+
+html[data-theme="gtav"] .row:is(:hover, :focus-visible) :is(.ref, .summary, .status, .go) {
+  color: #0a0a0a;
+}
+
+/* vice city: every section a neon-framed sign */
+html[data-theme="gtavi"] main > .man-section:not(:has(.signal)) {
+  border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+  border-radius: 8px;
+  padding: 0.8rem 1.1rem 1.1rem;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--amber) 22%, transparent), inset 0 0 18px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+html[data-theme="gtavi"] .row:is(:hover, :focus-visible) .ref {
+  text-shadow: 0 0 8px var(--amber);
+}
+
+/* battle bus: projects become item-shop cards by rarity; sections sit on storm-blue plates */
+html[data-theme="fortnite"] main > .man-section:not(:has(.signal)) {
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border: 2px solid var(--line);
+  padding: 0.8rem 1.1rem 1.1rem;
+}
+
+html[data-theme="fortnite"] .rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+  border: 0;
+}
+
+html[data-theme="fortnite"] .rows li {
+  border: 0;
+}
+
+html[data-theme="fortnite"] .row {
+  grid-template-columns: 1fr auto;
+  align-content: end;
+  gap: 0.35rem 1ch;
+  min-height: 9rem;
+  padding: 1rem;
+  color: #fff;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  transition: transform var(--duration-fast) var(--ease-smooth-out), filter var(--duration-quick) var(--ease-out);
+}
+
+html[data-theme="fortnite"] .row:is(:hover, :focus-visible) {
+  transform: translateY(-3px);
+  filter: brightness(1.12);
+}
+
+html[data-theme="fortnite"] .rows li:nth-child(1) .row {
+  background: radial-gradient(circle at 50% 25%, #f9c85e, #c46a12 75%); /* legendary */
+}
+
+html[data-theme="fortnite"] .rows li:nth-child(2) .row {
+  background: radial-gradient(circle at 50% 25%, #d58bff, #6a24b3 75%); /* epic */
+}
+
+html[data-theme="fortnite"] .row .ref {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.35);
+}
+
+html[data-theme="fortnite"] .row .summary {
+  grid-column: 1 / -1;
+  color: #fff;
+}
+
+html[data-theme="fortnite"] .row :is(.status, .go) {
+  color: rgb(255 255 255 / 0.85);
+}
+
+/* blade: sections cut apart by a red slash; rows get a blade sweep on hover */
+html[data-theme="blade"] main > .man-section + .man-section::before {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-bottom: 1.6rem;
+  background: linear-gradient(90deg, transparent, var(--amber) 30%, #d9dbe0 50%, var(--amber) 70%, transparent);
+  transform: skewY(-1.5deg);
+}
+
+html[data-theme="blade"] .row {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--amber) 22%, transparent) 0 50%, transparent 50%) no-repeat;
+  background-size: 0% 100%;
+  transition: background-size var(--duration-slow) var(--ease-smooth-out);
+}
+
+html[data-theme="blade"] .row:is(:hover, :focus-visible) {
+  background-size: 200% 100%;
+}
+
+/* matrix: green-lit terminal sections; the selected row inverts */
+html[data-theme="matrix"] .man-label {
+  color: var(--amber);
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 8px var(--amber);
+}
+
+html[data-theme="matrix"] main > .man-section:not(:has(.signal)) {
+  border-left: 2px solid color-mix(in srgb, var(--amber) 60%, transparent);
+  padding: 0.4rem 0 0.6rem 1rem;
+  background: repeating-linear-gradient(0deg, rgb(34 255 102 / 0.035) 0 1px, transparent 1px 3px);
+}
+
+html[data-theme="matrix"] .row:is(:hover, :focus-visible) {
+  background: var(--amber);
+}
+
+html[data-theme="matrix"] .row:is(:hover, :focus-visible) :is(.ref, .summary, .status, .go) {
+  color: var(--ink);
+}
+
+/* night city: cut-corner panels with a yellow edge; labels as yellow tags; rows glitch on hover */
+html[data-theme="cyberpunk"] main > .man-section:not(:has(.signal)) {
+  background: var(--panel);
+  border-left: 3px solid var(--amber);
+  padding: 0.8rem 1.1rem 1.1rem;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+
+html[data-theme="cyberpunk"] .man-label {
+  display: inline-block;
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  background: var(--amber);
+  padding: 0.05rem 1.2rem 0.05rem 0.6rem;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+html[data-theme="cyberpunk"] .row:is(:hover, :focus-visible) .ref {
+  text-shadow: -2px 0 var(--ok), 2px 0 #ff2a6d;
+  animation: row-glitch 300ms steps(2) 2;
+}
+
+@keyframes row-glitch {
+  50% { transform: translateX(2px) skewX(-6deg); }
+}
+
+/* spider-man: red-topped panels over suit blue; rows light up red and blue */
+html[data-theme="spiderman"] main > .man-section:not(:has(.signal)) {
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--amber);
+  padding: 0.8rem 1.1rem 1.1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 9%, transparent), transparent 70%);
+}
+
+html[data-theme="spiderman"] .man-label {
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+}
+
+html[data-theme="spiderman"] .row:is(:hover, :focus-visible) {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--amber) 22%, transparent), color-mix(in srgb, var(--ok) 16%, transparent));
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+
+/* minecraft: GUI panels with bevelled edges; project rows become buttons */
+html[data-theme="minecraft"] main > .man-section:not(:has(.signal)) {
+  background: #2f2a24;
+  border: 3px solid;
+  border-color: #5b5146 #16130f #16130f #5b5146;
+  padding: 0.8rem 1.1rem 1.1rem;
+}
+
+html[data-theme="minecraft"] :is(.man-label, .row .ref) {
+  font-family: var(--font-block), monospace;
+  font-weight: 700;
+  text-shadow: 2px 2px 0 #000;
+}
+
+html[data-theme="minecraft"] .man-label {
+  font-size: 1.15rem;
+  color: #fff;
+}
+
+html[data-theme="minecraft"] :is(.rows, .rows li) {
+  border: 0;
+}
+
+html[data-theme="minecraft"] .rows li + li {
+  margin-top: 6px;
+}
+
+html[data-theme="minecraft"] .row {
+  background: #3d3d3d;
+  border: 2px solid;
+  border-color: #7a7a7a #1f1f1f #1f1f1f #7a7a7a;
+}
+
+html[data-theme="minecraft"] .row:is(:hover, :focus-visible) {
+  background: #5a6fb5;
+  border-color: #fff;
+}
+
+html[data-theme="minecraft"] .row:is(:hover, :focus-visible) :is(.summary, .status, .go) {
+  color: #fff;
+}
+
+/* scenery behind the page (ThemeScenery): station themes only, kept dim so copy stays on top */
+.scenery {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  image-rendering: pixelated;
+  display: none;
+}
+
+html[data-theme] .scenery {
+  display: block;
+  opacity: 0.55;
+}
+
+html[data-theme="gtavi"] .scenery {
+  opacity: 0.45;
+}
+
+/* ---------- theme radio (RadioPlayer) ---------- */
+
+.radio {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1ch;
+  align-items: center;
+  width: 17rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  animation: rise var(--duration-slow) var(--ease-smooth-out) both;
+}
+
+html[data-boot] .radio {
+  display: none; /* the intro owns the screen */
+}
+
+.radio[data-playing] {
+  border-color: color-mix(in srgb, var(--amber) 50%, var(--line));
+}
+
+.radio-viz {
+  grid-row: span 2;
+  image-rendering: pixelated;
+}
+
+.radio-meta {
+  min-width: 0; /* let the grid cell shrink so long names truncate instead of spilling */
+}
+
+.radio-station {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* title and artist: never cut; lines too long for the card glide to their end and back */
+.scroll-line {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.scroll-line > span {
+  display: inline-block;
+}
+
+.scroll-line[data-scroll] > span {
+  animation: radio-scroll var(--dur, 6s) ease-in-out 1s infinite alternate;
+}
+
+@keyframes radio-scroll {
+  0%, 15% { transform: none; }
+  85%, 100% { transform: translateX(var(--over)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-line {
+    white-space: normal;
+  }
+  .scroll-line[data-scroll] > span {
+    animation: none;
+  }
+}
+
+.radio-station {
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.04em;
+}
+
+.radio-title {
+  color: var(--text);
+}
+
+.radio-ctl {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.radio-ctl button {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0.1rem 0.8ch;
+  cursor: pointer;
+  transition: color var(--duration-quick) var(--ease-out), border-color var(--duration-quick) var(--ease-out);
+}
+
+.radio-ctl button:hover,
+.radio-ctl button[aria-pressed="true"] {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.radio-ctl button:active {
+  translate: 0 1px;
+}
+
+.radio-note {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .radio {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 3.2rem;
+    width: auto;
+  }
+  .radio-note {
+    display: none;
+  }
+}
+
+/* ---------- print: a clean black-on-white page (doubles as a one-page resume) ---------- */
+
+@media print {
+  :root,
+  html[data-theme] {
+    --ink: #fff;
+    --panel: #f3f3f3;
+    --line: #ccc;
+    --text: #111;
+    --muted: #555;
+    --amber: #8a5a00;
+    --ok: #1a7f4b;
+  }
+
+  html {
+    font-size: 10.5pt;
+  }
+
+  .boot,
+  .cursor,
+  .dock,
+  .clocks,
+  .rail,
+  .radio,
+  .acc,
+  .scenery,
+  .skip,
+  .signal,
+  .dot-name canvas,
+  .heat-cursor,
+  .heat-tip,
+  .copy,
+  .row .go,
+  .man-edge .right {
+    display: none !important;
+  }
+
+  .man {
+    max-width: none;
+    padding: 0;
+  }
+
+  .dot-name,
+  .dot-name[data-dots] {
+    color: var(--text);
+    font-size: 26pt;
+  }
+
+  .man-section {
+    break-inside: avoid;
+    margin-top: 1.2rem;
+    animation: none !important;
+  }
+
+  a {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  /* external links print their address */
+  .man-body a[href^="http"]::after,
+  .see-also a[href^="http"]::after,
+  .see-also a[href^="mailto"]::after {
+    content: " <" attr(href) ">";
+    color: var(--muted);
+  }
+
+  .row {
+    padding: 0.3rem 0;
+  }
+
+  /* screenshots: the real image, not the dither */
+  .dither canvas {
+    display: none;
+  }
+
+  .figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .figures figure {
+    break-inside: avoid;
+  }
+
+  .heat canvas {
+    filter: invert(1) hue-rotate(180deg);
+  }
 }
