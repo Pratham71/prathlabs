@@ -65,7 +65,7 @@ secrets Sensitive, redeploy afterwards). Locally, `.env.local` (git-ignored), or
 | `SPOTIFY_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` | now playing | see [Spotify](#spotify) |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | overrides the email in `content/site.ts` | optional |
 
-Rotating `ADMIN_SECRET` logs out every admin session.
+Logging out of /admin ends every admin session (a copied cookie stops working too); rotating `ADMIN_SECRET` does the same.
 
 ## Deploy (Vercel)
 
