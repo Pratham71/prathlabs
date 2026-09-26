@@ -2,7 +2,17 @@ jest.mock("next/cache", () => ({ unstable_cache: (f: unknown) => f }));
 jest.mock("@/lib/redis", () => ({ getRedis: () => ({}), hasRedis: () => false }));
 
 import { checkPassword, newSession, validSession } from "@/lib/admin";
-import { clean } from "@/lib/settings";
+import { clean, isBlob, isSitePath } from "@/lib/settings";
+
+test("file urls: our blob store or a site path, nothing that leaves the site", () => {
+  expect(isBlob("https://abc123.public.blob.vercel-storage.com/music/gtav/a.mp3")).toBe(true);
+  expect(isBlob("https://evil.com/x.mp3")).toBe(false);
+  expect(isBlob("https://abc.public.blob.vercel-storage.com.evil.com/x")).toBe(false);
+  expect(isSitePath("/sfx/wasted.mp3")).toBe(true);
+  expect(isSitePath("//evil.com/x.mp3")).toBe(false);
+  expect(isSitePath("/\\evil.com/x.mp3")).toBe(false);
+  expect(isSitePath("https://evil.com")).toBe(false);
+});
 
 beforeAll(() => {
   process.env.ADMIN_PASSWORD = "hunter2";

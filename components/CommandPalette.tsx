@@ -229,7 +229,10 @@ export function CommandPalette() {
     if (r?.ok) {
       say(["[sudo] password for pratham: ", "root access granted."]);
       dialog.current?.close();
-      router.push("/admin");
+      // a full load, not router.push: the client router can hand back the logged-out /admin it already
+      // rendered (and pushing the URL you're on doesn't re-render at all), so the new cookie went unused
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- deliberate, see above
+      location.assign("/admin");
     } else {
       const err = r ? ((await r.json().catch(() => ({}))).error ?? "Sorry, try again.") : "network error";
       say(["[sudo] password for pratham: ", err]);
