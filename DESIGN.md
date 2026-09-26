@@ -107,8 +107,14 @@ The stack list on project pages uses 1px `line` borders and no fill.
 ### Activity heatmap (signature)
 A canvas contribution calendar with a 4×4 Bayer ordered dither, where the ink level maps to contribution level (after amicro, MIT). It ripples in from today once it is visible and the boot is done. The tooltip and cursor travel between cells. Keyboard: arrows, Home/End, Escape.
 
-### Boot overlay
-Four kernel-log lines rise in 320ms apart, and any key or tap skips them. It plays once per session. It is skipped for reduced motion and for background tabs. A CSS failsafe clears it at 2.6s.
+### Boot overlay (login)
+An ssh login plays over a rotating dithered globe (3px ordered dither, 30deg graticule). An inline script rewrites the log for the visitor's timezone: nearest edge region, great-circle latencies and login time. The globe faces that region and draws an arc to each edge as its probe line prints. It plays once per session, and any key or tap skips it. It is skipped for reduced motion and background tabs, with a CSS failsafe at 4.5s.
+
+### Dot-field name (hero)
+The NAME h1 is redrawn as a halftone dot relief (after benday, MIT): the text is rasterized, distance-transformed and sampled into a dot grid. The dots assemble from a scatter once per load, and a contour wave runs from outline to core. The relief tilts in 3D toward the pointer, and dots near the cursor lift away and turn amber. The real text stays in the DOM.
+
+### Scramble refs
+Project refs decode left to right on hover or focus (after amicro ScrambleHover, MIT).
 
 ## Motion
 

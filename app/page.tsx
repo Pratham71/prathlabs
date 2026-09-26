@@ -3,6 +3,8 @@ import { ViewTransition } from "react";
 import { ManPage, Section } from "@/components/Man";
 import { StatusMark } from "@/components/StatusMark";
 import { Devices } from "@/components/Devices";
+import { DotName } from "@/components/DotName";
+import { Scramble } from "@/components/Scramble";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { CopyEmail } from "@/components/CopyEmail";
 import { projects } from "@/content/projects";
@@ -21,7 +23,7 @@ export default async function Home() {
     <ManPage title={site.manName} section={1} footLeft={site.handle} footMid={renderDate()}>
       <Section name="NAME" plain>
         <div className="name-line">
-          <h1 className="display-name">{site.name}</h1>
+          <DotName text={site.name} />
           <span className="muted">— {site.whatis}</span>
         </div>
       </Section>
@@ -48,7 +50,7 @@ export default async function Home() {
               <Link className="row" href={`/projects/${p.slug}`} transitionTypes={["nav-forward"]}>
                 <ViewTransition name={`project-${p.slug}`} share="morph">
                   <span className="ref">
-                    {p.slug}({p.section})
+                    <Scramble text={`${p.slug}(${p.section})`} />
                   </span>
                 </ViewTransition>
                 <StatusMark kind={p.status} />

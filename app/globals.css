@@ -342,7 +342,7 @@ a:hover {
   flex-wrap: wrap;
 }
 
-/* ---------- boot overlay ---------- */
+/* ---------- boot overlay: ssh login over a dithered globe ---------- */
 
 .boot {
   display: none;
@@ -358,8 +358,9 @@ html[data-boot] .boot {
   justify-content: flex-end;
   padding: 2rem;
   cursor: default;
+  overflow: hidden;
   transition: opacity var(--duration-quick) var(--ease-out);
-  animation: boot-failsafe 1ms 2.6s forwards;
+  animation: boot-failsafe 1ms 4.5s forwards;
 }
 
 @keyframes boot-failsafe {
@@ -374,13 +375,42 @@ html[data-boot="out"] .boot {
   opacity: 0;
 }
 
-.boot p {
-  opacity: 0;
-  animation: rise var(--duration-fast) var(--ease-smooth-out) forwards;
-  animation-delay: calc(var(--i) * 320ms);
+.boot-globe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: boot-globe var(--duration-very-slow) var(--ease-smooth-out) backwards;
 }
 
-.boot .ok {
+@keyframes boot-globe {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(var(--blur-medium));
+  }
+}
+
+.boot-log,
+.boot .skip-hint {
+  position: relative;
+  max-width: 100%;
+}
+
+.boot-log p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  animation: rise var(--duration-fast) var(--ease-smooth-out) forwards;
+  animation-delay: var(--t);
+}
+
+.boot-log p:first-child {
+  color: var(--amber);
+}
+
+.boot-log .ok-line::before {
+  content: "[ OK ] ";
   color: var(--ok);
 }
 
@@ -400,6 +430,33 @@ html[data-boot="out"] .boot {
     transform: none;
     filter: none;
   }
+}
+
+@media (max-width: 640px) {
+  html[data-boot] .boot {
+    padding: 1.25rem 1rem;
+    font-size: 11px;
+  }
+}
+
+/* ---------- NAME as a dot field (DotName) ---------- */
+
+.dot-name {
+  position: relative;
+  transition: color var(--duration-slow) var(--ease-out);
+}
+
+.dot-name canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0; /* sized by DotName once the grid is built */
+  height: 0;
+  pointer-events: none;
+}
+
+.dot-name[data-dots] {
+  color: transparent;
 }
 
 /* ---------- project page body (MDX) ---------- */
