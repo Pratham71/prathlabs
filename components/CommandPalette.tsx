@@ -17,6 +17,10 @@ const FX_TEXT: Record<Exclude<Fx, "dance">, [string, string?]> = {
   victory: ["#1 victory royale"],
   placed: ["#1", "you placed"],
   slash: [""],
+  failure: ["system failure", "reloading the construct"],
+  flatline: ["flatlined", "rebooting cyberware"],
+  tbc: ["to be continued...", "your friendly neighbourhood reboot"],
+  died: ["you died!", "score: 0"],
 };
 
 // Full-screen game moments from the eggs: a banner over the page for ~2.6s, or a little dance.
@@ -69,6 +73,23 @@ async function reboot() {
     playFx("slash");
     audio.sting("slash");
     wait = 900;
+  } else if (theme === "matrix") {
+    playFx("failure");
+    audio.sting("glitch");
+    wait = 1800;
+  } else if (theme === "cyberpunk") {
+    playFx("flatline");
+    audio.sting("glitch");
+    wait = 1600;
+  } else if (theme === "spiderman") {
+    playFx("tbc");
+    audio.sting("thwip");
+    wait = 1800;
+  } else if (theme === "minecraft") {
+    const n = await visitorCount();
+    playFx("died", ["you died!", `score: ${n}`]);
+    audio.sting("oof");
+    wait = 2000;
   }
   // the inline boot script plays the intro again once this session hasn't "seen" it
   sessionStorage.removeItem("boot-seen");

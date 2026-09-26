@@ -26,6 +26,7 @@ test("easter eggs", () => {
   expect(run("rm notes.txt").action).toBeUndefined();
   expect(run(":q").action).toEqual({ type: "close" });
   expect(run("reboot").action).toEqual({ type: "reboot" });
+  expect(run("intro").action).toEqual({ type: "reboot" });
   expect(run("radio next").action).toEqual({ type: "radio", op: "next" });
   expect(run("cat hobbies.txt").out[0]).toMatch(/^--gym/);
   expect(run("coffee").out[0]).toMatch(/pre-workout/);

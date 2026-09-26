@@ -155,13 +155,14 @@ export function bootSfx(events: { at: number; ok: boolean }[]) {
 // One-shot stings for the themed reboots. They answer a command the visitor just typed, so they play
 // even with the ambient sound off (straight to the speakers, not through the master toggle).
 // A real clip at public/sfx/<kind>.mp3 plays if present; otherwise the synthesized one below.
-export function sting(kind: "wasted" | "placed" | "slash") {
+export type Sting = "wasted" | "placed" | "slash" | "glitch" | "thwip" | "oof";
+export function sting(kind: Sting) {
   const clip = new Audio(`/sfx/${kind}.mp3`);
   clip.volume = kind === "wasted" ? 0.35 : 0.6; // the real wasted clip is mastered hot
   clip.play().catch(() => synthSting(kind));
 }
 
-function synthSting(kind: "wasted" | "placed" | "slash") {
+function synthSting(kind: Sting) {
   const ac = ensure();
   void ac.resume();
   const t = ac.currentTime + 0.02;
@@ -208,6 +209,36 @@ function synthSting(kind: "wasted" | "placed" | "slash") {
     // three falling square notes: out of the match
     [659.3, 523.3, 440].forEach((f, i) => tone("square", f, f * 0.98, t + i * 0.14, 0.2, 0.12));
     tone("sine", 220, 110, t + 0.42, 0.5, 0.3);
+  } else if (kind === "glitch") {
+    // matrix / night city: a digital crunch, bit-stepped tones tumbling down
+    for (let i = 0; i < 9; i++) tone("square", 1800 / (i + 1) + Math.random() * 200, 90, t + i * 0.045, 0.06, 0.08);
+    const n = noise(0.5);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.18, t);
+    g.gain.setValueAtTime(0, t + 0.12);
+    g.gain.setValueAtTime(0.18, t + 0.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+    n.connect(g).connect(out);
+    n.start(t);
+  } else if (kind === "thwip") {
+    // web-shooter: a short rising hiss with a snap on the end
+    const n = noise(0.25);
+    const bp = ac.createBiquadFilter();
+    const g = ac.createGain();
+    bp.type = "bandpass";
+    bp.Q.value = 3;
+    bp.frequency.setValueAtTime(900, t);
+    bp.frequency.exponentialRampToValueAtTime(5200, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.6, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    n.connect(bp).connect(g).connect(out);
+    n.start(t);
+    tone("triangle", 1400, 600, t + 0.13, 0.05, 0.2);
+  } else if (kind === "oof") {
+    // a short, low, blocky grunt
+    tone("square", 190, 110, t, 0.16, 0.18);
+    tone("sine", 140, 80, t, 0.22, 0.4);
   } else {
     // blade: a fast swish and a metallic ring
     const n = noise(0.3);
