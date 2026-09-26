@@ -7,7 +7,7 @@ const CHORDS = [
   [87.31, 130.81, 174.61, 220, 329.63], // Fmaj9
   [98, 146.83, 196, 246.94, 293.66], // G6/9
 ];
-const BED_GAIN = 0.05;
+const BED_GAIN = 0.018; // pad level; everything else is set relative to "barely there"
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -78,7 +78,7 @@ function bed(ac: AudioContext, out: GainNode) {
   bp.type = "bandpass";
   bp.frequency.value = 180;
   const ng = ac.createGain();
-  ng.gain.value = 0.6;
+  ng.gain.value = 0.2;
   noise.connect(bp).connect(ng).connect(out);
   noise.start();
 
@@ -93,7 +93,7 @@ function bed(ac: AudioContext, out: GainNode) {
   // sparse "data" pings, pentatonic, far in the background
   const ping = () => {
     const notes = [880, 987.77, 1318.5, 1479.98, 1760];
-    blip(notes[Math.floor(Math.random() * notes.length)], 0.012, 0.9, "sine");
+    blip(notes[Math.floor(Math.random() * notes.length)], 0.004, 0.9, "sine");
     timers.push(window.setTimeout(ping, 3500 + Math.random() * 5000));
   };
   timers.push(window.setTimeout(ping, 2500));

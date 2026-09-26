@@ -5,6 +5,7 @@ import { StatusMark } from "@/components/StatusMark";
 import { Devices } from "@/components/Devices";
 import { DotName } from "@/components/DotName";
 import { Scramble } from "@/components/Scramble";
+import { SignalField } from "@/components/SignalField";
 import { ActivityHeatmap } from "@/components/ActivityHeatmap";
 import { CopyEmail } from "@/components/CopyEmail";
 import { projects } from "@/content/projects";
@@ -22,6 +23,7 @@ export default async function Home() {
   return (
     <ManPage title={site.manName} section={1} footLeft={site.handle} footMid={renderDate()}>
       <Section name="NAME" plain>
+        <SignalField />
         <div className="name-line">
           <DotName text={site.name} />
           <span className="muted">— {site.whatis}</span>

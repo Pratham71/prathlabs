@@ -1,9 +1,10 @@
 import { BOOT_T, NODES, bootLines } from "@/lib/boot-lines";
 import { BootGlobe } from "@/components/BootGlobe";
+import { CrtOverlay } from "@/components/CrtOverlay";
 
 const KEY = "boot-seen";
 const PLAY_MS = BOOT_T.man + 950;
-const FADE_MS = 150;
+const FADE_MS = 450; // CRT power-off (globals.css tv-off)
 const INTRO_MS = 1400; // page sections' staggered rise (globals.css), then client navs stop replaying it
 
 // Whole lifecycle runs inline before paint, so it never flashes in late and never waits on hydration:
@@ -31,6 +32,7 @@ export function Boot() {
         ))}
       </div>
       <p className="skip-hint">press any key to skip</p>
+      <CrtOverlay />
       <script dangerouslySetInnerHTML={{ __html: fillScript }} />
     </div>
   );
