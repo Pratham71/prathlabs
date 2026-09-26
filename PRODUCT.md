@@ -28,7 +28,7 @@ He self-hosts and operates his own infrastructure (Raspberry Pi, home server) an
 - Stack: existing Next.js 16 (App Router) app on Vercel, with Upstash Redis, `@vercel/analytics` and `@vercel/speed-insights`.
 - Sections: boot-sequence intro, about/intro, projects (one page per project), contact. Live device status appears only while a device is on and is absent otherwise; it must cost negligible compute.
 - The previous rickroll, retro page and visitor counter are removed.
-- Open: final domain (www.prathlab.com today; prathamnagpal.dev being considered). Contact method and public email address not yet chosen.
+- Open: final domain (www.prathlabs.com today; prathamnagpal.dev being considered). Contact method and public email address not yet chosen.
 
 ## Brand Commitments
 

@@ -52,8 +52,8 @@ export function bootLines(nodes: BootNode[], tz: string, now: Date, T: typeof BO
   const probe = (n: BootNode) => n.id + String(rtt(n)).padStart(5) + " ms";
   const pad = (x: number) => String(x).padStart(2, "0");
   const lines: BootLine[] = [
-    { t: 0, text: "$ ssh pratham@prathlab.com", prompt: true },
-    { t: T.resolve, text: "resolving prathlab.com ... anycast, " + nodes.length + " edge regions" },
+    { t: 0, text: "$ ssh pratham@prathlabs.com", prompt: true },
+    { t: T.resolve, text: "resolving prathlabs.com ... anycast, " + nodes.length + " edge regions" },
     { t: T.probeHead, text: "probing edges (rtt)" },
   ];
   for (let i = 0; i < nodes.length; i += 2) {

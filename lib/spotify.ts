@@ -2,15 +2,22 @@
 // short access token, then currently-playing, falling back to the last played track.
 export type NowPlaying = { playing: boolean; title: string; artist: string; url: string; art: string | null };
 
-export const spotifyConfigured = () =>
-  Boolean(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET && process.env.SPOTIFY_REFRESH_TOKEN);
+// Env values as pasted: trims spaces/newlines and quotes, and drops a leading "NAME=" (the auth script
+// prints `SPOTIFY_REFRESH_TOKEN=...`, and pasting the whole line gets Spotify's invalid_grant).
+export function envValue(name: string): string {
+  let v = (process.env[name] ?? "").trim();
+  if (v.startsWith(`${name}=`)) v = v.slice(name.length + 1).trim();
+  return v.replace(/^(["'])(.*)\1$/, "$2").trim();
+}
+
+export const spotifyConfigured = () => Boolean(envValue("SPOTIFY_CLIENT_ID") && envValue("SPOTIFY_CLIENT_SECRET") && envValue("SPOTIFY_REFRESH_TOKEN"));
 
 async function accessToken(): Promise<string> {
-  const basic = Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString("base64");
+  const basic = Buffer.from(`${envValue("SPOTIFY_CLIENT_ID")}:${envValue("SPOTIFY_CLIENT_SECRET")}`).toString("base64");
   const res = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: { Authorization: `Basic ${basic}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: process.env.SPOTIFY_REFRESH_TOKEN! }),
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: envValue("SPOTIFY_REFRESH_TOKEN") }),
     cache: "no-store",
   });
   // Spotify's error code only (e.g. invalid_grant = bad/revoked refresh token, invalid_client = wrong id/secret)
