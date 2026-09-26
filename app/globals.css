@@ -230,6 +230,12 @@ a:hover {
   gap: 1.5ch;
 }
 
+.copyright {
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 /* HOBBIES: option list, like a man page's OPTIONS */
 .hobbies div {
   display: grid;
@@ -986,24 +992,48 @@ html[data-theme="gtavi"] .cursor-sprite {
    Same six tokens everywhere; --amber is "the accent", whatever colour it ends up. Palettes are
    nods to the games (colours only, no logos or fonts). Muted text stays >= 4.5:1 on --ink. */
 
-html[data-theme="phosphor"] {
-  --amber: #8dff9e;
-  --text: #d6ffdc;
-  --muted: #6f9a78;
-  --line: #1f3326;
-  --panel: #0f1a13;
-  --ink: #070b08;
+/* matrix: green rain on black (the Konami code lands here) */
+html[data-theme="matrix"] {
+  --ink: #020604;
+  --panel: #07120a;
+  --line: #0f2a16;
+  --text: #c8ffd4;
+  --muted: #62a877;
+  --amber: #22ff66;
+  --ok: #9dffb5;
 }
 
-/* Solarized dark (base03 / base02 / yellow) */
-html[data-theme="solar"] {
-  --ink: #002b36;
-  --panel: #073642;
-  --line: #0f4a58;
-  --text: #eee8d5;
-  --muted: #93a1a1;
-  --amber: #e0b020;
-  --ok: #a3b82a;
+/* night city (Cyberpunk 2077): signal yellow, netrunner cyan */
+html[data-theme="cyberpunk"] {
+  --ink: #0a0a12;
+  --panel: #13131f;
+  --line: #2a2540;
+  --text: #eaf7ff;
+  --muted: #8c94b3;
+  --amber: #fcee0a;
+  --ok: #00f0ff;
+}
+
+/* amazing spider-man (Andrew Garfield): suit red, deep suit blue, NYC night, web silver */
+html[data-theme="spiderman"] {
+  --ink: #070b16;
+  --panel: #0e1526;
+  --line: #1f2c4a;
+  --text: #f1f4fa;
+  --muted: #93a0bd;
+  --amber: #e0243a;
+  --ok: #4a8df0;
+}
+
+/* minecraft: dark dirt, grass green, gold */
+html[data-theme="minecraft"] {
+  --ink: #16130f;
+  --panel: #2b2620;
+  --line: #4a4035;
+  --text: #f4f1e8;
+  --muted: #aaa191;
+  --amber: #7fc94f;
+  --ok: #ffc933;
 }
 
 /* blade (Marvel's daywalker): black leather, silver, blood red */
@@ -1397,15 +1427,15 @@ html[data-theme="fortnite"] {
   display: none;
 }
 
-html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) :is(.boot-log, .boot-globe, .boot .crt) {
+html[data-theme] :is(.boot-log, .boot-globe, .boot .crt) {
   display: none;
 }
 
-html[data-boot]:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot {
+html[data-boot][data-theme] .boot {
   padding: 0;
 }
 
-html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .gi-scene {
+html[data-theme] .gi-scene {
   display: block;
   position: absolute;
   inset: 0;
@@ -1415,6 +1445,10 @@ html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-t
   animation: gi-in 900ms var(--ease-smooth-out) both;
 }
 
+html[data-theme="matrix"] .gi-matrix,
+html[data-theme="cyberpunk"] .gi-cyberpunk,
+html[data-theme="spiderman"] .gi-spiderman,
+html[data-theme="minecraft"] .gi-minecraft,
 html[data-theme="blade"] .gi-blade,
 html[data-theme="gtav"] .gi-gtav,
 html[data-theme="gtavi"] .gi-gtavi,
@@ -1424,7 +1458,7 @@ html[data-theme="fortnite"] .gi-fortnite {
   inset: 0;
 }
 
-html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) .boot .skip-hint {
+html[data-theme] .boot .skip-hint {
   position: absolute;
   left: 2rem;
   bottom: 1.25rem;
@@ -1708,6 +1742,198 @@ html[data-boot="out"][data-theme="blade"] .boot {
   }
 }
 
+/* matrix: the line types itself, then the name resolves out of the rain */
+html[data-theme="matrix"] .gi-matrix {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+  color: #b8ffcc;
+  text-shadow: 0 0 8px #22ff66;
+}
+
+.gi-type {
+  display: inline-block;
+  justify-self: center;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid #22ff66;
+  font-size: 1.1rem;
+  width: 0;
+  animation: gi-typing 1.4s steps(19) 0.3s forwards, gi-caret 0.8s steps(1) infinite;
+}
+
+@keyframes gi-typing {
+  to { width: 19ch; }
+}
+
+@keyframes gi-caret {
+  50% { border-color: transparent; }
+}
+
+.gi-matrix .gi-title {
+  margin-top: 1.5rem;
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  font-weight: 800;
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #effff3;
+  background: rgb(1 3 2 / 0.7);
+  padding: 0 0.3em;
+  animation: gi-title 900ms var(--ease-smooth-out) 2s both;
+}
+
+/* night city: yellow name with chromatic misregistration that twitches */
+html[data-theme="cyberpunk"] .gi-cyberpunk {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+}
+
+.gi-cyberpunk .gi-title {
+  position: relative;
+  font-family: var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fcee0a;
+  text-shadow: -4px 0 #00f0ff, 4px 0 #ff2a6d;
+  animation: gi-glitch 2.2s steps(1) 0.4s infinite both;
+}
+
+@keyframes gi-glitch {
+  0%, 88%, 100% { transform: none; clip-path: none; }
+  90% { transform: translateX(-6px) skewX(-8deg); clip-path: inset(10% 0 55% 0); }
+  93% { transform: translateX(5px); clip-path: inset(50% 0 20% 0); }
+  96% { transform: translateX(-2px); clip-path: none; }
+}
+
+.gi-cyberpunk .gi-sub {
+  justify-self: center;
+  margin-top: 1rem;
+  padding: 0.25rem 1rem;
+  color: #0a0a12;
+  background: #fcee0a;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  clip-path: polygon(0 0, 100% 0, 100% 60%, 94% 100%, 0 100%);
+}
+
+/* spider-man: metallic red title with a suit-blue edge */
+html[data-theme="spiderman"] .gi-spiderman {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+}
+
+.gi-spiderman .gi-title {
+  font-family: var(--font-ls), sans-serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(180deg, #ff7a86, #e0243a 45%, #8a0f1f 55%, #e0243a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-stroke: 2px #1b3fa0;
+  filter: drop-shadow(0 4px 0 #04070f);
+  animation: gi-title 900ms var(--ease-smooth-out) 300ms both;
+}
+
+.gi-spiderman .gi-sub {
+  justify-self: center;
+  margin-top: 1rem;
+  padding: 0.2rem 1rem;
+  color: #dfe6f5;
+  background: rgb(4 7 17 / 0.7);
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+}
+
+/* minecraft: blocky title, a bouncing yellow splash, a loading bar */
+html[data-theme="minecraft"] .gi-minecraft {
+  display: grid; /* scoped, or it shows in every intro */
+  place-content: center;
+  text-align: center;
+}
+
+.gi-minecraft .gi-title {
+  position: relative;
+  font-family: var(--font-block), monospace;
+  font-weight: 700;
+  font-size: clamp(3.5rem, 12vw, 9rem);
+  line-height: 1;
+  text-transform: uppercase;
+  color: #d8d8d8;
+  text-shadow: 0 6px 0 #3a3a3a, 0 10px 0 rgb(0 0 0 / 0.4);
+  animation: gi-title 900ms var(--ease-smooth-out) 300ms both;
+}
+
+.gi-splash {
+  justify-self: end;
+  margin-top: -1.5rem;
+  margin-right: -2rem;
+  font-family: var(--font-block), monospace;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #ffff55;
+  text-shadow: 2px 2px 0 #3f3f15;
+  rotate: -18deg;
+  animation: gi-splash 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes gi-splash {
+  to { scale: 1.1; }
+}
+
+.gi-bar {
+  justify-self: center;
+  margin-top: 3rem;
+  width: min(420px, 70vw);
+  padding: 0.5rem 0.75rem 0.75rem;
+  font-family: var(--font-block), monospace;
+  color: #fff;
+  background: rgb(0 0 0 / 0.55);
+}
+
+.gi-bar i {
+  display: block;
+  height: 8px;
+  margin-top: 0.4rem;
+  background: #4b4b4b;
+  box-shadow: inset 0 0 0 1px #000;
+}
+
+.gi-bar i::before {
+  content: "";
+  display: block;
+  height: 100%;
+  background: #7fc94f;
+  transform-origin: left;
+  animation: gi-fill 5s linear both;
+}
+
+@keyframes gi-fill {
+  from { transform: scaleX(0); }
+}
+
+html[data-boot="out"][data-theme="cyberpunk"] .boot {
+  animation: gi-glitch-out 450ms steps(6) forwards;
+}
+
+@keyframes gi-glitch-out {
+  0% { clip-path: inset(0); }
+  30% { clip-path: inset(20% 0 30% 0); transform: translateX(-12px); }
+  60% { clip-path: inset(45% 0 45% 0); transform: translateX(10px); filter: hue-rotate(90deg); }
+  100% { clip-path: inset(50% 0 50% 0); opacity: 0; }
+}
+
+html[data-boot="out"]:is([data-theme="matrix"], [data-theme="spiderman"], [data-theme="minecraft"]) .boot {
+  animation: gi-fade 450ms ease forwards;
+}
+
 /* exits: GTA cuts to black; the bus drops you in through a closing storm eye */
 html[data-boot="out"]:is([data-theme="gtav"], [data-theme="gtavi"]) .boot {
   animation: gi-fade 450ms ease forwards;
@@ -1747,7 +1973,7 @@ html[data-boot="out"][data-theme="fortnite"] .boot {
 
 /* ---------- game themes: page accents (ThemeAccents) ---------- */
 
-html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) {
+html[data-theme] {
   --name: var(--amber);
 }
 
@@ -2065,6 +2291,119 @@ html[data-theme="blade"] .row:is(:hover, :focus-visible) {
   background-size: 200% 100%;
 }
 
+/* matrix: green-lit terminal sections; the selected row inverts */
+html[data-theme="matrix"] .man-label {
+  color: var(--amber);
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 8px var(--amber);
+}
+
+html[data-theme="matrix"] main > .man-section:not(:has(.signal)) {
+  border-left: 2px solid color-mix(in srgb, var(--amber) 60%, transparent);
+  padding: 0.4rem 0 0.6rem 1rem;
+  background: repeating-linear-gradient(0deg, rgb(34 255 102 / 0.035) 0 1px, transparent 1px 3px);
+}
+
+html[data-theme="matrix"] .row:is(:hover, :focus-visible) {
+  background: var(--amber);
+}
+
+html[data-theme="matrix"] .row:is(:hover, :focus-visible) :is(.ref, .summary, .status, .go) {
+  color: var(--ink);
+}
+
+/* night city: cut-corner panels with a yellow edge; labels as yellow tags; rows glitch on hover */
+html[data-theme="cyberpunk"] main > .man-section:not(:has(.signal)) {
+  background: var(--panel);
+  border-left: 3px solid var(--amber);
+  padding: 0.8rem 1.1rem 1.1rem;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+
+html[data-theme="cyberpunk"] .man-label {
+  display: inline-block;
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  background: var(--amber);
+  padding: 0.05rem 1.2rem 0.05rem 0.6rem;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+html[data-theme="cyberpunk"] .row:is(:hover, :focus-visible) .ref {
+  text-shadow: -2px 0 var(--ok), 2px 0 #ff2a6d;
+  animation: row-glitch 300ms steps(2) 2;
+}
+
+@keyframes row-glitch {
+  50% { transform: translateX(2px) skewX(-6deg); }
+}
+
+/* spider-man: red-topped panels over suit blue; rows light up red and blue */
+html[data-theme="spiderman"] main > .man-section:not(:has(.signal)) {
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--amber);
+  padding: 0.8rem 1.1rem 1.1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 9%, transparent), transparent 70%);
+}
+
+html[data-theme="spiderman"] .man-label {
+  font-family: var(--font-ls), sans-serif;
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+}
+
+html[data-theme="spiderman"] .row:is(:hover, :focus-visible) {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--amber) 22%, transparent), color-mix(in srgb, var(--ok) 16%, transparent));
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+
+/* minecraft: GUI panels with bevelled edges; project rows become buttons */
+html[data-theme="minecraft"] main > .man-section:not(:has(.signal)) {
+  background: #2f2a24;
+  border: 3px solid;
+  border-color: #5b5146 #16130f #16130f #5b5146;
+  padding: 0.8rem 1.1rem 1.1rem;
+}
+
+html[data-theme="minecraft"] :is(.man-label, .row .ref) {
+  font-family: var(--font-block), monospace;
+  font-weight: 700;
+  text-shadow: 2px 2px 0 #000;
+}
+
+html[data-theme="minecraft"] .man-label {
+  font-size: 1.15rem;
+  color: #fff;
+}
+
+html[data-theme="minecraft"] :is(.rows, .rows li) {
+  border: 0;
+}
+
+html[data-theme="minecraft"] .rows li + li {
+  margin-top: 6px;
+}
+
+html[data-theme="minecraft"] .row {
+  background: #3d3d3d;
+  border: 2px solid;
+  border-color: #7a7a7a #1f1f1f #1f1f1f #7a7a7a;
+}
+
+html[data-theme="minecraft"] .row:is(:hover, :focus-visible) {
+  background: #5a6fb5;
+  border-color: #fff;
+}
+
+html[data-theme="minecraft"] .row:is(:hover, :focus-visible) :is(.summary, .status, .go) {
+  color: #fff;
+}
+
 /* scenery behind the page (ThemeScenery): station themes only, kept dim so copy stays on top */
 .scenery {
   position: fixed;
@@ -2077,7 +2416,7 @@ html[data-theme="blade"] .row:is(:hover, :focus-visible) {
   display: none;
 }
 
-html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"]) .scenery {
+html[data-theme] .scenery {
   display: block;
   opacity: 0.55;
 }
@@ -2117,6 +2456,17 @@ html[data-boot] .radio {
 .radio-viz {
   grid-row: span 2;
   image-rendering: pixelated;
+}
+
+.radio-meta {
+  min-width: 0; /* let the grid cell shrink so long names truncate instead of spilling */
+}
+
+.radio-station,
+.radio-note {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .radio-station {
@@ -2163,6 +2513,7 @@ html[data-boot] .radio {
 .radio-note {
   grid-column: 1 / -1;
   font-size: 0.7rem;
+  min-width: 0;
 }
 
 @media (max-width: 640px) {

@@ -76,7 +76,7 @@ async function reboot() {
 }
 
 // A terminal prompt over the page: `:`, `/` or Ctrl/Cmd+K opens it (also the dock button).
-// Native <dialog> gives the focus trap and Esc. Konami code anywhere toggles the phosphor theme.
+// Native <dialog> gives the focus trap and Esc. Konami code anywhere toggles the matrix theme.
 export function CommandPalette() {
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -100,7 +100,7 @@ export function CommandPalette() {
       konami.push(e.key.length === 1 ? e.key.toLowerCase() : e.key);
       konami.splice(0, konami.length - KONAMI.length);
       if (konami.join() === KONAMI.join()) {
-        setTheme(currentTheme() === "phosphor" ? "amber" : "phosphor");
+        setTheme(currentTheme() === "matrix" ? "amber" : "matrix");
         konami.length = 0;
       }
       const t = e.target as HTMLElement;

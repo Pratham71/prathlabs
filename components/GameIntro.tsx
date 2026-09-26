@@ -6,7 +6,9 @@ import { isGame } from "@/lib/theme";
 // Game-theme boot scenes, drawn as ordered dither (4x4 Bayer) at 4px cells over a small palette:
 // los santos loading screen (sunset over the hills and skyline), vice city (striped sun over the ocean),
 // battle bus (the bus crossing a cloudy sky over the island), blade (a blood rave: strobes, crowd,
-// the sprinklers, then one silver slash). Original art, drawn procedurally.
+// the sprinklers, then one silver slash), matrix (digital rain), night city (neon towers in the rain,
+// an AV overhead, glitching), spider-man (Manhattan at night, a swing across it), minecraft (block
+// terrain, trees, drifting clouds). Original art, drawn procedurally.
 
 const CELL = 4;
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
@@ -53,6 +55,116 @@ type Scene = { palette: string[]; at: (x: number, y: number, t: number, a: numbe
 
 // v is a palette position; the dither picks floor or ceil per cell.
 const SCENES: Record<string, Scene> = {
+  matrix: {
+    palette: ["#010302", "#03140a", "#063d1b", "#0b6b2e", "#16a347", "#22ff66", "#b8ffcc", "#effff3"],
+    at(x, y, t) {
+      const c = Math.floor(x * 120);
+      const speed = 0.35 + hash(c, 1) * 0.6;
+      const len = 0.2 + hash(c, 2) * 0.45;
+      const head = ((t * speed + hash(c, 3) * 3) % 1.5) - 0.25;
+      const d = head - y;
+      if (d < 0 || d > len) return 0.3;
+      if (hash(c, Math.floor(y * 140)) < 0.35) return 0.6; // broken strokes read as glyphs
+      if (d < 0.012) return 7;
+      return 5.6 - (d / len) * 5;
+    },
+  },
+  cyberpunk: {
+    palette: ["#05050a", "#0d0d1c", "#1a1733", "#2c2350", "#00a3b0", "#00f0ff", "#fcee0a", "#ff2a6d"],
+    at(x, y, t, a) {
+      const band = Math.floor(y * 24);
+      if (Math.sin(t * 23 + band * 1.7) > 0.985) x += 0.04 * Math.sin(band); // glitch: a band slips sideways
+      const r = x * a * 70 + y * 22 - t * 11;
+      if (((r % 1) + 1) % 1 < 0.035 && hash(Math.floor(r), 1) > 0.5) return 3.4; // rain
+      const bx = Math.floor(x * 26 + 0.5);
+      const top = 0.18 + hash(bx, 1) * 0.5;
+      if (y > top) {
+        const inX = x * 26 + 0.5 - bx;
+        if (hash(bx, 5) > 0.55 && y > top + 0.04 && y < top + 0.1 && inX > 0.2 && inX < 0.8)
+          return Math.sin(t * 6 + bx) > -0.6 ? [5, 6, 7][Math.floor(hash(bx, 6) * 3)] : 2; // neon, flickering
+        if (inX < 0.06 || inX > 0.94) return 0;
+        return hash(bx * 8 + Math.floor(inX * 8), Math.floor(y * 90)) > 0.95 ? 4 : 1.2;
+      }
+      return Math.min(3, 0.5 + 2.2 * y);
+    },
+    sprite(c, w, h, t) {
+      // an AV crossing high over the towers, running lights on
+      const x = Math.round(w + 30 - ((t * 0.18) % 1.4) * (w + 60));
+      const y = Math.round(h * 0.12);
+      c.fillStyle = "#1a1733";
+      c.fillRect(x, y, 14, 3);
+      c.fillRect(x + 3, y - 2, 7, 2);
+      c.fillStyle = "#00f0ff";
+      c.fillRect(x + 1, y + 3, 12, 1);
+      c.fillStyle = "#ff2a6d";
+      c.fillRect(x + 13, y + 1, 1, 1);
+      c.fillStyle = "#fcee0a";
+      c.fillRect(x, y + 1, 1, 1);
+    },
+  },
+  spiderman: {
+    palette: ["#040711", "#0a1226", "#14224a", "#1f3570", "#3a5fb0", "#e0243a", "#ffd98a", "#dfe6f5"],
+    at(x, y, t, a) {
+      const md = Math.hypot((x - 0.8) * a, y - 0.2);
+      if (md < 0.06) return 7;
+      const bx = Math.floor(x * 18 + t * 0.15);
+      const tall = hash(bx, 4) > 0.85;
+      const top = tall ? 0.22 + hash(bx, 1) * 0.1 : 0.4 + hash(bx, 1) * 0.35;
+      const inX = x * 18 + t * 0.15 - bx;
+      if (tall && y < top && y > top - 0.12 && Math.abs(inX - 0.5) < 0.08 * (1 - (top - y) / 0.12) + 0.02) return 0.4; // spire
+      if (y > top) {
+        if (inX < 0.05 || inX > 0.95) return 0;
+        return hash(bx * 9 + Math.floor(inX * 9), Math.floor(y * 80)) > 0.88 ? 6 : 0.6;
+      }
+      return Math.min(4, 1 + 2.3 * y + 1.2 * Math.exp(-(md - 0.06) * 14));
+    },
+    sprite(c, w, h, t) {
+      // one long swing: the web anchor slides across as the pendulum carries him
+      const ax = -w * 0.1 + t * w * 0.22;
+      const L = h * 0.5;
+      const th = Math.sin(t * 2.2) * 0.85;
+      const bx = Math.round(ax + Math.sin(th) * L);
+      const by = Math.round(Math.cos(th) * L - h * 0.05);
+      const steps = 40;
+      c.fillStyle = "#dfe6f5";
+      for (let i = 0; i <= steps; i++) {
+        const k = i / steps;
+        const yy = -h * 0.05 + (by + h * 0.05) * k;
+        if (yy >= 0) c.fillRect(Math.round(ax + (bx - ax) * k), Math.round(yy), 1, 1);
+      }
+      SPIDEY.forEach((row, dy) => [...row].forEach((ch, dx) => {
+        if (ch === ".") return;
+        c.fillStyle = SPIDEY_COL[ch];
+        c.fillRect(bx - 6 + dx * 2, by + dy * 2, 2, 2); // 2x: readable at a glance
+      }));
+    },
+  },
+  minecraft: {
+    palette: ["#0e0c0a", "#3b2a1a", "#5a3d24", "#79553a", "#6d6d6d", "#8e8e8e", "#3f7d2b", "#5fa83c", "#8fd15a", "#7fb3e6", "#a9cff5", "#ffffff"],
+    at(x, y, t, a) {
+      const X = (x * a + t * 0.03) * 22;
+      const bx = Math.floor(X), by = Math.floor(y * 22);
+      const tex = hash(Math.floor(X * 8), Math.floor(y * 22 * 8));
+      const ground = (b: number) => 12 + Math.floor(noise(b * 0.12, 1) * 6);
+      const surface = ground(bx);
+      if (by < surface) {
+        for (const k of [-1, 0, 1]) {
+          const tb = bx + k;
+          if (hash(tb, 7) < 0.9) continue;
+          const s = ground(tb);
+          if (k === 0 && by >= s - 4) return 2 + tex; // trunk
+          if (by >= s - 7 && by <= s - 4 && (k !== 0 || by < s - 4)) return 6 + tex * 1.5; // leaves
+        }
+        const cb = Math.floor((x * a + t * 0.08) * 22);
+        if ((by === 2 || by === 3) && noise(cb * 0.25, 5) > 0.62) return 11;
+        return Math.min(10, 9.2 + y * 1.2);
+      }
+      const fy = Math.floor((y * 22 - by) * 8);
+      if (by === surface) return fy < 3 ? 7 + tex : 2 + tex;
+      if (by <= surface + 3) return 1 + tex * 2;
+      return 4 + tex;
+    },
+  },
   blade: {
     palette: ["#050203", "#12060a", "#2a070c", "#5c0b12", "#a3101a", "#e3121b", "#ff5a5a", "#d9dbe0"],
     at(x, y, t, a) {
@@ -164,6 +276,10 @@ const SCENES: Record<string, Scene> = {
     },
   },
 };
+
+// ---- spider-man, 7x8 cells ----
+const SPIDEY = ["..rrr..", ".rwrwr.", "..rrr..", ".brrrb.", "b.rrr.b", "..bbb..", "..b.b..", ".b...b."];
+const SPIDEY_COL: Record<string, string> = { r: "#e0243a", w: "#dfe6f5", b: "#1b3fa0" };
 
 // ---- battle bus pieces (4px cells) ----
 const JUMPERS = 8;

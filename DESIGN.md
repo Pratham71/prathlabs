@@ -170,3 +170,6 @@ Tokens follow transitions.dev: stagger 40ms, micro 80ms, quick 150ms, fast 250ms
 - **Reboot**: GTA themes show WASTED with a slow-motion boom; Fortnite shows "#N, you placed" with this week's visitor count; blade cuts the screen. Then the intro replays.
 - **Name**: `--name` token; the dotted name takes the accent in station themes. Finer dot grid for legibility.
 - **Fonts**: Pricedown (GTA) and Burbank Big Condensed (Fortnite) are used when installed or placed at `public/fonts/`; Anton stands in.
+- **More station themes**: matrix (replaces phosphor; Konami, `matrix`, `redpill`; `bluepill` goes back to amber), night city (Cyberpunk 2077; replaces solarized), spider-man (Andrew Garfield's Amazing suit colours, Manhattan at night), minecraft (block terrain, GUI-button rows). Each has an intro, a two-track station, a cursor, scenery and a page structure. Every theme but amber is a station theme; CSS targets them with `html[data-theme]`.
+- **Copyright**: footer notice, `LICENSE` (all rights reserved), `package.json` UNLICENSED, copyright in metadata and JSON-LD.
+- **Audio drop folders**: `public/music/<theme>/` and `public/sfx/` (wasted.mp3, placed.mp3, slash.mp3).

@@ -187,7 +187,26 @@ export function run(line: string, home = "your nearest edge"): Result {
     case "ssh":
       return { out: [`ssh: connect to host ${arg || "prathlab"} port 22: you're already here.`] };
     case "matrix":
-      return { out: ["wake up, visitor..."], action: { type: "theme", name: "phosphor" } };
+    case "redpill":
+      return { out: ["wake up, visitor..."], action: { type: "theme", name: "matrix" } };
+    case "bluepill":
+      return { out: ["the story ends. you wake up in your bed."], action: { type: "theme", name: "amber" } };
+    case "whiterabbit":
+      return { out: ["follow it: type matrix."] };
+    case "cyberpunk":
+    case "nightcity":
+      return { out: ["night city never sleeps. neither does the homelab."], action: { type: "theme", name: "cyberpunk" } };
+    case "spiderman":
+    case "spidey":
+    case "peter":
+      return { out: ["web-shooters loaded. mind the gap between buildings."], action: { type: "theme", name: "spiderman" } };
+    case "web":
+      return { out: ["thwip."] };
+    case "minecraft":
+    case "creeper":
+      return { out: ["sss... (it's fine. this page is blast-resistant.)"], action: { type: "theme", name: "minecraft" } };
+    case "diamonds":
+      return { out: ["found 0 diamonds at y=-58. keep digging."] };
     case "blade":
     case "daywalker":
       return { out: ["sunlight: not a problem. sunglasses: on."], action: { type: "theme", name: "blade" } };

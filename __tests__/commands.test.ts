@@ -9,7 +9,7 @@ test("navigation commands resolve projects by slug, name or man ref", () => {
 
 test("settings commands emit actions; bad args list the options", () => {
   expect(run("sound off").action).toEqual({ type: "sound", on: false });
-  expect(run("theme phosphor").action).toEqual({ type: "theme", name: "phosphor" });
+  expect(run("theme matrix").action).toEqual({ type: "theme", name: "matrix" });
   expect(run("theme gtavi").action).toEqual({ type: "theme", name: "gtavi" });
   const bad = run("theme pink");
   expect(bad.action).toBeUndefined();
@@ -36,6 +36,8 @@ test("game eggs switch themes or play an effect", () => {
   expect(run("hesoyam").action).toEqual({ type: "theme", name: "gtav" });
   expect(run("gta6").action).toEqual({ type: "theme", name: "gtavi" });
   expect(run("daywalker").action).toEqual({ type: "theme", name: "blade" });
+  expect(run("bluepill").action).toEqual({ type: "theme", name: "amber" });
+  expect(run("creeper").action).toEqual({ type: "theme", name: "minecraft" });
   expect(run("wasted").action).toEqual({ type: "fx", name: "wasted" });
   expect(run("gg").action).toEqual({ type: "fx", name: "victory" });
 });
@@ -47,6 +49,6 @@ test("unknown commands point at help", () => {
 test("tab completion covers commands and arguments", () => {
   expect(complete("pro")).toEqual(["projects"]);
   expect(complete("open ve")).toEqual(["open vessel"]);
-  expect(complete("theme p")).toEqual(["theme phosphor"]);
+  expect(complete("theme m")).toEqual(["theme matrix", "theme minecraft"]);
   expect(complete("theme gta")).toEqual(["theme gtav", "theme gtavi"]);
 });

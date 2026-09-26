@@ -27,6 +27,106 @@ const bar = (s: string) => s.replace(/\s+/g, "");
 
 // ---- the music (original compositions) ----
 export const STATIONS: Partial<Record<Theme, Station>> = {
+  matrix: {
+    name: "the construct",
+    tracks: [
+      {
+        title: "red pill",
+        bpm: 128,
+        drums: { kick: "x...x...x...x...", clap: "....x.......x...", hat: "..x...x...x...x." },
+        chords: ["E2 G2 B2", "E2 G2 B2", "C2 E2 G2", "D2 F#2 A2"],
+        chord: "square",
+        bass: bar("..r...r...r...r. ..r...r...r...r. ..r...r...r...r. ..r...r...r.r.r."),
+        lead: "E4 . B4 . G4 . B4 . E5 . B4 . G4 . D5 . E4 . B4 . G4 . B4 . E5 . G5 . F#5 . D5 . C4 . G4 . E4 . G4 . C5 . G4 . E4 . B4 . D4 . A4 . F#4 . A4 . D5 . A4 . F#4 . A4 .",
+        leadVoice: "square",
+      },
+      {
+        title: "bullet time",
+        bpm: 78,
+        drums: { kick: "x.......x.x.....", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x." },
+        chords: ["E3 G3 B3", "C3 E3 G3", "A2 C3 E3", "B2 D#3 F#3"],
+        chord: "saw",
+        bass: bar("r.......r...r... r.......r...r... r.......r...r... r.......r.r.r..."),
+        lead: ". . . . B4 . . . . . G4 . . . . . . . . . C5 . . . B4 . . . . . . . . . . . A4 . . . . . E4 . . . . . . . . . . . F#4 . . . . . D#5 . . . . . . .",
+        leadVoice: "bell",
+      },
+    ],
+  },
+  cyberpunk: {
+    name: "neon static fm",
+    tracks: [
+      {
+        title: "chrome & rain",
+        bpm: 112,
+        drums: { kick: "x..x..x.x..x..x.", snare: "....x.......x...", hat: "xxxxxxxxxxxxxxxx" },
+        chords: ["F#2 A2 C#3", "D2 F#2 A2", "E2 G#2 B2", "C#2 E2 G#2"],
+        chord: "saw",
+        bass: bar("rrrrrrrrrrrrrrrr rrrrrrrrrrrrrrrr rrrrrrrrrrrrrrrr rrrrrrrrrrrrrrrr"),
+        lead: "F#3 . F#3 A3 . F#3 C#4 . B3 . A3 . F#3 . E3 . D3 . D3 F#3 . D3 A3 . G#3 . F#3 . E3 . D3 . E3 . E3 G#3 . E3 B3 . A3 . G#3 . E3 . B2 . C#3 . C#3 E3 . C#3 G#3 . F#3 . E3 . C#3 . G#2 .",
+        leadVoice: "acid",
+      },
+      {
+        title: "braindance",
+        bpm: 90,
+        drums: { kick: "x.......x.......", snare: "....x.......x...", hat: "..x...x...x...x." },
+        chords: ["A2 C3 E3 G3", "F2 A2 C3 E3", "D2 F2 A2 C3", "E2 G#2 B2 D3"],
+        chord: "saw",
+        bass: bar("r.r.r.r.r.r.r.r. r.r.r.r.r.r.r.r. r.r.r.r.r.r.r.r. r.r.r.r.r.r.r.r."),
+        lead: "E5 . . . D5 . C5 . . . A4 . . . . . C5 . . . B4 . A4 . . . E4 . . . . . F4 . . . A4 . D5 . . . C5 . . . . . B4 . . . G#4 . E4 . . . D5 . . . . . . .",
+        leadVoice: "saw",
+      },
+    ],
+  },
+  spiderman: {
+    name: "queens radio",
+    tracks: [
+      {
+        title: "swing over sixth",
+        bpm: 118,
+        drums: { kick: "x.......x.x.....", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x." },
+        chords: ["D3 F#3 A3", "B2 D3 F#3", "G2 B2 D3", "A2 C#3 E3"],
+        chord: "brass",
+        bass: bar("r...r...r...r... r...r...r...r... r...r...r...r... r...r...r.r.r.r."),
+        lead: "A4 . D5 . F#5 . . . E5 . D5 . A4 . . . B4 . D5 . F#5 . . . A5 . G5 . F#5 . . . G5 . . . F#5 . E5 . D5 . . . B4 . . . A4 . . . C#5 . E5 . A5 . . . . . . .",
+        leadVoice: "brass",
+      },
+      {
+        title: "rooftop, after",
+        bpm: 76,
+        drums: { kick: "x.........x.....", hat: "....o.......o..." },
+        chords: ["G2 D3 B3", "E2 B2 G3", "C3 G3 E4", "D3 A3 F#4"],
+        chord: "keys",
+        bass: bar("r............... r............... r............... r..............."),
+        lead: ". . B4 . . . D5 . . . G5 . . . F#5 . . . . . E5 . . . B4 . . . . . . . . . C5 . . . E5 . . . G5 . . . A5 . F#5 . . . D5 . . . . . . . . . . .",
+        leadVoice: "bell",
+      },
+    ],
+  },
+  minecraft: {
+    name: "overworld radio",
+    tracks: [
+      {
+        title: "grass block",
+        bpm: 72,
+        drums: {},
+        chords: ["C3 G3 E4", "A2 E3 C4", "F2 C3 A3", "G2 D3 B3"],
+        chord: "keys",
+        bass: bar("r............... r............... r............... r..............."),
+        lead: "E5 . . . . . G5 . . . . . D5 . . . . . . . C5 . . . . . . . . . . . A4 . . . . . C5 . . . . . E5 . . . . . . . D5 . . . . . . . . . . . . . . .",
+        leadVoice: "keys",
+      },
+      {
+        title: "creeper nearby",
+        bpm: 96,
+        drums: { kick: "x.......x.......", hat: "..o...o...o...o." },
+        chords: ["D3 F3 A3", "D3 F3 A#3", "C3 E3 G3", "C#3 E3 G3"],
+        chord: "saw",
+        bass: bar("r...r...r...r... r...r...r...r... r...r...r...r... r...r...r...r..."),
+        lead: "A4 . . . A#4 . . . A4 . . . G4 . . . F4 . . . . . . . E4 . . . . . . . D4 . . . F4 . . . A4 . . . C#5 . . . D5 . . . . . . . . . . . . . . .",
+        leadVoice: "pluck",
+      },
+    ],
+  },
   blade: {
     name: "blood rave radio",
     tracks: [

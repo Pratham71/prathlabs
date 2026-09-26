@@ -17,7 +17,15 @@ export function personLd() {
         sameAs: [site.github],
         ...(site.email ? { email: `mailto:${site.email}` } : {}),
       },
-      { "@type": "WebSite", "@id": `${site.url}/#site`, url: site.url, name: site.name, author: { "@id": `${site.url}/#person` } },
+      {
+        "@type": "WebSite",
+        "@id": `${site.url}/#site`,
+        url: site.url,
+        name: site.name,
+        author: { "@id": `${site.url}/#person` },
+        copyrightHolder: { "@id": `${site.url}/#person` },
+        copyrightYear: new Date().getFullYear(),
+      },
     ],
   };
 }

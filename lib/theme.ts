@@ -1,11 +1,15 @@
 // Colour themes. Tokens live in globals.css under html[data-theme="<id>"]; amber is the default (no attribute).
-export const THEMES = ["amber", "phosphor", "solar", "blade", "gtav", "gtavi", "fortnite"] as const;
+// Every theme except amber is a "station theme": its own intro, radio station, cursor, scenery and page
+// structure. CSS targets them all with html[data-theme] (amber never sets the attribute).
+export const THEMES = ["amber", "matrix", "cyberpunk", "spiderman", "minecraft", "blade", "gtav", "gtavi", "fortnite"] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const THEME_LABEL: Record<Theme, string> = {
   amber: "amber",
-  phosphor: "phosphor",
-  solar: "solarized",
+  matrix: "matrix",
+  cyberpunk: "night city",
+  spiderman: "spider-man",
+  minecraft: "minecraft",
   blade: "blade",
   gtav: "los santos",
   gtavi: "vice city",
@@ -46,6 +50,6 @@ export function onThemeChange(cb: () => void) {
   return () => mo.disconnect();
 }
 
-// Themes with their own intro, radio station and page accents (games, and Blade).
-export const GAME_THEMES: readonly Theme[] = ["blade", "gtav", "gtavi", "fortnite"];
-export const isGame = (t: string | undefined): t is Theme => !!t && GAME_THEMES.includes(t as Theme);
+// Station themes: everything but amber.
+export const GAME_THEMES: readonly Theme[] = THEMES.filter((t) => t !== "amber");
+export const isGame = (t: string | undefined): t is Theme => !!t && t !== "amber" && isTheme(t);

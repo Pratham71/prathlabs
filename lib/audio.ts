@@ -157,7 +157,7 @@ export function bootSfx(events: { at: number; ok: boolean }[]) {
 // A real clip at public/sfx/<kind>.mp3 plays if present; otherwise the synthesized one below.
 export function sting(kind: "wasted" | "placed" | "slash") {
   const clip = new Audio(`/sfx/${kind}.mp3`);
-  clip.volume = 0.6;
+  clip.volume = kind === "wasted" ? 0.35 : 0.6; // the real wasted clip is mastered hot
   clip.play().catch(() => synthSting(kind));
 }
 

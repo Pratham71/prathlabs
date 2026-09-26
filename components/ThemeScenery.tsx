@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { currentTheme, onThemeChange } from "@/lib/theme";
+import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { palm } from "@/components/GameIntro";
 
 // Behind-the-page scenery for the station themes, drawn in 3px cells like the intros:
 // blade: a blood moon and bats breaking out of the dark at random; vice city: palms and a striped sun
-// low on the horizon; los santos: the skyline with premiere searchlights sweeping over it.
+// low on the horizon; los santos: the skyline with premiere searchlights sweeping over it; matrix: faint
+// rain; night city: neon skyline in the rain; spider-man: Manhattan and a web in the corner; minecraft:
+// block hills and drifting clouds.
 // Static layers render once per resize; only bats and beams animate. Paused offscreen and in
 // background tabs; with reduced motion, a single still frame.
 
@@ -34,6 +36,28 @@ export function ThemeScenery() {
     let theme = currentTheme();
     let w = 0, h = 0, raf = 0, last = 0, nextBat = 0;
     let bats: Bat[] = [];
+    let rain: { x: number; y: number; v: number; len: number }[] = [];
+
+    // skyline helper: towers along the bottom, lit windows in `lit`, neon strips in `neon`
+    const skyline = (l: CanvasRenderingContext2D, body: string, lit: string[], neon: string[], maxH: number) => {
+      for (let x = 0; x < w; ) {
+        const bw = 4 + Math.floor(hash(x, 1) * 9);
+        const bh = Math.floor(h * (0.05 + hash(x, 2) * maxH));
+        l.fillStyle = body;
+        l.fillRect(x, h - bh, bw - 1, bh);
+        if (neon.length && hash(x, 9) > 0.7) {
+          l.fillStyle = neon[Math.floor(hash(x, 8) * neon.length)];
+          l.fillRect(x + 1, h - bh + 2, Math.max(1, bw - 3), 1);
+        }
+        for (let yy = h - bh + 4; yy < h - 1; yy += 3)
+          for (let xx = x + 1; xx < x + bw - 2; xx += 2)
+            if (hash(xx, yy) > 0.86) {
+              l.fillStyle = lit[Math.floor(hash(yy, xx) * lit.length)];
+              l.fillRect(xx, yy, 1, 1);
+            }
+        x += bw;
+      }
+    };
 
     const paintStatic = () => {
       w = Math.ceil(innerWidth / CELL);
@@ -64,19 +88,47 @@ export function ThemeScenery() {
               l.fillRect(x, y, 1, 1);
           }
       } else if (theme === "gtav") {
-        // skyline along the bottom with a few lit windows
-        for (let x = 0; x < w; ) {
-          const bw = 4 + Math.floor(hash(x, 1) * 9);
-          const bh = Math.floor(h * (0.05 + hash(x, 2) * 0.16 * (0.6 + 0.4 * Math.sin((x / w) * Math.PI))));
-          l.fillStyle = "#0d1410";
-          l.fillRect(x, h - bh, bw - 1, bh);
-          for (let yy = h - bh + 2; yy < h - 1; yy += 3)
-            for (let xx = x + 1; xx < x + bw - 2; xx += 2)
-              if (hash(xx, yy) > 0.86) {
-                l.fillStyle = hash(yy, xx) > 0.5 ? "#f2c94c" : "#eef3ee";
-                l.fillRect(xx, yy, 1, 1);
+        skyline(l, "#0d1410", ["#f2c94c", "#eef3ee"], [], 0.14);
+      } else if (theme === "cyberpunk") {
+        skyline(l, "#101020", ["#00f0ff", "#fcee0a", "#3a3560"], ["#00f0ff", "#fcee0a", "#ff2a6d"], 0.3);
+      } else if (theme === "spiderman") {
+        skyline(l, "#0b1224", ["#ffd98a", "#7f8fb5"], [], 0.26);
+        // a web strung across the top-left corner
+        l.fillStyle = "rgba(223,230,245,0.35)";
+        const R = Math.min(w, h) * 0.32;
+        for (let k = 0; k < 7; k++) {
+          const ang = (k / 6) * (Math.PI / 2);
+          for (let r = 0; r < R; r++) l.fillRect(Math.round(Math.cos(ang) * r), Math.round(Math.sin(ang) * r), 1, 1);
+        }
+        for (let ring = 1; ring <= 5; ring++) {
+          const rr = (R * ring) / 5.5;
+          for (let k = 0; k < 6; k++) {
+            const a0 = (k / 6) * (Math.PI / 2), a1 = ((k + 1) / 6) * (Math.PI / 2);
+            for (let q = 0; q <= 20; q++) {
+              const u = q / 20;
+              const sag = Math.sin(u * Math.PI) * rr * 0.08; // strands sag toward the corner
+              const px = Math.cos(a0) * rr * (1 - u) + Math.cos(a1) * rr * u;
+              const py = Math.sin(a0) * rr * (1 - u) + Math.sin(a1) * rr * u;
+              const len = Math.hypot(px, py) || 1;
+              l.fillRect(Math.round(px - (px / len) * sag), Math.round(py - (py / len) * sag), 1, 1);
+            }
+          }
+        }
+      } else if (theme === "minecraft") {
+        // block hills along the bottom: grass tops, dirt below
+        const B = 6;
+        for (let bx = 0; bx * B < w; bx++) {
+          const tall = 2 + Math.floor((Math.sin(bx * 0.35) * 0.5 + 0.5) * 3 + hash(bx, 3) * 2);
+          for (let k = 0; k < tall; k++) {
+            const y0 = h - (k + 1) * B;
+            for (let yy = 0; yy < B; yy++)
+              for (let xx = 0; xx < B; xx++) {
+                const top = k === tall - 1 && yy < 2;
+                const v = hash(bx * B + xx, y0 + yy);
+                l.fillStyle = top ? (v > 0.5 ? "#5fa83c" : "#3f7d2b") : v > 0.6 ? "#79553a" : v > 0.25 ? "#5a3d24" : "#3b2a1a";
+                l.fillRect(bx * B + xx, y0 + yy, 1, 1);
               }
-          x += bw;
+          }
         }
       } else if (theme === "blade") {
         // blood moon, top right, with a dithered halo
@@ -110,6 +162,33 @@ export function ThemeScenery() {
           ctx.lineTo(ox + Math.sin(ang + spread) * len, oy - Math.cos(ang + spread) * len);
           ctx.fill();
         }
+      } else if (theme === "matrix" && !reduce) {
+        if (!rain.length) rain = Array.from({ length: Math.floor(w / 6) }, (_, i) => ({ x: i * 6 + Math.floor(Math.random() * 4), y: Math.random() * h, v: 12 + Math.random() * 30, len: 10 + Math.random() * 30 }));
+        for (const d of rain) {
+          d.y += d.v * dt;
+          if (d.y - d.len > h) d.y = -Math.random() * h * 0.5;
+          for (let k = 0; k < d.len; k += 2) {
+            ctx.fillStyle = k === 0 ? "rgba(184,255,204,0.55)" : `rgba(34,255,102,${0.28 * (1 - k / d.len)})`;
+            ctx.fillRect(d.x, Math.round(d.y - k), 1, 1);
+          }
+        }
+      } else if (theme === "cyberpunk" && !reduce) {
+        ctx.fillStyle = "rgba(140,148,179,0.25)";
+        for (let i = 0; i < 70; i++) {
+          const x = (hash(i, 1) * w + t * 40) % w;
+          const y = (hash(i, 2) * h + t * (120 + hash(i, 3) * 80)) % h;
+          ctx.fillRect(Math.round(x), Math.round(y), 1, 3);
+        }
+      } else if (theme === "minecraft" && !reduce) {
+        // flat blocky clouds drifting right
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        for (let i = 0; i < 5; i++) {
+          const cw = 18 + Math.floor(hash(i, 4) * 26);
+          const x = ((hash(i, 5) * w + t * 3 * (1 + i * 0.2)) % (w + cw)) - cw;
+          const y = Math.floor(h * (0.05 + hash(i, 6) * 0.2));
+          ctx.fillRect(Math.round(x), y, cw, 5);
+          ctx.fillRect(Math.round(x) + 4, y - 3, cw - 10, 3);
+        }
       } else if (theme === "blade" && !reduce) {
         if (t > nextBat) {
           // a lone bat, sometimes a small colony
@@ -141,7 +220,7 @@ export function ThemeScenery() {
           );
         }
       }
-      const moving = !reduce && (theme === "gtav" || theme === "blade");
+      const moving = !reduce && ["gtav", "blade", "matrix", "cyberpunk", "minecraft"].includes(theme);
       raf = moving && !document.hidden ? requestAnimationFrame(frame) : 0;
     };
 
@@ -150,8 +229,9 @@ export function ThemeScenery() {
       cancelAnimationFrame(raf);
       raf = 0;
       bats = [];
+      rain = [];
       canvas.dataset.theme = theme;
-      if (!["gtav", "gtavi", "blade"].includes(theme)) {
+      if (!isGame(theme)) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;
       }
