@@ -53,6 +53,35 @@ export default async function Home() {
         ))}
       </Section>
 
+      <Section name="EDUCATION">
+        <dl className="opts">
+          {site.education.map((e) => (
+            <div key={e.what}>
+              <dt className="flag">{e.when}</dt>
+              <dd>
+                {e.what} <span className="muted">· {e.detail}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      <Section name="EXPERIENCE">
+        {site.experience.map((x) => (
+          <div key={x.org} className="job">
+            <p>
+              <strong>{x.role}</strong> <span className="muted">@</span> {x.org}
+            </p>
+            <p className="muted">{x.when}</p>
+            <ul>
+              {x.points.map((pt) => (
+                <li key={pt}>{pt}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </Section>
+
       <Section name="PROJECTS">
         <ul className="rows">
           {projects.map((p) => (
@@ -72,6 +101,29 @@ export default async function Home() {
             </li>
           ))}
         </ul>
+      </Section>
+
+      <Section name="SKILLS">
+        <dl className="opts">
+          {site.skills.map(([flag, what]) => (
+            <div key={flag}>
+              <dt className="flag">{flag}</dt>
+              <dd>{what}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      <Section name="AWARDS">
+        <dl className="opts">
+          {site.awards.map(([when, what]) => (
+            <div key={what}>
+              <dt className="flag">{when}</dt>
+              <dd>{what}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="muted">at G.D. Goenka, The Flagship School</p>
       </Section>
 
       <Section name="HOBBIES">

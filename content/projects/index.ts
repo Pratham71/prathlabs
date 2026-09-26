@@ -46,6 +46,30 @@ export const projects: Project[] = [
       { src: "/projects/vessel-notebook.webp", alt: "Vessel notebook window with a Java cell ready to run", caption: "a cell, a run button, output below", width: 1248, height: 849 },
     ],
   },
+  {
+    slug: "infirmary",
+    title: "INFIRMARY",
+    section: 1,
+    name: "medical-appointment-system",
+    status: "shipped",
+    lang: "Python",
+    summary: "college infirmary appointments and records",
+    repo: "https://github.com/Pratham71/medical-appointment-system",
+    stack: ["FastAPI", "MySQL", "raw SQL", "JWT", "Next.js", "TypeScript", "Tailwind"],
+    images: [],
+  },
+  {
+    slug: "ytdl",
+    title: "YTDL",
+    section: 1,
+    name: "yt-downloader",
+    status: "shipped",
+    lang: "Python",
+    summary: "youtube video and mp3 from the terminal",
+    repo: "https://github.com/Pratham71/YtDownloader",
+    stack: ["Python", "uv", "yt-dlp", "FFmpeg"],
+    images: [],
+  },
 ];
 
 export const getProject = (slug: string) => projects.find((p) => p.slug === slug);

@@ -15,22 +15,42 @@ export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const p = getProject((await params).slug);
   return p
-    ? { title: p.name, description: `${p.name}: ${p.summary}.`, alternates: { canonical: `/projects/${p.slug}` } }
+    ? {
+        title: p.name,
+        description: `${p.name}: ${p.summary}.`,
+        alternates: { canonical: `/projects/${p.slug}` },
+      }
     : {};
 }
 
-export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const p = getProject(slug);
   if (!p) notFound();
   const { default: Body } = await import(`@/content/projects/${slug}.mdx`);
 
   return (
-    <ManPage title={p.title} section={p.section} footLeft={site.handle} footMid={p.lang}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(projectLd(p)) }} />
+    <ManPage
+      title={p.title}
+      section={p.section}
+      footLeft={site.handle}
+      footMid={p.lang}
+    >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: ldJson(projectLd(p)) }}
+      />
       <Section name="NAME" plain>
         <h1 className="project-name">
           <ViewTransition name={`project-${p.slug}`} share="morph">
@@ -47,18 +67,25 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <Body />
         </div>
       </Section>
-      <Section name="FIGURES">
-        <div className="figures">
-          {p.images.map((im, i) => (
-            <figure key={im.src}>
-              <DitherImage src={im.src} alt={im.alt} width={im.width} height={im.height} />
-              <figcaption>
-                <span className="muted">fig.{i + 1}</span> {im.caption}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </Section>
+      {p.images.length > 0 && (
+        <Section name="FIGURES">
+          <div className="figures">
+            {p.images.map((im, i) => (
+              <figure key={im.src}>
+                <DitherImage
+                  src={im.src}
+                  alt={im.alt}
+                  width={im.width}
+                  height={im.height}
+                />
+                <figcaption>
+                  <span className="muted">fig.{i + 1}</span> {im.caption}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </Section>
+      )}
       <Section name="STACK">
         <ul className="chips">
           {p.stack.map((s) => (
@@ -72,7 +99,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <a href={p.repo}>source(1)</a>
           </li>
           <li>
-            <Link href="/" transitionTypes={["nav-back"]}>pratham(1)</Link>
+            <Link href="/" transitionTypes={["nav-back"]}>
+              pratham(1)
+            </Link>
           </li>
         </ul>
       </Section>

@@ -236,14 +236,28 @@ a:hover {
   color: var(--muted);
 }
 
-/* HOBBIES and CONTACT: option lists, like a man page's OPTIONS */
-:is(.hobbies, .contact) div {
+/* EXPERIENCE: one block per job */
+.job ul {
+  margin: 0.4rem 0 0;
+  padding-left: 2ch;
+}
+
+.job + .job {
+  margin-top: 1.2rem;
+}
+
+.opts + .muted {
+  margin-top: 0.6rem;
+}
+
+/* HOBBIES, CONTACT, EDUCATION, SKILLS, AWARDS: option lists, like a man page's OPTIONS */
+:is(.hobbies, .contact, .opts) div {
   display: grid;
   grid-template-columns: 12ch 1fr;
   gap: 1.5ch;
 }
 
-:is(.hobbies, .contact) div + div {
+:is(.hobbies, .contact, .opts) div + div {
   margin-top: 0.4rem;
 }
 
@@ -255,7 +269,7 @@ a:hover {
 }
 
 @media (max-width: 640px) {
-  :is(.hobbies, .contact) div {
+  :is(.hobbies, .contact, .opts) div {
     grid-template-columns: 1fr;
     gap: 0;
   }
