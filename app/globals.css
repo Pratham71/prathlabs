@@ -400,6 +400,10 @@ html[data-boot="out"] .boot {
   animation: boot-globe var(--duration-very-slow) var(--ease-smooth-out) backwards;
 }
 
+.boot-globe--gl {
+  image-rendering: pixelated; /* rendered at 1x; the dither cells stay crisp */
+}
+
 @keyframes boot-globe {
   from {
     opacity: 0;
