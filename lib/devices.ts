@@ -1,12 +1,12 @@
 import { unstable_cache } from "next/cache";
-import { getRedis } from "@/lib/redis";
+import { getRedis, hasRedis } from "@/lib/redis";
 import { redisBeatStore } from "@/lib/beat-store";
 import { liveDevices, readOnline } from "@/lib/heartbeat";
 
 // Cached for 60s so page traffic never multiplies Redis reads; any failure means "show nothing".
 const getOnlineDevices = unstable_cache(
   async () => {
-    if (!process.env.UPSTASH_REDIS_REST_URL) return [];
+    if (!hasRedis()) return [];
     try {
       return await readOnline(redisBeatStore(getRedis()));
     } catch {

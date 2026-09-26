@@ -1,7 +1,6 @@
-import { getRedis } from "@/lib/redis";
+import { getRedis, hasRedis } from "@/lib/redis";
 import { VISITS_KEEP, VISITS_KEY, parseVisit, tallyVisits, visitEntry } from "@/lib/visits";
 
-const hasRedis = () => Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
 // GET: recent visits per region (CDN-cached a minute). Empty when Redis isn't configured or errors.
 export async function GET() {

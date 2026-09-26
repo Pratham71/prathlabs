@@ -1,5 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { getRedis } from "@/lib/redis";
+import { getRedis, hasRedis } from "@/lib/redis";
 
 // Admin session: the password lives only in ADMIN_PASSWORD (server env, never in the bundle). A correct
 // login gets a signed, httpOnly cookie ("<expiry>.<hmac>") good for 12 hours. ADMIN_SECRET signs it.
@@ -44,7 +44,6 @@ export function isAdminRequest(req: Request) {
 }
 
 // Login throttle in Redis; without Redis (local dev) it's off.
-const hasRedis = () => Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 const failKey = (ip: string) => `admin:fail:${ip}`;
 const ALL = "admin:fail:*all";
 

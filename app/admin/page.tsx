@@ -4,6 +4,7 @@ import { ManPage, Section } from "@/components/Man";
 import { AdminLogin, AdminPanel } from "@/components/AdminPanel";
 import { ADMIN_COOKIE, adminConfigured, validSession } from "@/lib/admin";
 import { readSettings } from "@/lib/settings";
+import { hasRedis } from "@/lib/redis";
 
 export const metadata: Metadata = {
   title: "admin",
@@ -20,10 +21,7 @@ export default async function Admin() {
           <AdminPanel
             initial={await readSettings()}
             ready={{
-              redis: Boolean(
-                process.env.UPSTASH_REDIS_REST_URL &&
-                process.env.UPSTASH_REDIS_REST_TOKEN,
-              ),
+              redis: hasRedis(),
               blob: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
               spotify: Boolean(
                 process.env.SPOTIFY_CLIENT_ID &&
