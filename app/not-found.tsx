@@ -10,7 +10,7 @@ export default function NotFound() {
       </Section>
       <Section name="SEE ALSO">
         <p>
-          <Link href="/">pratham(1)</Link>
+          <Link href="/" transitionTypes={["nav-back"]}>pratham(1)</Link>
         </p>
       </Section>
     </ManPage>

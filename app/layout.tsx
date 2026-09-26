@@ -1,10 +1,16 @@
+/// <reference types="react/canary" />
 import type { Metadata, Viewport } from "next";
+import { ViewTransition } from "react";
 import { Martian_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Boot, bootScript } from "@/components/Boot";
 import { site } from "@/content/site";
 import "./globals.css";
+
+// Route changes update this boundary; Link transitionTypes pick the slide direction.
+// Untyped updates (browser back, state changes) don't animate.
+const SLIDE = { "nav-forward": "nav-forward", "nav-back": "nav-back", default: "none" };
 
 const mono = Martian_Mono({
   subsets: ["latin"],
@@ -34,7 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <Boot />
-        {children}
+        <ViewTransition update={SLIDE} default="none">
+          {children}
+        </ViewTransition>
         <Analytics />
         <SpeedInsights />
       </body>

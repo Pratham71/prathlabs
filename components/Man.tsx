@@ -15,7 +15,7 @@ export function ManPage({
   const ref = `${title}(${section})`;
   return (
     <div className="man">
-      <header className="man-edge" aria-label="Manual page header">
+      <header className="man-edge" aria-label="Manual page header" style={{ viewTransitionName: "man-head" }}>
         <span>{ref}</span>
         <span className="mid">{section === 7 ? "Miscellaneous" : "User Commands"}</span>
         <span className="right">{ref}</span>

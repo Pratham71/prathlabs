@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { notFound } from "next/navigation";
 import { ManPage, Section } from "@/components/Man";
 import { StatusMark } from "@/components/StatusMark";
@@ -29,7 +30,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     <ManPage title={p.title} section={p.section} footLeft={site.handle} footMid={p.lang}>
       <Section name="NAME" plain>
         <h1 className="project-name">
-          {p.name} <span className="muted">— {p.summary}</span>
+          <ViewTransition name={`project-${p.slug}`} share="morph">
+            <span className="project-ref">{p.name}</span>
+          </ViewTransition>{" "}
+          <span className="muted">— {p.summary}</span>
         </h1>
       </Section>
       <Section name="STATUS">
@@ -53,7 +57,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <a href={p.repo}>source(1)</a>
           </li>
           <li>
-            <Link href="/">pratham(1)</Link>
+            <Link href="/" transitionTypes={["nav-back"]}>pratham(1)</Link>
           </li>
         </ul>
       </Section>

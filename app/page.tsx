@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { ManPage, Section } from "@/components/Man";
 import { StatusMark } from "@/components/StatusMark";
 import { Devices } from "@/components/Devices";
@@ -44,10 +45,12 @@ export default async function Home() {
         <ul className="rows">
           {projects.map((p) => (
             <li key={p.slug}>
-              <Link className="row" href={`/projects/${p.slug}`}>
-                <span className="ref">
-                  {p.slug}({p.section})
-                </span>
+              <Link className="row" href={`/projects/${p.slug}`} transitionTypes={["nav-forward"]}>
+                <ViewTransition name={`project-${p.slug}`} share="morph">
+                  <span className="ref">
+                    {p.slug}({p.section})
+                  </span>
+                </ViewTransition>
                 <StatusMark kind={p.status} />
                 <span className="summary">{p.summary}</span>
                 <span className="go" aria-hidden="true">

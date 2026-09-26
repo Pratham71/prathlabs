@@ -7,12 +7,14 @@ const LINES: [string, boolean?][] = [
 ];
 const PLAY_MS = LINES.length * 320 + 450;
 const FADE_MS = 150;
+const INTRO_MS = 1400; // page sections' staggered rise (globals.css), then client navs stop replaying it
 
 // Whole lifecycle runs inline before paint, so it never flashes in late and never waits on hydration:
 // start (unless reduced motion, already seen this session, or opened in a background tab), finish on
 // timer or any key/tap, then fire "boot:done" so the heatmap reveal plays where it can be seen.
+// data-intro marks the first paint so sections rise in once; route changes use view transitions instead.
 // CSS also hides the overlay after 2.6s as a failsafe if this script is interrupted.
-export const bootScript = `(function(){try{var d=document.documentElement;if(document.hidden||matchMedia("(prefers-reduced-motion: reduce)").matches||sessionStorage.getItem("${KEY}"))return;sessionStorage.setItem("${KEY}","1");d.dataset.boot="1";var done=function(){if(d.dataset.boot!=="1")return;d.dataset.boot="out";setTimeout(function(){delete d.dataset.boot;dispatchEvent(new Event("boot:done"))},${FADE_MS});removeEventListener("keydown",done);removeEventListener("pointerdown",done)};addEventListener("keydown",done);addEventListener("pointerdown",done);setTimeout(done,${PLAY_MS})}catch(e){}})()`;
+export const bootScript = `(function(){try{var d=document.documentElement;if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;d.dataset.intro="";var intro=function(){setTimeout(function(){delete d.dataset.intro},${INTRO_MS})};if(document.hidden||sessionStorage.getItem("${KEY}"))return intro();sessionStorage.setItem("${KEY}","1");d.dataset.boot="1";var done=function(){if(d.dataset.boot!=="1")return;d.dataset.boot="out";intro();setTimeout(function(){delete d.dataset.boot;dispatchEvent(new Event("boot:done"))},${FADE_MS});removeEventListener("keydown",done);removeEventListener("pointerdown",done)};addEventListener("keydown",done);addEventListener("pointerdown",done);setTimeout(done,${PLAY_MS})}catch(e){}})()`;
 
 // Decorative layer over the fully rendered page; hidden from assistive tech.
 export function Boot() {

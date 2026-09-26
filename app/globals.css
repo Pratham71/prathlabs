@@ -11,7 +11,10 @@
   /* Motion tokens (transitions.dev scale). */
   --duration-stagger: 40ms;
   --duration-quick: 150ms;
+  --duration-micro: 80ms;
   --duration-fast: 250ms;
+  --duration-slow: 400ms;
+  --duration-very-slow: 500ms;
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: ease-out;
   --distance-medium: 12px;
@@ -373,7 +376,7 @@ html[data-boot="out"] .boot {
 
 .boot p {
   opacity: 0;
-  animation: boot-line var(--duration-fast) var(--ease-smooth-out) forwards;
+  animation: rise var(--duration-fast) var(--ease-smooth-out) forwards;
   animation-delay: calc(var(--i) * 320ms);
 }
 
@@ -386,7 +389,7 @@ html[data-boot="out"] .boot {
   color: var(--muted);
 }
 
-@keyframes boot-line {
+@keyframes rise {
   from {
     opacity: 0;
     transform: translateY(var(--distance-medium));
@@ -494,4 +497,91 @@ html[data-boot="out"] .boot {
   font-size: 1rem;
   font-weight: 700;
   line-height: inherit;
+}
+
+.project-ref {
+  display: inline-block;
+}
+
+/* ---------- first paint: sections rise in order (transitions.dev texts reveal) ---------- */
+
+/* Starts as the boot overlay begins fading, or straight away when there is no boot. */
+html[data-intro]:not([data-boot="1"]) :is(.man-edge, .man-section) {
+  animation: rise var(--duration-very-slow) var(--ease-smooth-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--duration-micro));
+}
+
+main > .man-section:nth-child(1) { --i: 1; }
+main > .man-section:nth-child(2) { --i: 2; }
+main > .man-section:nth-child(3) { --i: 3; }
+main > .man-section:nth-child(4) { --i: 4; }
+main > .man-section:nth-child(5) { --i: 5; }
+main > .man-section:nth-child(6) { --i: 6; }
+main > .man-section:nth-child(n + 7) { --i: 7; }
+.man-edge--foot { --i: 8; }
+
+/* ---------- route changes (React ViewTransition) ---------- */
+
+/* Content slides the way you're going; old leaves fast, new arrives after it. */
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation:
+    var(--duration-quick) var(--ease-out) both vt-fade reverse,
+    var(--duration-slow) var(--ease-smooth-out) both vt-slide reverse;
+}
+
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation:
+    var(--duration-fast) var(--ease-out) var(--duration-quick) both vt-fade,
+    var(--duration-slow) var(--ease-smooth-out) both vt-slide;
+}
+
+::view-transition-old(.nav-forward) { --slide: -32px; }
+::view-transition-new(.nav-forward) { --slide: 32px; }
+::view-transition-old(.nav-back) { --slide: 32px; }
+::view-transition-new(.nav-back) { --slide: -32px; }
+
+/* The project's name travels from its row to the page title. */
+::view-transition-group(.morph) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-smooth-out);
+}
+
+::view-transition-image-pair(.morph) {
+  animation-name: vt-via-blur;
+}
+
+/* The header stays put; only its title crossfades. */
+::view-transition-group(man-head) {
+  animation-duration: var(--duration-fast);
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+    filter: blur(var(--blur-medium));
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--slide) 0;
+  }
+}
+
+@keyframes vt-via-blur {
+  30% {
+    filter: blur(var(--blur-medium));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
 }
