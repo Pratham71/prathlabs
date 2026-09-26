@@ -152,6 +152,72 @@ export function bootSfx(events: { at: number; ok: boolean }[]) {
   return true;
 }
 
+// One-shot stings for the themed reboots. They answer a command the visitor just typed, so they play
+// even with the ambient sound off (straight to the speakers, not through the master toggle).
+export function sting(kind: "wasted" | "placed" | "slash") {
+  const ac = ensure();
+  void ac.resume();
+  const t = ac.currentTime + 0.02;
+  const out = ac.createGain();
+  out.gain.value = 0.5;
+  out.connect(ac.destination);
+  const noise = (dur: number) => {
+    const b = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource();
+    src.buffer = b;
+    return src;
+  };
+  const tone = (type: OscillatorType, f0: number, f1: number, at: number, dur: number, peak: number) => {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, at);
+    o.frequency.exponentialRampToValueAtTime(f1, at + dur);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(peak, at + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    o.connect(g).connect(out);
+    o.start(at);
+    o.stop(at + dur + 0.05);
+  };
+  if (kind === "wasted") {
+    // slow-motion hit: a filtered whoosh sinking into a deep boom and a low, detuned chord
+    const n = noise(1.6);
+    const lp = ac.createBiquadFilter();
+    const g = ac.createGain();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(3000, t);
+    lp.frequency.exponentialRampToValueAtTime(120, t + 1.4);
+    g.gain.setValueAtTime(0.35, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
+    n.connect(lp).connect(g).connect(out);
+    n.start(t);
+    tone("sine", 120, 38, t + 0.05, 1.6, 0.9);
+    tone("sawtooth", 55, 52, t + 0.1, 1.8, 0.12);
+    tone("sawtooth", 82.4, 78, t + 0.1, 1.8, 0.09);
+  } else if (kind === "placed") {
+    // three falling square notes: out of the match
+    [659.3, 523.3, 440].forEach((f, i) => tone("square", f, f * 0.98, t + i * 0.14, 0.2, 0.12));
+    tone("sine", 220, 110, t + 0.42, 0.5, 0.3);
+  } else {
+    // blade: a fast swish and a metallic ring
+    const n = noise(0.3);
+    const hp = ac.createBiquadFilter();
+    const g = ac.createGain();
+    hp.type = "bandpass";
+    hp.frequency.setValueAtTime(800, t);
+    hp.frequency.exponentialRampToValueAtTime(6000, t + 0.2);
+    g.gain.setValueAtTime(0.5, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    n.connect(hp).connect(g).connect(out);
+    n.start(t);
+    tone("sine", 2350, 2300, t + 0.12, 0.9, 0.12);
+    tone("sine", 3520, 3480, t + 0.12, 0.7, 0.06);
+  }
+}
+
 // Must be called from a user gesture (click/key) the first time; browsers block audio before one.
 export async function start() {
   wanted = true;

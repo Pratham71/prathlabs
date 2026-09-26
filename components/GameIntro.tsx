@@ -30,7 +30,7 @@ function noise(x: number, y: number) {
 const fbm = (x: number, y: number) => noise(x, y) * 0.6 + noise(x * 2.1, y * 2.1) * 0.3 + noise(x * 4.3, y * 4.3) * 0.1;
 
 // Palm silhouette: curved trunk + drooping fronds. Returns true if (x, y) (aspect-corrected x) is inside.
-function palm(x: number, y: number, px: number, base: number, top: number, lean: number, s: number) {
+export function palm(x: number, y: number, px: number, base: number, top: number, lean: number, s: number) {
   if (y > base || y < top - 0.12 * s) return false;
   const k = (base - y) / (base - top);
   if (y >= top && Math.abs(x - (px + lean * k * k)) < 0.007 * s * (1.3 - k * 0.5)) return true;
@@ -145,27 +145,94 @@ const SCENES: Record<string, Scene> = {
       return 1.2 + 3.4 * Math.pow(y / hz, 1.2);
     },
     sprite(c, w, h, t) {
-      // the battle bus under its balloon, crossing left to right
-      const bx = Math.round(-40 + (t / 5.2) * (w + 80));
-      const by = Math.round(h * 0.34 + Math.sin(t * 1.6) * 2);
-      const r = (x: number, y: number, ww: number, hh: number, col: string) => {
-        c.fillStyle = col;
-        c.fillRect(bx + x, by + y, ww, hh);
-      };
-      for (let dy = -10; dy <= 10; dy++) {
-        const half = Math.round(Math.sqrt(1 - (dy / 10.5) ** 2) * 14);
-        r(-half + 16, dy - 26, half * 2, 1, dy % 5 === 0 ? "#ffe03a" : "#2a6be0");
+      const at = (tt: number) => ({ x: Math.round(-50 + (tt / 5.2) * (w + 100)), y: Math.round(h * 0.2 + Math.sin(tt * 1.6) * 2) });
+      // players dropping out of the back: freefall, then the glider opens and they drift down
+      for (let i = 0; i < JUMPERS; i++) {
+        const t0 = 1.3 + i * 0.42;
+        if (t < t0) continue;
+        const dt = t - t0;
+        const from = at(t0);
+        const fall = dt < 0.55 ? 34 * dt * dt * 3 : 31 + (dt - 0.55) * 7;
+        const x = from.x + 4 + (1 - Math.exp(-dt * 2)) * (6 + (i % 3) * 3) + Math.sin(dt * 2 + i) * (dt > 0.55 ? 2 : 0);
+        const y = from.y + 8 + fall;
+        if (y > h) continue;
+        if (dt > 0.55) glider(c, Math.round(x), Math.round(y) - 6, GLIDERS[i % GLIDERS.length]);
+        person(c, Math.round(x), Math.round(y), i);
       }
-      r(10, -15, 1, 10, "#16307e");
-      r(22, -15, 1, 10, "#16307e");
-      r(2, -5, 28, 11, "#3a7bd5");
-      r(2, -5, 28, 2, "#ffe03a");
-      for (let k = 0; k < 5; k++) r(4 + k * 5, -1, 3, 3, "#e8f4ff");
-      r(6, 6, 4, 2, "#0a1440");
-      r(22, 6, 4, 2, "#0a1440");
+      const { x, y } = at(t);
+      bus(c, x, y, t);
     },
   },
 };
+
+// ---- battle bus pieces (4px cells) ----
+const JUMPERS = 8;
+const GLIDERS = ["#ff4f9a", "#ffe03a", "#5fe36b", "#3d9bff", "#b65cf5", "#ff8a1f", "#ffffff", "#3fe0d0"];
+const BUS = [
+  "......kkkkkkkkkkkkkkkkkkkkkkkkkk.....",
+  ".....kRRRRRRRRRRRRRRRRRRRRRRRRRRk....",
+  "....kBBBBBBBBBBBBBBBBBBBBBBBBBBBBk...",
+  "...kBBwWWwWWwWWwWWwWWwWWwWWBBwWWWBk..",
+  "...kBBwWWwWWwWWwWWwWWwWWwWWBBwWWWWBk.",
+  "..GkBBwwwwwwwwwwwwwwwwwwwwwBBwwwwwBk.",
+  "..GkYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYk.",
+  "..GkBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBHBk",
+  "...kbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbk",
+  "....kkkTTTkkkkkkkkkkkkkkkkkkTTTkkkkk.",
+  "......TTTTT...............TTTTT......",
+  ".......TTT.................TTT.......",
+];
+const BUS_COL: Record<string, string> = {
+  k: "#0a1440", R: "#e8f0ff", B: "#2f6fd8", b: "#1f4fa8", W: "#cfe8ff", w: "#16307e",
+  Y: "#ffe03a", H: "#fff3a0", T: "#111827", G: "#9aa4b4",
+};
+
+function bus(c: CanvasRenderingContext2D, x: number, y: number, t: number) {
+  const px = (dx: number, dy: number, col: string) => {
+    c.fillStyle = col;
+    c.fillRect(x + dx, y + dy, 1, 1);
+  };
+  // balloon: striped envelope, a yellow band, ropes down to the roof
+  const cx = 18, cy = -16, rx = 15, ry = 12;
+  for (let dy = -ry; dy <= ry + 3; dy++) {
+    const k = dy <= ry ? Math.sqrt(Math.max(0, 1 - (dy / ry) ** 2)) : 0;
+    const half = dy <= ry * 0.6 ? Math.round(k * rx) : Math.round(k * rx * (1 - (dy - ry * 0.6) / (ry * 1.1)));
+    for (let dx = -half; dx <= half; dx++) {
+      const edge = Math.abs(dx) === half || dy === -ry;
+      const band = dy >= ry * 0.45 && dy <= ry * 0.62;
+      const stripe = Math.floor((dx + 32) / 4) % 2 === 0;
+      px(cx + dx, cy + dy, edge ? "#0a1440" : band ? "#ffe03a" : stripe ? "#2a6be0" : "#5fa0ff");
+    }
+  }
+  for (const [ax, bx] of [[9, 7], [27, 29]]) {
+    for (let i = 0; i <= 6; i++) px(Math.round(ax + ((bx - ax) * i) / 6), cy + ry - 1 + i, "#0a1440");
+  }
+  BUS.forEach((row, dy) => [...row].forEach((ch, dx) => ch !== "." && px(dx, dy, BUS_COL[ch])));
+  // thrusters at the back, flickering
+  const f = Math.floor(t * 20) % 2;
+  for (const [dx, dy, col] of [[1, 5, "#ff8a1f"], [1, 7, "#ff8a1f"], [0, 6, "#ffd23a"], [0 - f, 5, "#ffd23a"], [0 - f, 7, "#ff8a1f"], [-1 - f, 6, "#ff8a1f"]] as [number, number, string][]) px(dx, dy, col);
+}
+
+function person(c: CanvasRenderingContext2D, x: number, y: number, i: number) {
+  c.fillStyle = "#f1c27d";
+  c.fillRect(x, y, 1, 1);
+  c.fillStyle = ["#1d2d66", "#7a1f2b", "#2f5a2a", "#3a3a44"][i % 4];
+  c.fillRect(x, y + 1, 1, 2);
+  c.fillRect(x - 1, y + 1, 1, 1);
+  c.fillRect(x + 1, y + 1, 1, 1);
+}
+
+// the default-style hang glider: a wide chevron wing with a keel, lines down to the rider
+function glider(c: CanvasRenderingContext2D, x: number, y: number, col: string) {
+  const wing: [number, number][] = [[0, 0], [-1, 1], [1, 1], [-2, 1], [2, 1], [-3, 2], [3, 2], [-4, 2], [4, 2], [-5, 3], [5, 3]];
+  c.fillStyle = "#0a1440";
+  for (const [dx, dy] of wing) c.fillRect(x + dx, y + dy + 1, 1, 1);
+  c.fillStyle = col;
+  for (const [dx, dy] of wing) c.fillRect(x + dx, y + dy, 1, 1);
+  c.fillStyle = "rgba(10,20,64,0.8)";
+  c.fillRect(x - 2, y + 3, 1, 2);
+  c.fillRect(x + 2, y + 3, 1, 2);
+}
 
 export function GameIntro() {
   const ref = useRef<HTMLCanvasElement>(null);

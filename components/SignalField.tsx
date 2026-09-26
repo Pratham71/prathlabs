@@ -44,7 +44,7 @@ void main(){
   vec2 e = px / res;
   level *= smoothstep(0.0, 0.18, e.x) * smoothstep(1.0, 0.7, e.x) * smoothstep(0.0, 0.25, e.y) * smoothstep(1.0, 0.75, e.y);
   float ink = step(bayer4(c) + 0.04, level); // +0.04: empty stays empty (no faint grid)
-  float a = ink * (0.3 + 0.35 * glow);
+  float a = ink * (0.2 + 0.35 * glow); // quieter under the name so the dots read
   gl_FragColor = vec4(mix(dim, warm, glow) * a, a);
 }`;
 

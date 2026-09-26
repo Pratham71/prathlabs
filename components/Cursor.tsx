@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ditherImage } from "@/lib/dither";
-import { onThemeChange } from "@/lib/theme";
+import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
+import { cursorSprite } from "@/lib/sprites";
 
 type Mode = "block" | "caret" | "frame";
 
@@ -50,8 +51,20 @@ export function Cursor() {
     if (!el || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     const html = document.documentElement;
     const snap = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let amber = getComputedStyle(html).getPropertyValue("--amber").trim();
-    const offTheme = onThemeChange(() => (amber = getComputedStyle(html).getPropertyValue("--amber").trim()));
+    let amber = "";
+    // station themes swap the block/caret for a pixel sprite at the pointer (frames stay)
+    const retheme = () => {
+      amber = getComputedStyle(html).getPropertyValue("--amber").trim();
+      const t = currentTheme();
+      const s = isGame(t) ? cursorSprite(t) : null;
+      if (!s) return void delete el.dataset.sprite;
+      el.dataset.sprite = "";
+      el.style.setProperty("--sprite", `url(${s.url})`);
+      el.style.setProperty("--hx", `${s.hx}px`);
+      el.style.setProperty("--hy", `${s.hy}px`);
+    };
+    retheme();
+    const offTheme = onThemeChange(retheme);
     const want = { x: -100, y: -100, w: 10, h: 18 };
     const now = { ...want };
     const mouse = { x: -100, y: -100 };
@@ -141,6 +154,7 @@ export function Cursor() {
     <div ref={ref} className="cursor" aria-hidden="true" data-mode="block">
       <span className="cursor-tl" />
       <span className="cursor-br" />
+      <i className="cursor-sprite" />
       {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL */}
       {image && <img className="cursor-preview" src={image} alt="" />}
     </div>

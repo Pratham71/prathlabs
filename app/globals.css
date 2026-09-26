@@ -20,6 +20,7 @@
   --distance-medium: 12px;
   --blur-medium: 3px;
 
+  --name: var(--text); /* the dotted name; game themes paint it in their accent */
   --indent: 5ch;
   --measure: 80ch;
   color-scheme: dark;
@@ -769,6 +770,33 @@ html[data-cursor] * {
   opacity: 1;
 }
 
+/* station themes: pixel sprite at the pointer instead of the block/caret */
+.cursor-sprite {
+  display: none;
+  position: absolute;
+  left: calc(var(--mx, 0px) - var(--hx, 0px));
+  top: calc(var(--my, 0px) - var(--hy, 0px));
+  width: 32px;
+  height: 32px;
+  background: var(--sprite) no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.6));
+}
+
+.cursor[data-sprite] .cursor-sprite {
+  display: block;
+}
+
+.cursor[data-sprite]:is([data-mode="block"], [data-mode="caret"]) {
+  background: transparent;
+  mix-blend-mode: normal;
+  animation: none;
+}
+
+html[data-theme="gtavi"] .cursor-sprite {
+  filter: drop-shadow(0 0 4px #ff4fa3);
+}
+
 .cursor-preview {
   position: absolute;
   left: calc(var(--mx, 0px) + 20px);
@@ -1227,6 +1255,38 @@ html[data-theme="fortnite"] {
   color: #e2383b;
 }
 
+/* fortnite: the placement number in bus yellow on a dark plate */
+.fx-banner[data-fx="placed"] .fx-title {
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
+  font-size: clamp(3rem, 12vw, 8rem);
+  color: #ffe03a;
+  text-shadow: 0 4px 0 #0a1440;
+}
+
+.fx-banner[data-fx="placed"] .fx-sub {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+/* blade: one red cut across the screen */
+.fx-banner[data-fx="slash"] {
+  background: none;
+}
+
+.fx-banner[data-fx="slash"]::after {
+  content: "";
+  position: fixed;
+  left: -10vw;
+  right: -10vw;
+  top: 50%;
+  height: 5px;
+  background: linear-gradient(90deg, #e3121b, #fff 50%, #e3121b);
+  box-shadow: 0 0 18px #e3121b;
+  rotate: -18deg;
+  transform-origin: left;
+  animation: gi-cut 200ms cubic-bezier(0.7, 0, 0.2, 1) both;
+}
+
 @keyframes fx-life {
   0% { opacity: 0; }
   10%, 80% { opacity: 1; }
@@ -1301,6 +1361,21 @@ html[data-theme="fortnite"] {
   color: var(--muted);
 }
 
+/* ---------- game fonts ----------
+   The real faces aren't bundled (Burbank is a paid House Industries font; Pricedown is Typodermic's).
+   Put licensed files at these paths (or have them installed) and they take over; Anton stands in. */
+@font-face {
+  font-family: "Pricedown";
+  src: local("Pricedown"), local("Pricedown Bl"), url("/fonts/pricedown.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Burbank Big Condensed";
+  src: local("Burbank Big Condensed Black"), local("BurbankBigCondensed-Black"), url("/fonts/burbank-big-condensed-black.woff2") format("woff2");
+  font-display: swap;
+}
+
 /* ---------- game themes: intros (GameIntro + Boot markup) ---------- */
 
 .gi-scene,
@@ -1340,8 +1415,9 @@ html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-t
   left: 2rem;
   bottom: 1.25rem;
   margin: 0;
+  padding: 0.15rem 0.6rem;
   color: #fff;
-  opacity: 0.7;
+  background: rgb(0 0 0 / 0.6);
   z-index: 1;
 }
 
@@ -1360,8 +1436,9 @@ html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-t
   display: flex;
   align-items: center;
   gap: 1ch;
+  padding: 0.25rem 0.7rem;
   color: #fff;
-  text-shadow: 0 1px 2px #000;
+  background: rgb(0 0 0 / 0.6);
 }
 
 .gi-spin {
@@ -1384,7 +1461,7 @@ html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-t
   position: absolute;
   left: 2rem;
   bottom: 4.5rem;
-  font-family: var(--font-ls), sans-serif;
+  font-family: "Pricedown", var(--font-ls), sans-serif;
   font-size: clamp(3.5rem, 11vw, 9rem);
   line-height: 0.92;
   text-transform: uppercase;
@@ -1511,8 +1588,8 @@ html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-t
 }
 
 .gi-fortnite .gi-title {
-  margin-top: 30vh;
-  font-family: var(--font-bus), sans-serif;
+  margin-top: 36vh;
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
   font-size: clamp(3.5rem, 13vw, 10rem);
   line-height: 1;
   text-transform: uppercase;
@@ -1523,11 +1600,26 @@ html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-t
 }
 
 .gi-fortnite .gi-sub {
+  display: inline-block;
   margin-top: 1rem;
+  padding: 0.3rem 1rem;
   color: #fff;
+  background: rgb(10 20 64 / 0.78);
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  text-shadow: 0 2px 0 #0a1440;
+  transform: skewX(-8deg);
+}
+
+/* the title sits on a soft dark pool so it reads over bright cloud */
+.gi-fortnite::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 55% 28% at 50% 50%, rgb(10 20 64 / 0.55), transparent 70%);
+}
+
+.gi-fortnite > * {
+  position: relative;
 }
 
 @keyframes gi-pop {
@@ -1641,13 +1733,17 @@ html[data-boot="out"][data-theme="fortnite"] .boot {
 
 /* ---------- game themes: page accents (ThemeAccents) ---------- */
 
+html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-theme="fortnite"]) {
+  --name: var(--amber);
+}
+
 .acc {
   display: none;
 }
 
 /* los santos: mission-title section labels, wanted stars that fill as you scroll */
 html[data-theme="gtav"] .man-label {
-  font-family: var(--font-ls), sans-serif;
+  font-family: "Pricedown", var(--font-ls), sans-serif;
   font-weight: 400;
   font-size: 1.2rem;
   letter-spacing: 0.03em;
@@ -1783,7 +1879,7 @@ html[data-theme="blade"] .acc-drips {
 /* battle bus: labels as tilted banners, rarity on project rows, health and shield bars */
 html[data-theme="fortnite"] .man-label {
   display: inline-block;
-  font-family: var(--font-bus), sans-serif;
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
   font-weight: 400;
   font-size: 1.15rem;
   letter-spacing: 0.04em;
@@ -1791,16 +1887,6 @@ html[data-theme="fortnite"] .man-label {
   background: var(--amber);
   padding: 0.15rem 0.7rem 0;
   transform: skewX(-8deg);
-}
-
-html[data-theme="fortnite"] .rows li:nth-child(1) .row {
-  box-shadow: inset 3px 0 0 #f7a93b; /* legendary */
-  background: linear-gradient(90deg, color-mix(in srgb, #f7a93b 14%, transparent), transparent 60%);
-}
-
-html[data-theme="fortnite"] .rows li:nth-child(2) .row {
-  box-shadow: inset 3px 0 0 #b65cf5; /* epic */
-  background: linear-gradient(90deg, color-mix(in srgb, #b65cf5 14%, transparent), transparent 60%);
 }
 
 html[data-theme="fortnite"] .acc-hud {
@@ -1844,6 +1930,146 @@ html[data-theme="fortnite"] .acc-hud {
   from {
     transform: scaleX(0.08);
   }
+}
+
+/* ---------- game themes: page structure ----------
+   Same markup, rebuilt per theme. NAME (with the signal field) stays open in every theme. */
+
+/* los santos: pause-menu panels; the selected row is a white bar with black text */
+html[data-theme="gtav"] main > .man-section:not(:has(.signal)) {
+  background: rgb(0 0 0 / 0.5);
+  border-top: 3px solid var(--amber);
+  padding: 0.8rem 1.1rem 1.1rem;
+}
+
+html[data-theme="gtav"] main > .man-section:not(:has(.signal)) > .body {
+  padding-left: 1ch;
+}
+
+html[data-theme="gtav"] :is(.rows, .rows li) {
+  border-color: transparent;
+}
+
+html[data-theme="gtav"] .row:is(:hover, :focus-visible) {
+  background: #f0f0f0;
+}
+
+html[data-theme="gtav"] .row:is(:hover, :focus-visible) :is(.ref, .summary, .status, .go) {
+  color: #0a0a0a;
+}
+
+/* vice city: every section a neon-framed sign */
+html[data-theme="gtavi"] main > .man-section:not(:has(.signal)) {
+  border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+  border-radius: 8px;
+  padding: 0.8rem 1.1rem 1.1rem;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--amber) 22%, transparent), inset 0 0 18px color-mix(in srgb, var(--amber) 10%, transparent);
+}
+
+html[data-theme="gtavi"] .row:is(:hover, :focus-visible) .ref {
+  text-shadow: 0 0 8px var(--amber);
+}
+
+/* battle bus: projects become item-shop cards by rarity; sections sit on storm-blue plates */
+html[data-theme="fortnite"] main > .man-section:not(:has(.signal)) {
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border: 2px solid var(--line);
+  padding: 0.8rem 1.1rem 1.1rem;
+}
+
+html[data-theme="fortnite"] .rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+  border: 0;
+}
+
+html[data-theme="fortnite"] .rows li {
+  border: 0;
+}
+
+html[data-theme="fortnite"] .row {
+  grid-template-columns: 1fr auto;
+  align-content: end;
+  gap: 0.35rem 1ch;
+  min-height: 9rem;
+  padding: 1rem;
+  color: #fff;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  transition: transform var(--duration-fast) var(--ease-smooth-out), filter var(--duration-quick) var(--ease-out);
+}
+
+html[data-theme="fortnite"] .row:is(:hover, :focus-visible) {
+  transform: translateY(-3px);
+  filter: brightness(1.12);
+}
+
+html[data-theme="fortnite"] .rows li:nth-child(1) .row {
+  background: radial-gradient(circle at 50% 25%, #f9c85e, #c46a12 75%); /* legendary */
+}
+
+html[data-theme="fortnite"] .rows li:nth-child(2) .row {
+  background: radial-gradient(circle at 50% 25%, #d58bff, #6a24b3 75%); /* epic */
+}
+
+html[data-theme="fortnite"] .row .ref {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  font-family: "Burbank Big Condensed", var(--font-ls), sans-serif;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.35);
+}
+
+html[data-theme="fortnite"] .row .summary {
+  grid-column: 1 / -1;
+  color: #fff;
+}
+
+html[data-theme="fortnite"] .row :is(.status, .go) {
+  color: rgb(255 255 255 / 0.85);
+}
+
+/* blade: sections cut apart by a red slash; rows get a blade sweep on hover */
+html[data-theme="blade"] main > .man-section + .man-section::before {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-bottom: 1.6rem;
+  background: linear-gradient(90deg, transparent, var(--amber) 30%, #d9dbe0 50%, var(--amber) 70%, transparent);
+  transform: skewY(-1.5deg);
+}
+
+html[data-theme="blade"] .row {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--amber) 22%, transparent) 0 50%, transparent 50%) no-repeat;
+  background-size: 0% 100%;
+  transition: background-size var(--duration-slow) var(--ease-smooth-out);
+}
+
+html[data-theme="blade"] .row:is(:hover, :focus-visible) {
+  background-size: 200% 100%;
+}
+
+/* scenery behind the page (ThemeScenery): station themes only, kept dim so copy stays on top */
+.scenery {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  image-rendering: pixelated;
+  display: none;
+}
+
+html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"]) .scenery {
+  display: block;
+  opacity: 0.55;
+}
+
+html[data-theme="gtavi"] .scenery {
+  opacity: 0.45;
 }
 
 /* ---------- theme radio (RadioPlayer) ---------- */
@@ -1962,6 +2188,7 @@ html[data-boot] .radio {
   .rail,
   .radio,
   .acc,
+  .scenery,
   .skip,
   .signal,
   .dot-name canvas,

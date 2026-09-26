@@ -1,7 +1,7 @@
 /// <reference types="react/canary" />
 import type { Metadata, Viewport } from "next";
 import { ViewTransition } from "react";
-import { Anton, Kaushan_Script, Luckiest_Guy, Martian_Mono } from "next/font/google";
+import { Anton, Kaushan_Script, Martian_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Boot, bootScript } from "@/components/Boot";
@@ -13,6 +13,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { SideRail } from "@/components/SideRail";
 import { RadioPlayer } from "@/components/RadioPlayer";
 import { ThemeAccents } from "@/components/ThemeAccents";
+import { ThemeIcon } from "@/components/ThemeIcon";
+import { ThemeScenery } from "@/components/ThemeScenery";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -31,7 +33,6 @@ const mono = Martian_Mono({
 // actually renders text in it, so the default theme pays nothing.
 const anton = Anton({ weight: "400", subsets: ["latin"], display: "swap", preload: false, variable: "--font-ls" });
 const kaushan = Kaushan_Script({ weight: "400", subsets: ["latin"], display: "swap", preload: false, variable: "--font-vice" });
-const luckiest = Luckiest_Guy({ weight: "400", subsets: ["latin"], display: "swap", preload: false, variable: "--font-bus" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -45,7 +46,7 @@ export const viewport: Viewport = { themeColor: "#0a0d10", colorScheme: "dark" }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${mono.variable} ${anton.variable} ${kaushan.variable} ${luckiest.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${mono.variable} ${anton.variable} ${kaushan.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
@@ -61,6 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SideRail />
         <RadioPlayer />
         <ThemeAccents />
+        <ThemeIcon />
+        <ThemeScenery />
         <div className="dock">
           <CommandPalette />
           <ThemeToggle />

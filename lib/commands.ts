@@ -14,7 +14,7 @@ export type Action =
   | { type: "close" }
   | { type: "shake" };
 
-export type Fx = "wasted" | "passed" | "victory" | "dance";
+export type Fx = "wasted" | "passed" | "victory" | "dance" | "placed" | "slash";
 export type Result = { out: string[]; action?: Action };
 
 const FORTUNES = [

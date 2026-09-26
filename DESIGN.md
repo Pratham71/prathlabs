@@ -164,3 +164,9 @@ Tokens follow transitions.dev: stagger 40ms, micro 80ms, quick 150ms, fast 250ms
 - `reboot` in the prompt replays the intro.
 - **Blade** (Marvel): replaces red alert. Blood-rave intro (strobes, crowd, the sprinklers, one silver slash), exit cuts the screen along the diagonal; steel labels with red underscores, blood drips from the top edge; "blood rave radio" with an acid-techno loop and a slower industrial one.
 - **Real songs**: list files in `content/music.ts` (files in `public/music/<theme>/`). They play before the synth loops, advance on end, and a missing file is skipped. Commercial recordings: hosting them is the owner's call.
+- **Structure per station theme** (CSS over the same markup): los santos pause-menu panels with a white selection bar; vice city neon-framed signs; battle bus plates and item-shop rarity cards for projects; blade slash dividers and a red sweep on rows.
+- **Scenery** (`ThemeScenery`, behind the page): blade blood moon and bats at random; vice palms and a striped sun; los santos skyline with sweeping searchlights.
+- **Cursors / tab icon**: pixel sprites per station theme (`lib/sprites.ts`: reticle, neon arrow, pickaxe, blade); the favicon follows the theme.
+- **Reboot**: GTA themes show WASTED with a slow-motion boom; Fortnite shows "#N, you placed" with this week's visitor count; blade cuts the screen. Then the intro replays.
+- **Name**: `--name` token; the dotted name takes the accent in station themes. Finer dot grid for legibility.
+- **Fonts**: Pricedown (GTA) and Burbank Big Condensed (Fortnite) are used when installed or placed at `public/fonts/`; Anton stands in.

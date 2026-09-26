@@ -15,10 +15,12 @@ const FX_TEXT: Record<Exclude<Fx, "dance">, [string, string?]> = {
   wasted: ["wasted"],
   passed: ["mission passed", "respect +"],
   victory: ["#1 victory royale"],
+  placed: ["#1", "you placed"],
+  slash: [""],
 };
 
 // Full-screen game moments from the eggs: a banner over the page for ~2.6s, or a little dance.
-function playFx(name: Fx) {
+function playFx(name: Fx, text?: [string, string?]) {
   if (name === "dance") {
     document.querySelector(".man")?.animate(
       [{ transform: "none" }, { transform: "translateY(-6px) rotate(-0.6deg)" }, { transform: "none" }, { transform: "translateY(-6px) rotate(0.6deg)" }, { transform: "none" }],
@@ -31,12 +33,46 @@ function playFx(name: Fx) {
   el.className = "fx-banner";
   el.dataset.fx = name;
   el.setAttribute("role", "status");
-  const [title, sub] = FX_TEXT[name];
+  const [title, sub] = text ?? FX_TEXT[name];
   el.innerHTML = `<p class="fx-title"></p>${sub ? '<p class="fx-sub"></p>' : ""}`;
   el.querySelector(".fx-title")!.textContent = title;
   if (sub) el.querySelector(".fx-sub")!.textContent = sub;
   document.body.append(el);
   setTimeout(() => el.remove(), 2600);
+}
+
+// Everyone who dropped in this week (the globe's region tally), for Fortnite's "you placed #N".
+async function visitorCount() {
+  try {
+    const list: { n: number }[] = await (await fetch("/api/visits")).json();
+    return Math.max(1, list.reduce((a, v) => a + v.n, 0));
+  } catch {
+    return 1;
+  }
+}
+
+// `reboot` replays the intro. The station themes go out the way their games do first.
+async function reboot() {
+  const theme = document.documentElement.dataset.theme;
+  const audio = await import("@/lib/audio");
+  let wait = 400;
+  if (theme === "gtav" || theme === "gtavi") {
+    playFx("wasted");
+    audio.sting("wasted");
+    wait = 1800;
+  } else if (theme === "fortnite") {
+    const n = await visitorCount();
+    playFx("placed", [`#${n}`, `you placed. ${n} ${n === 1 ? "player" : "players"} dropped in this week`]);
+    audio.sting("placed");
+    wait = 2000;
+  } else if (theme === "blade") {
+    playFx("slash");
+    audio.sting("slash");
+    wait = 900;
+  }
+  // the inline boot script plays the intro again once this session hasn't "seen" it
+  sessionStorage.removeItem("boot-seen");
+  setTimeout(() => location.reload(), wait);
 }
 
 // A terminal prompt over the page: `:`, `/` or Ctrl/Cmd+K opens it (also the dock button).
@@ -111,9 +147,8 @@ export function CommandPalette() {
       });
     }
     if (a.type === "reboot") {
-      // the inline boot script plays the intro again once this session hasn't "seen" it
-      sessionStorage.removeItem("boot-seen");
-      setTimeout(() => location.reload(), 400);
+      dialog.current?.close();
+      void reboot();
     }
     if (a.type === "close") dialog.current?.close();
     if (a.type === "nav") {

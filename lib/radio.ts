@@ -292,7 +292,7 @@ function bassNote(o: Out, m: number, t: number, dur: number, sub: boolean) {
 
 // ---- transport ----
 // One playlist per station: real files (content/music.ts) first, then the synth loops.
-export type Entry = { title: string; artist?: string; src?: string; synth?: Track };
+export type Entry = { title: string; artist?: string; src?: string; start?: number; synth?: Track };
 export function playlist(theme: Theme): Entry[] {
   return [...(MUSIC[theme] ?? []), ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
 }
@@ -418,7 +418,11 @@ export async function play(theme: Theme, index = state.index) {
   if (e.src) {
     o.bus.gain.setTargetAtTime(0, o.ac.currentTime, 0.05);
     const el = fileEl(o);
-    if (!el.src.endsWith(e.src)) el.src = e.src; // same src: resume where it paused
+    // new song: start at its peak (media fragment #t=); same song: resume where it paused
+    if (el.dataset.src !== e.src) {
+      el.dataset.src = e.src;
+      el.src = e.start ? `${e.src}#t=${e.start}` : e.src;
+    }
     void el.play().catch(() => {});
   } else {
     o.bus.gain.setTargetAtTime(1, o.ac.currentTime, 0.05);

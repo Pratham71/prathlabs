@@ -38,7 +38,10 @@ export function DotName({ text }: { text: string }) {
     const tilt = { x: 0, y: 0 };
     const colors = () => {
       const css = getComputedStyle(html);
-      return { text: css.getPropertyValue("--text").trim(), amber: css.getPropertyValue("--amber").trim() };
+      // --name is --text normally and the accent in the game themes; hot dots take whichever it isn't
+      const name = css.getPropertyValue("--name").trim() || css.getPropertyValue("--text").trim();
+      const amber = css.getPropertyValue("--amber").trim();
+      return { text: name, amber: name === amber ? css.getPropertyValue("--text").trim() : amber };
     };
     let col = colors();
 
@@ -49,7 +52,7 @@ export function DotName({ text }: { text: string }) {
       built = key;
       const cs = getComputedStyle(el);
       fs = parseFloat(cs.fontSize);
-      P = Math.max(3, Math.round(fs / 11));
+      P = Math.max(2, Math.round(fs / 15)); // fine grid: letters stay readable as dots
       const B = Math.round(fs * 0.6); // bleed so tilted/lifted dots aren't clipped
       W = Math.ceil(r.width + 2 * B);
       H = Math.ceil(r.height + 2 * B);
@@ -159,7 +162,7 @@ export function DotName({ text }: { text: string }) {
       }
       const [cx, sx, cy, sy] = [Math.cos(tilt.x), Math.sin(tilt.x), Math.cos(tilt.y), Math.sin(tilt.y)];
       const F = fs * 14;
-      const depth = fs * 0.28;
+      const depth = fs * 0.12; // shallow: deeper bulges distorted the letterforms
       const reach = fs * 1.1;
       const buckets: Path2D[] = Array.from({ length: 10 }, () => new Path2D());
 
@@ -191,8 +194,8 @@ export function DotName({ text }: { text: string }) {
         const s = F / (F - z2);
         const px = W / 2 + x1 * s;
         const py = H / 2 + y2 * s;
-        const wave = still ? 1 : 0.62 + 0.38 * (0.5 + 0.5 * Math.sin(t * 1.4 - p.d * 6));
-        const r = P * 0.45 * Math.sqrt(p.c) * s * (0.5 + 0.5 * k);
+        const wave = still ? 1 : 0.85 + 0.15 * (0.5 + 0.5 * Math.sin(t * 1.4 - p.d * 6));
+        const r = P * 0.5 * Math.sqrt(p.c) * s * (0.5 + 0.5 * k);
         const b = Math.min(4, Math.floor(wave * k * 5)); // 0..4 alpha steps
         const path = buckets[(hot > 0.2 ? 5 : 0) + b];
         path.moveTo(px + r, py);
@@ -202,7 +205,7 @@ export function DotName({ text }: { text: string }) {
       ctx.clearRect(0, 0, W, H);
       buckets.forEach((path, i) => {
         ctx.fillStyle = i >= 5 ? col.amber : col.text;
-        ctx.globalAlpha = 0.2 + 0.2 * (i % 5);
+        ctx.globalAlpha = 0.5 + 0.125 * (i % 5); // floor at half: no near-invisible dots
         ctx.fill(path);
       });
       ctx.globalAlpha = 1;

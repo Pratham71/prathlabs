@@ -5,7 +5,8 @@ import type { Theme } from "@/lib/theme";
 // Leave a theme's list empty to keep only the synth loops. If a file is missing, the player skips it.
 //
 // Heads-up: these are commercial recordings. Hosting them on a public site is your call (DMCA risk).
-export type RealTrack = { title: string; artist: string; src: string };
+// `start` (seconds) is where the song begins when it comes on: set it to the drop, chorus or hook.
+export type RealTrack = { title: string; artist: string; src: string; start?: number };
 
 export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
   gtav: [
