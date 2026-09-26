@@ -1538,8 +1538,8 @@ html:is([data-theme="blade"], [data-theme="gtav"], [data-theme="gtavi"], [data-t
 }
 
 /* blade: silver title, cut by a red slash when the blade crosses the screen */
-.gi-blade {
-  display: grid;
+html[data-theme="blade"] .gi-blade {
+  display: grid; /* scoped: a bare .gi-blade rule would beat .gi's display: none in every intro */
   place-content: center;
   text-align: center;
 }
