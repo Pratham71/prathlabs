@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx eslint .
+      - run: npx tsc --noEmit
+      - run: npx jest
+      - run: npm run build
+        env:
+          # read-only, for the ACTIVITY heatmap at build time
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
