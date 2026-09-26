@@ -141,7 +141,7 @@ export function run(line: string, home = "your nearest edge"): Result {
     case "date":
       return { out: [new Date().toString()] };
     case "ping":
-      return { out: [`PING prathlab.com: 64 bytes from ${home}: time=2 ms`] };
+      return { out: [`PING prathlabs.com: 64 bytes from ${home}: time=2 ms`] };
     // --- easter eggs ---
     case "spotify":
     case "np":

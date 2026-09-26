@@ -1,6 +1,6 @@
 # prathlab
 
-Pratham Nagpal's portfolio, written as a Unix man page: [prathlab.com](https://www.prathlab.com).
+Pratham Nagpal's portfolio, written as a Unix man page: [prathlabs.com](https://www.prathlabs.com).
 
 Next.js 16 (App Router), React 19, no UI framework. Dithered canvases, a command prompt, live homelab
 status, a Spotify "now playing", nine themes (eight of them game/film themed, each with an intro,
@@ -55,7 +55,7 @@ secrets Sensitive, redeploy afterwards). Locally, `.env.local` (git-ignored), or
 
 | Variable | What for | Where it comes from |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | canonical URL, sitemap, OG | `https://www.prathlab.com` |
+| `NEXT_PUBLIC_SITE_URL` | canonical URL, sitemap, OG | `https://www.prathlabs.com` |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` (or `KV_REST_API_URL` / `_TOKEN`) | visits globe, homelab rail, admin settings, login throttle | Vercel → Storage → Upstash for Redis → connect (filled in automatically) |
 | `BLOB_READ_WRITE_TOKEN` | songs and sounds uploaded in /admin | Vercel → Storage → Blob → connect, **tick "Add a read-write token env var"** |
 | `ADMIN_PASSWORD` | the `sudo su` / `/admin` password | you choose it; make it long |
@@ -72,7 +72,7 @@ Logging out of /admin ends every admin session (a copied cookie stops working to
 1. vercel.com/new → import this repo. Defaults are right (Next.js).
 2. Storage: connect Upstash Redis and Blob (with the read-write token box ticked).
 3. Add the env vars above, then redeploy.
-4. Settings → Domains: add `prathlab.com` and `www.prathlab.com`, set the DNS records Vercel shows.
+4. Settings → Domains: add `prathlabs.com` and `www.prathlabs.com`, set the DNS records Vercel shows.
 5. Enable Analytics and Speed Insights (both cookieless: no consent banner needed).
 6. Google Search Console: add the domain, submit `/sitemap.xml`.
 
