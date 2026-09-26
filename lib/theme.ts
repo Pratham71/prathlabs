@@ -37,6 +37,8 @@ export function setTheme(name: Theme) {
   };
   try {
     localStorage.setItem("theme", name);
+    // the default this pick was made under; when /admin sets a new default, it wins over old picks (Boot.tsx)
+    localStorage.setItem("theme-default", clientSettings().defaultTheme ?? "amber");
   } catch {}
   if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return apply();
   pending = name;
