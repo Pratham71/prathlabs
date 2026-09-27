@@ -155,7 +155,7 @@ export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "
 
 // `found`: eggs this visitor has. Once they have one, egg names complete too (from 3 letters, so it's a nudge,
 // not a list).
-export function complete(input: string, found: string[] = []): string[] {
+export function complete(input: string, found: string[] = [], enabled: readonly Theme[] = THEMES): string[] {
   const parts = input.trimStart().split(/\s+/);
   if (parts.length <= 1) {
     const word = parts[0] ?? "";
@@ -171,7 +171,7 @@ export function complete(input: string, found: string[] = []): string[] {
         : cmd === "sound"
           ? ["on", "off"]
           : cmd === "theme"
-            ? [...THEMES]
+            ? [...enabled]
             : cmd === "radio"
               ? ["play", "pause", "next", "prev"]
               : [];
@@ -180,20 +180,26 @@ export function complete(input: string, found: string[] = []): string[] {
 
 const pad = (s: string, n: number) => s + " ".repeat(Math.max(1, n - s.length));
 
-// `theme`: the visitor's current theme, for the theme-bound eggs (omitted: no gate, e.g. in tests).
-export function run(line: string, home = "your nearest edge", found: string[] = [], theme?: Theme): Result {
+// `theme`: the visitor's current theme, for the theme-bound eggs; `enabled`: the themes switched on in /admin.
+// Either omitted: no gate (tests).
+export function run(line: string, home = "your nearest edge", found: string[] = [], theme?: Theme, enabled: readonly Theme[] = THEMES): Result {
   const [raw = "", ...rest] = line.trim().split(/\s+/);
   const cmd = raw.replace(/^\/(?=\w)/, ""); // "/give", "/gamemode": minecraft-style, slash optional
   const arg = rest.join(" ").toLowerCase();
   const egg = eggOf(cmd.toLowerCase(), arg);
-  const only = EGG_THEME[egg ?? cmd.toLowerCase()];
+  const only = EGG_THEME[egg ?? cmd.toLowerCase()]?.filter((t) => enabled.includes(t));
+  // an egg whose themes are all switched off doesn't exist
+  if (only && !only.length) return { out: [`command not found: ${cmd}. Try: help`] };
   if (theme && only && !only.includes(theme))
     return { out: [`${cmd}: only works in ${only.map((t) => THEME_LABEL[t]).join(" or ")}. try: theme ${only[0]}`] };
-  const r = answer(cmd, rest.join(" "), home, found);
+  const r = answer(cmd, rest.join(" "), home, found, enabled);
+  // eggs and `theme` can't take anyone to a theme that's switched off
+  if (r.action?.type === "theme" && !enabled.includes(r.action.name))
+    return { out: [cmd.toLowerCase() === "theme" ? `theme: no such theme '${r.action.name}'. try: theme` : `command not found: ${cmd}. Try: help`] };
   return egg ? { ...r, egg } : r;
 }
 
-function answer(cmd: string, arg: string, home: string, found: string[]): Result {
+function answer(cmd: string, arg: string, home: string, found: string[], enabled: readonly Theme[]): Result {
   const project = (name: string) => projects.find((p) => p.slug === name.toLowerCase() || p.name.toLowerCase() === name.toLowerCase());
 
   switch (cmd.toLowerCase()) {
@@ -236,7 +242,7 @@ function answer(cmd: string, arg: string, home: string, found: string[]): Result
       return { out: ["usage: sound on|off"] };
     case "theme":
       if (isTheme(arg)) return { out: [`theme: ${THEME_LABEL[arg]}`], action: { type: "theme", name: arg } };
-      return { out: [...THEMES.map((t) => `${pad(t, 10)}${THEME_LABEL[t] === t ? "" : THEME_LABEL[t]}`), "usage: theme <name>"] };
+      return { out: [...enabled.map((t) => `${pad(t, 10)}${THEME_LABEL[t] === t ? "" : THEME_LABEL[t]}`), "usage: theme <name>"] };
     case "clear":
       return { out: [], action: { type: "clear" } };
     case "hobbies":
@@ -268,7 +274,8 @@ function answer(cmd: string, arg: string, home: string, found: string[]): Result
       return { out: [`found ${got}/${EGGS.length}${got ? "" : ". stuck? try: hint"}`, ...rows] };
     }
     case "hint": {
-      const left = EGGS.filter(([n]) => !found.includes(n));
+      // not found yet, and not tied to themes that are all switched off
+      const left = EGGS.filter(([n]) => !found.includes(n) && (!EGG_THEME[n] || EGG_THEME[n].some((t) => enabled.includes(t))));
       if (!left.length) return { out: ["all found. go touch grass."] };
       const [name, clue] = left[Math.floor(Math.random() * left.length)];
       const only = EGG_THEME[name];
