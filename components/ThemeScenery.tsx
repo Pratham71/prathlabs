@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { palm } from "@/components/GameIntro";
+import { battleBus, losSantos, viceCity, type Scene } from "@/components/scenes";
 
 // Behind-the-page scenery for the station themes, drawn in 3px cells like the intros:
 // blade: a blood moon and bats breaking out of the dark at random; vice city: palms and a striped sun
@@ -65,6 +66,10 @@ export function ThemeScenery() {
     let fight: { t0: number; left: boolean; burnt: boolean } | null = null;
     let ash: { x: number; y: number; vx: number; vy: number; life: number; c: string }[] = [];
     let nextChase = 0, nextFight = 0, nextBlood = 0, hits = 0;
+    const events: Partial<Record<string, Scene>> = { gtav: losSantos(), gtavi: viceCity(), fortnite: battleBus() };
+    // those scenes draw at half resolution (6px cells) and are blown up 2x, so their sprites read
+    const half = document.createElement("canvas");
+    const hctx = half.getContext("2d")!;
 
     const put = (rows: string[], pal: Pal, x: number, y: number, s = 1, flip = false) =>
       rows.forEach((row, dy) =>
@@ -326,7 +331,16 @@ export function ThemeScenery() {
           }
         }
       }
-      const moving = !reduce && ["gtav", "blade", "matrix", "cyberpunk", "minecraft", "spiderman"].includes(theme);
+      const ev = reduce ? undefined : events[theme];
+      if (ev) {
+        const [w2, h2] = [Math.ceil(w / 2), Math.ceil(h / 2)];
+        if (half.width !== w2 || half.height !== h2) [half.width, half.height] = [w2, h2];
+        hctx.clearRect(0, 0, w2, h2);
+        ev.frame(hctx, w2, h2, t, dt);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(half, 0, 0, w2 * 2, h2 * 2);
+      }
+      const moving = !reduce && ["gtav", "gtavi", "fortnite", "blade", "matrix", "cyberpunk", "minecraft", "spiderman"].includes(theme);
       raf = moving && !document.hidden ? requestAnimationFrame(frame) : 0;
     };
 
@@ -342,6 +356,7 @@ export function ThemeScenery() {
       nextChase = now + 4;
       nextFight = now + 6;
       nextBlood = now + 10;
+      Object.values(events).forEach((e) => e?.reset(now));
       document.querySelectorAll(".blood-drop").forEach((d) => d.remove());
       canvas.dataset.theme = theme;
       if (!isGame(theme)) {

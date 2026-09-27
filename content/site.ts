@@ -50,6 +50,6 @@ export const site = {
   responseTime: "usually within 24 to 48 hours",
   location: "Dubai, UAE",
   timezone: "GST, UTC+4",
-  // "MM-DD": confetti on the site that day (Dubai time). null: no birthday easter egg.
+  // "MM-DD": confetti on the site that day (India time). null: no birthday easter egg.
   birthday: "12-13" as string | null,
 };

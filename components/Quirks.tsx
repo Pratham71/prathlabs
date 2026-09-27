@@ -5,7 +5,7 @@ import { site } from "@/content/site";
 
 // Eggs nobody types (CommandPalette records them from the "egg" event):
 // idle two minutes and a DVD-style screensaver bounces the initials; 3am in Dubai gets a note;
-// ?debug in the URL outlines the page and shows a (mostly fake) dev panel; on the birthday, confetti.
+// ?debug in the URL outlines the page and shows a (mostly fake) dev panel; on the birthday (India time), confetti.
 
 const IDLE_MS = 120_000;
 const WAKE = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart", "scroll"] as const;
@@ -15,10 +15,10 @@ const accents = () => {
   return ["--amber", "--text", "--ok", "--muted"].map((v) => css.getPropertyValue(v).trim()).filter(Boolean);
 };
 
-// The hour and MM-DD where Pratham is.
-function dubai(d = new Date()) {
+// The hour and MM-DD in a time zone: Dubai for the 3am note (where he is), India for the birthday.
+function zoned(timeZone: string, d = new Date()) {
   const p = Object.fromEntries(
-    new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dubai", hour: "numeric", hourCycle: "h23", month: "2-digit", day: "2-digit" })
+    new Intl.DateTimeFormat("en-GB", { timeZone, hour: "numeric", hourCycle: "h23", month: "2-digit", day: "2-digit" })
       .formatToParts(d)
       .map((x) => [x.type, x.value]),
   );
@@ -31,7 +31,8 @@ export function Quirks() {
   useEffect(() => {
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ready = () => {
-      const { hour, md } = dubai();
+      const { hour } = zoned("Asia/Dubai");
+      const { md } = zoned("Asia/Kolkata");
       if (hour === 3 && !sessionStorage.getItem("3am")) {
         sessionStorage.setItem("3am", "1");
         egg({ name: "3am", text: "you should be asleep. so should I. (the pi isn't)" });
