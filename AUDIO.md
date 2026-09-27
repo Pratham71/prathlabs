@@ -1,16 +1,16 @@
 # Audio files
 
-Drop files at exactly these paths. Nothing else to do: the site finds them on its own
-(missing ones are skipped, and the built-in synth loops keep playing).
+For the live site, upload songs and sounds in /admin (below). This file lists the paths the repo
+looks for, for playing songs locally.
 
-Base folder on this machine:
-`C:\Users\prath\OneDrive\Desktop\Projects\Portfolio\Prathlabs.com\prathlabs\public`
+**Audio files are git-ignored** (`public/music/**`, `public/sfx/**`): they play only on the machine that has them and
+never reach GitHub or Vercel. Songs you own the rights to, or royalty-free ones, go through /admin.
 
-Format: `.mp3`, lowercase names, exactly as written.
+Paths are relative to the repo's `public/` folder. Format: `.mp3`, lowercase names, exactly as written.
+Missing files are skipped, and the built-in synth loops keep playing.
 
 **After adding files, rebuild** (`npm run build`, then `npx next start`). The production server
-only serves files that were in `public/` at build time, so a file added later returns 404 until
-the next build. (`npm run dev` picks new files up on refresh.) On Vercel, every push rebuilds.
+only serves files that were in `public/` at build time. (`npm run dev` picks new files up on refresh.)
 
 ## Or: upload from /admin
 

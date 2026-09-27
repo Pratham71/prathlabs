@@ -1,6 +1,6 @@
 ---
 name: ship-change
-description: Verify and ship a change to prathlab (checks, visual check, commit, PR, merge after CI). Use before committing, opening a PR, or when asked to deploy/ship/push changes to this repo.
+description: Verify and ship a change to this portfolio (checks, visual check, commit, PR, merge after CI). Use before committing, opening a PR, or when asked to deploy/ship/push changes to this repo.
 ---
 
 # Ship a change
