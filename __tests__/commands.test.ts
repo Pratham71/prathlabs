@@ -91,3 +91,14 @@ test("game eggs: minecraft slash commands, phrases, and the ones not found by ty
   expect(run("bats").egg).toBeUndefined();
   expect(complete("kon", ["gg"])).toEqual([]);
 });
+
+test("theme eggs only work in their theme; theme switchers work anywhere", () => {
+  expect(run("storm", undefined, [], "amber")).toEqual({ out: ["storm: only works in battle bus. try: theme fortnite"] });
+  expect(run("storm", undefined, [], "fortnite").egg).toBe("storm");
+  expect(run("wanted", undefined, [], "gtavi").action).toEqual({ type: "wanted" });
+  expect(run("wanted", undefined, [], "matrix").action).toBeUndefined();
+  expect(run("/give diamond", undefined, [], "gtav").egg).toBeUndefined();
+  expect(run("there is no spoon", undefined, [], "matrix").egg).toBe("spoon");
+  expect(run("hesoyam", undefined, [], "amber").egg).toBe("hesoyam");
+  expect(run("hint", undefined, EGGS.map(([n]) => n).filter((n) => n !== "storm")).out[0]).toMatch(/^hint: \(battle bus\)/);
+});

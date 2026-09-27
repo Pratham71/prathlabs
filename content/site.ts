@@ -51,5 +51,5 @@ export const site = {
   location: "Dubai, UAE",
   timezone: "GST, UTC+4",
   // "MM-DD": confetti on the site that day (Dubai time). null: no birthday easter egg.
-  birthday: null as string | null,
+  birthday: "12-13" as string | null,
 };

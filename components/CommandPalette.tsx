@@ -331,7 +331,7 @@ export function CommandPalette() {
   const submit = () => {
     if (askPass) return void login();
     const line = value;
-    const r = run(line, document.documentElement.dataset.bootHome, foundEggs());
+    const r = run(line, document.documentElement.dataset.bootHome, foundEggs(), currentTheme());
     if (line.trim()) history.current.push(line);
     cursor.current = -1;
     setValue("");

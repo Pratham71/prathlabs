@@ -91,6 +91,18 @@ function eggOf(cmd: string, arg: string) {
   return EGGS.find(([name, , ...also]) => name === cmd || also.includes(cmd))?.[0];
 }
 
+// Eggs that belong to a theme only work there; elsewhere the prompt says which theme to switch to.
+// (The ones that switch themes, like hesoyam or creeper, work everywhere: they're the way in.)
+const GTA: Theme[] = ["gtav", "gtavi"];
+export const EGG_THEME: Record<string, Theme[]> = {
+  rockstar: GTA, aezakmi: GTA, baguvix: GTA, wanted: GTA, wasted: GTA, passed: GTA,
+  storm: ["fortnite"], drop: ["fortnite"], gg: ["fortnite"], dance: ["fortnite"],
+  gamemode: ["minecraft"], "give diamond": ["minecraft"], diamonds: ["minecraft"],
+  "great power": ["spiderman"], web: ["spiderman"],
+  neo: ["matrix"], trinity: ["matrix"], spoon: ["matrix"],
+  garlic: ["blade"], vampire: ["blade"],
+};
+
 // One clue per station theme, on the radio card while it's paused.
 export const THEME_CLUE: Partial<Record<Theme, string>> = {
   gtav: "cheats still work: hesoyam",
@@ -168,12 +180,16 @@ export function complete(input: string, found: string[] = []): string[] {
 
 const pad = (s: string, n: number) => s + " ".repeat(Math.max(1, n - s.length));
 
-export function run(line: string, home = "your nearest edge", found: string[] = []): Result {
+// `theme`: the visitor's current theme, for the theme-bound eggs (omitted: no gate, e.g. in tests).
+export function run(line: string, home = "your nearest edge", found: string[] = [], theme?: Theme): Result {
   const [raw = "", ...rest] = line.trim().split(/\s+/);
   const cmd = raw.replace(/^\/(?=\w)/, ""); // "/give", "/gamemode": minecraft-style, slash optional
   const arg = rest.join(" ").toLowerCase();
-  const r = answer(cmd, rest.join(" "), home, found);
   const egg = eggOf(cmd.toLowerCase(), arg);
+  const only = EGG_THEME[egg ?? cmd.toLowerCase()];
+  if (theme && only && !only.includes(theme))
+    return { out: [`${cmd}: only works in ${only.map((t) => THEME_LABEL[t]).join(" or ")}. try: theme ${only[0]}`] };
+  const r = answer(cmd, rest.join(" "), home, found);
   return egg ? { ...r, egg } : r;
 }
 
@@ -253,7 +269,10 @@ function answer(cmd: string, arg: string, home: string, found: string[]): Result
     }
     case "hint": {
       const left = EGGS.filter(([n]) => !found.includes(n));
-      return { out: [left.length ? `hint: ${left[Math.floor(Math.random() * left.length)][1]}` : "all found. go touch grass."] };
+      if (!left.length) return { out: ["all found. go touch grass."] };
+      const [name, clue] = left[Math.floor(Math.random() * left.length)];
+      const only = EGG_THEME[name];
+      return { out: [`hint: ${only ? `(${THEME_LABEL[only[0]]}) ` : ""}${clue}`] };
     }
     // --- easter eggs ---
     case "spotify":
@@ -378,7 +397,7 @@ function answer(cmd: string, arg: string, home: string, found: string[]): Result
     case "gamemode": {
       const mode = arg.toLowerCase();
       if (!MODES.includes(mode)) return { out: ["usage: /gamemode survival|creative|adventure|spectator"] };
-      return { out: [`Set own game mode to ${mode[0].toUpperCase()}${mode.slice(1)} Mode`], action: { type: "theme", name: "minecraft" } };
+      return { out: [`Set own game mode to ${mode[0].toUpperCase()}${mode.slice(1)} Mode`] };
     }
     case "give":
       return arg.toLowerCase() === "diamond"

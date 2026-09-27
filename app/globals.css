@@ -2648,7 +2648,7 @@ html[data-theme="gtavi"] .scenery {
   grid-template-columns: auto 1fr;
   gap: 0.35rem 1ch;
   align-items: center;
-  width: 17rem;
+  width: 19.5rem;
   padding: 0.6rem 0.8rem;
   font-size: 0.8rem;
   background: color-mix(in srgb, var(--ink) 88%, transparent);
@@ -3075,7 +3075,7 @@ html[data-bloody] .cursor { filter: drop-shadow(0 3px 0 #9b0f16); }
 /* typed volume: the radio's field and the admin panel's */
 .radio-vol-text input,
 .admin-vol {
-  width: 4ch;
+  width: 4.5ch;
   font: inherit;
   color: var(--text);
   background: none;
