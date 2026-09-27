@@ -4,7 +4,8 @@
 // battle bus: the bus crosses and drops players, they fight, and "you" win.
 // All original pixel drawings. Each scene keeps its own state; ThemeScenery calls frame() every frame on a
 // half-resolution canvas (one cell = 6 screen px), so speeds are in those cells per second.
-import type { SceneSound } from "@/lib/audio";
+import { clientSettings } from "@/lib/client-settings";
+import type { SceneSound } from "@/lib/settings";
 
 type Pal = Record<string, string>;
 export type Scene = { frame: (ctx: CanvasRenderingContext2D, w: number, h: number, t: number, dt: number) => void; reset: (t: number) => void };
@@ -19,7 +20,11 @@ export function put(ctx: CanvasRenderingContext2D, rows: string[], pal: Pal, x: 
   );
 }
 
-const sound = (k: SceneSound, dur?: number) => void import("@/lib/audio").then((a) => a.scene(k, dur));
+// each sound as /admin set it (SCENE SOUNDS): switched off, turned up or down, or an uploaded clip
+const sound = (k: SceneSound, dur?: number) => {
+  const set = clientSettings().scene?.[k];
+  if (!set?.off) void import("@/lib/audio").then((a) => a.scene(k, dur, set));
+};
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 // the ground the events stand on: above the radio card (bottom left) and the dock (bottom right)
 const groundOf = (h: number) => h - 30;

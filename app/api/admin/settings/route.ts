@@ -10,6 +10,7 @@ const files = (s: Settings) => [
   ...Object.values(s.music).flatMap((l) => l?.map((t) => t.src) ?? []),
   ...Object.values(s.reboot).map((r) => r?.src),
   ...Object.values(s.sfx).map((r) => r?.src),
+  ...Object.values(s.scene).flatMap((r) => (r?.src ? [r.src] : [])),
 ];
 
 export async function GET(req: Request) {

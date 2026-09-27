@@ -6,7 +6,7 @@ import { upload } from "@vercel/blob/client";
 import { Section } from "@/components/Man";
 import { MUSIC, REBOOT_SOUNDS } from "@/content/music";
 import { THEMES, THEME_LABEL, type Theme } from "@/lib/theme";
-import { EGG_SOUNDS, type EggSound, type Settings } from "@/lib/settings";
+import { EGG_SOUNDS, SCENE_SOUNDS, type EggSound, type SceneSound, type Settings } from "@/lib/settings";
 
 // /admin, logged out: same password as the palette's `sudo su`.
 export function AdminLogin({ configured }: { configured: boolean }) {
@@ -43,6 +43,7 @@ const ext = (name: string) => (name.match(/\.[a-z0-9]{2,4}$/i)?.[0] ?? ".mp3").t
 
 type Ready = { redis: boolean; blob: boolean; spotify: boolean };
 
+const SCENE_LABEL: Record<SceneSound, string> = { siren: "police siren", heli: "helicopter", jet: "jets", boom: "explosion" };
 const EGG_LABEL: Record<EggSound, string> = { storm: "storm", greatpower: "with great power", wanted: "wanted (five stars)" };
 
 // A volume typed as 0-100. Saves on Enter or when the field loses focus, only if it changed.
@@ -308,6 +309,57 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             }}
           />
         </label>
+      </Section>
+
+      <Section name="SCENE SOUNDS">
+        {why && <p className="admin-why">{why}</p>}
+        <p className="muted">los santos background: chases, jets, the oppressor&apos;s missile. only with the site sound on.</p>
+        <ul className="admin-list">
+          {SCENE_SOUNDS.map((k) => {
+            const cur = s.scene[k] ?? {};
+            const set = (next: typeof cur, msg?: string) => save({ ...s, scene: { ...s.scene, [k]: next } }, msg);
+            return (
+              <li key={k}>
+                <label>
+                  <input type="checkbox" checked={!cur.off} disabled={locked} onChange={(e) => set({ ...cur, off: e.target.checked ? undefined : true }, e.target.checked ? `${SCENE_LABEL[k]} on` : `${SCENE_LABEL[k]} off`)} /> {SCENE_LABEL[k]}
+                </label>{" "}
+                <span className="muted">{cur.src ? "uploaded clip" : "synth"}</span>{" "}
+                <Vol value={cur.volume ?? (cur.src ? 0.6 : 1)} disabled={locked} onSave={(v) => set({ ...cur, volume: v })} />{" "}
+                {cur.src && (
+                  <>
+                    <button type="button" disabled={locked} onClick={() => Object.assign(new Audio(cur.src), { volume: cur.volume ?? 0.6 }).play()}>
+                      play
+                    </button>{" "}
+                    <button type="button" disabled={locked} onClick={() => set({ ...cur, src: undefined }, "back to the synth")}>
+                      use synth
+                    </button>{" "}
+                  </>
+                )}
+                <label>
+                  {cur.src ? "replace" : "upload clip"}{" "}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    disabled={noUpload}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setBusy(true);
+                      try {
+                        const src = await put(file, "sfx", (n) => setStatus(`uploading ${n}%`), `scene-${k}`);
+                        e.target.value = "";
+                        await set({ ...cur, src, volume: cur.src ? cur.volume : s.uploadVolume }, `${SCENE_LABEL[k]} clip set`);
+                      } catch (err) {
+                        setBusy(false);
+                        setStatus(`upload failed: ${(err as Error).message}`);
+                      }
+                    }}
+                  />
+                </label>
+              </li>
+            );
+          })}
+        </ul>
       </Section>
 
       <Section name="EGG SOUNDS">

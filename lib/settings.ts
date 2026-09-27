@@ -13,13 +13,20 @@ export type Settings = {
   reboot: Partial<Record<Theme, RebootSound>>; // reboot sounds uploaded through the panel
   sfx: Partial<Record<EggSound, RebootSound>>; // sounds for the eggs that have one (uploaded through the panel)
   uploadVolume: number; // 0..1, what new uploads start at in the panel
+  scene: Partial<Record<SceneSound, SceneSetting>>; // los santos background sounds: off, louder/quieter, or a file
 };
+
+// The los santos background scene's sounds (ThemeScenery). Each can be switched off, turned up or down,
+// or replaced with an uploaded clip; untouched, it's synthesized.
+export const SCENE_SOUNDS = ["siren", "heli", "jet", "boom"] as const;
+export type SceneSound = (typeof SCENE_SOUNDS)[number];
+export type SceneSetting = { off?: true; src?: string; volume?: number };
 
 // Eggs that play an uploaded sound: storm, "with great power", and five stars of wanted.
 export const EGG_SOUNDS = ["storm", "greatpower", "wanted"] as const;
 export type EggSound = (typeof EGG_SOUNDS)[number];
 
-export const DEFAULT_SETTINGS: Settings = { defaultTheme: "amber", themes: [...THEMES], spotify: true, music: {}, reboot: {}, sfx: {}, uploadVolume: 1 };
+export const DEFAULT_SETTINGS: Settings = { defaultTheme: "amber", themes: [...THEMES], spotify: true, music: {}, reboot: {}, sfx: {}, uploadVolume: 1, scene: {} };
 export const SETTINGS_TAG = "site-settings";
 const KEY = "site:settings";
 
@@ -36,6 +43,7 @@ export function clean(raw: unknown): Settings {
     spotify: r.spotify !== false,
     music: perTheme(r.music, (v) => (Array.isArray(v) ? v.filter(isTrack).map(({ title, artist, src, start, volume }) => ({ title, artist, src, ...(start ? { start } : {}), ...(volume !== undefined && volume !== 1 ? { volume } : {}) })) : undefined)),
     reboot: perTheme(r.reboot, sound),
+    scene: Object.fromEntries(SCENE_SOUNDS.flatMap((k) => (sceneSetting((r.scene as Record<string, unknown> | undefined)?.[k]) ? [[k, sceneSetting((r.scene as Record<string, unknown>)[k])]] : []))),
     uploadVolume: typeof r.uploadVolume === "number" && r.uploadVolume >= 0 && r.uploadVolume <= 1 ? r.uploadVolume : 1,
     sfx: Object.fromEntries(EGG_SOUNDS.flatMap((k) => (sound((r.sfx as Record<string, unknown> | undefined)?.[k]) ? [[k, sound((r.sfx as Record<string, unknown>)[k])]] : []))),
   };
@@ -48,6 +56,16 @@ export const isSitePath = (u: string) => /^\/(?![/\\])/.test(u);
 
 const str = (s: unknown): s is string => typeof s === "string" && s.length > 0 && s.length < 500;
 const vol = (v: unknown) => (typeof v === "number" && v >= 0 && v <= 1 ? v : 0.6);
+function sceneSetting(v: unknown): SceneSetting | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const x = v as SceneSetting;
+  const out: SceneSetting = {
+    ...(x.off === true ? { off: true as const } : {}),
+    ...(str(x.src) ? { src: x.src } : {}),
+    ...(typeof x.volume === "number" && x.volume >= 0 && x.volume <= 1 ? { volume: x.volume } : {}),
+  };
+  return Object.keys(out).length ? out : undefined;
+}
 const sound = (v: unknown): RebootSound | undefined => (v && typeof v === "object" && str((v as RebootSound).src) ? { src: (v as RebootSound).src, volume: vol((v as RebootSound).volume) } : undefined);
 const isTrack = (t: unknown): t is RealTrack => {
   const x = t as RealTrack;

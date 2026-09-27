@@ -1,3 +1,5 @@
+import type { SceneSetting, SceneSound } from "@/lib/settings";
+
 // Site audio: a quiet generated ambient bed plus tiny UI/boot sound effects, all synthesized with Web Audio
 // (no files). Browser only; nothing is created until the visitor turns sound on.
 // ponytail: generated bed; to use a recorded track instead, play an <audio loop> through `master` in start().
@@ -257,15 +259,24 @@ function synthSting(kind: Sting) {
   }
 }
 
-// Background-scene sounds (ThemeScenery): quiet, through the master toggle, so only with sound on.
+// Background-scene sounds (ThemeScenery): quiet, and only with the site sound on.
 // siren: a police wail; heli: rotor chop; jet: a flyby roar; boom: an explosion.
-export type SceneSound = "siren" | "heli" | "jet" | "boom";
-export function scene(kind: SceneSound, dur = 4) {
-  if (!ctx || !master || ctx.state !== "running" || !wanted) return;
+// `set` is /admin's say: off, a volume (scales the synth; the file's own level), or an uploaded clip.
+export function scene(kind: SceneSound, dur = 4, set: SceneSetting = {}) {
+  if (!ctx || !master || ctx.state !== "running" || !wanted || set.off) return;
+  if (set.src) {
+    const clip = new Audio(set.src);
+    clip.volume = set.volume ?? 0.6;
+    void clip.play().catch(() => {});
+    window.setTimeout(() => clip.pause(), dur * 1000); // cut with the scene (a long siren file)
+    return;
+  }
   const ac = ctx;
   const t = ac.currentTime + 0.02;
   const out = ac.createGain();
-  out.connect(master);
+  const level = ac.createGain();
+  level.gain.value = set.volume ?? 1;
+  out.connect(level).connect(master);
   const env = (peak: number, attack: number, release: number) => {
     out.gain.setValueAtTime(0.0001, t);
     out.gain.exponentialRampToValueAtTime(peak, t + attack);

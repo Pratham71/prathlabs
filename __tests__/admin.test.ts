@@ -63,3 +63,9 @@ test("egg sounds keep only known eggs; upload volume defaults to full", () => {
   expect(s.uploadVolume).toBe(1);
   expect(clean({ uploadVolume: 0.6 }).uploadVolume).toBe(0.6);
 });
+
+test("scene sounds: off, volume and a clip survive clean; junk and unknown sounds don't", () => {
+  const src = "https://abc.public.blob.vercel-storage.com/sfx/scene-siren/a.mp3";
+  const s = clean({ scene: { siren: { off: true }, boom: { volume: 0.2, src }, jet: { volume: 9, off: "yes" }, horn: { off: true } } });
+  expect(s.scene).toEqual({ siren: { off: true }, boom: { src, volume: 0.2 } });
+});
