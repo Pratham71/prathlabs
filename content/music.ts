@@ -25,7 +25,6 @@ export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
   ],
   fortnite: [{ title: "Lobby Theme (Chapter 1)", artist: "Epic Games", src: "/music/fortnite/lobby-chapter-1.mp3" }],
   blade: [
-    { title: "Blade", artist: "D'Angello & Francis", src: "/music/blade/blade.mp3" },
     { title: "Confusion (Pump Panel Reconstruction Mix)", artist: "New Order", src: "/music/blade/confusion.mp3" },
   ],
   matrix: [
