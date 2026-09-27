@@ -102,3 +102,16 @@ test("theme eggs only work in their theme; theme switchers work anywhere", () =>
   expect(run("hesoyam", undefined, [], "amber").egg).toBe("hesoyam");
   expect(run("hint", undefined, EGGS.map(([n]) => n).filter((n) => n !== "storm")).out[0]).toMatch(/^hint: \(battle bus\)/);
 });
+
+test("themes switched off in /admin are hidden: not listed, not completed, not reachable", () => {
+  const on = ["amber", "matrix", "fortnite"] as const;
+  expect(run("theme", undefined, [], "amber", on).out.join("\n")).not.toMatch(/gtav|blade/);
+  expect(complete("theme g", [], on)).toEqual([]);
+  expect(complete("theme ", [], on)).toEqual(["theme amber", "theme matrix", "theme fortnite"]);
+  expect(run("theme gtav", undefined, [], "amber", on)).toEqual({ out: ["theme: no such theme 'gtav'. try: theme"] });
+  expect(run("hesoyam", undefined, [], "amber", on).action).toBeUndefined();
+  expect(run("wasted", undefined, [], "amber", on).out[0]).toMatch(/command not found/);
+  expect(run("theme matrix", undefined, [], "amber", on).action).toEqual({ type: "theme", name: "matrix" });
+  const all = EGGS.map(([n]) => n);
+  expect(run("hint", undefined, all.filter((n) => n !== "hesoyam" && n !== "wasted"), "amber", on).out[0]).toMatch(/hint: \S/);
+});

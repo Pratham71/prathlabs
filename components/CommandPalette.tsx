@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EGGS, KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
-import { currentTheme, isGame, setTheme } from "@/lib/theme";
+import { currentTheme, enabledThemes, isGame, setTheme } from "@/lib/theme";
 import { REBOOT_SOUNDS } from "@/content/music";
 import { clientSettings } from "@/lib/client-settings";
 import { pixelArt } from "@/lib/sprites";
@@ -185,8 +185,9 @@ export function CommandPalette() {
       konami.push(e.key.length === 1 ? e.key.toLowerCase() : e.key);
       konami.splice(0, konami.length - KONAMI.length);
       if (konami.join() === KONAMI.join()) {
-        setTheme(currentTheme() === "matrix" ? "amber" : "matrix");
         konami.length = 0;
+        if (!enabledThemes().includes("matrix")) return; // matrix switched off in /admin: no egg either
+        setTheme(currentTheme() === "matrix" ? "amber" : "matrix");
         const n = markEgg("konami");
         if (n && dialog.current?.open) setLog((l) => [...l, { out: [eggLine(n)] }]);
       }
@@ -331,7 +332,7 @@ export function CommandPalette() {
   const submit = () => {
     if (askPass) return void login();
     const line = value;
-    const r = run(line, document.documentElement.dataset.bootHome, foundEggs(), currentTheme());
+    const r = run(line, document.documentElement.dataset.bootHome, foundEggs(), currentTheme(), enabledThemes());
     if (line.trim()) history.current.push(line);
     cursor.current = -1;
     setValue("");
@@ -350,7 +351,7 @@ export function CommandPalette() {
     if (askPass) return; // no completion or history on a password
     if (e.key === "Tab") {
       e.preventDefault();
-      const c = complete(value, foundEggs());
+      const c = complete(value, foundEggs(), enabledThemes());
       if (c.length === 1) setValue(c[0] + " ");
       else if (c.length > 1)
         setLog((l) => [...l, { cmd: value, out: [c.join("   ")] }]);
@@ -370,7 +371,7 @@ export function CommandPalette() {
     }
   };
 
-  const hints = value.trim() && !askPass ? complete(value, foundEggs()).slice(0, 6) : [];
+  const hints = value.trim() && !askPass ? complete(value, foundEggs(), enabledThemes()).slice(0, 6) : [];
 
   return (
     <>

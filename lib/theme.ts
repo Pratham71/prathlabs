@@ -28,7 +28,11 @@ export function currentTheme(): Theme {
   return isTheme(t) ? t : "amber";
 }
 
+// The themes switched on in /admin (all of them by default). Nothing reaches a theme that's off.
+export const enabledThemes = (): readonly Theme[] => clientSettings().themes ?? THEMES;
+
 export function setTheme(name: Theme) {
+  if (!enabledThemes().includes(name)) return; // switched off in /admin: the palette, eggs and konami all stop here
   const d = document.documentElement;
   const apply = () => {
     pending = null;
@@ -45,9 +49,9 @@ export function setTheme(name: Theme) {
   document.startViewTransition(apply);
 }
 
-// Cycles the themes switched on in /admin (all of them by default).
+// Cycles the themes switched on in /admin.
 export function nextTheme(t: Theme): Theme {
-  const list = clientSettings().themes ?? THEMES;
+  const list = enabledThemes();
   return list[(list.indexOf(t) + 1) % list.length];
 }
 
