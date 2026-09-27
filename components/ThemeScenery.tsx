@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { palm } from "@/components/GameIntro";
-import { battleBus, losSantos, viceCity, type Scene } from "@/components/scenes";
+import { battleBus, fortniteProps, losSantos, type Scene } from "@/components/scenes";
 
 // Behind-the-page scenery for the station themes, drawn in 3px cells like the intros:
 // blade: a blood moon and bats breaking out of the dark at random; vice city: palms and a striped sun
@@ -66,7 +66,7 @@ export function ThemeScenery() {
     let fight: { t0: number; left: boolean; burnt: boolean } | null = null;
     let ash: { x: number; y: number; vx: number; vy: number; life: number; c: string }[] = [];
     let nextChase = 0, nextFight = 0, nextBlood = 0, hits = 0;
-    const events: Partial<Record<string, Scene>> = { gtav: losSantos(), gtavi: viceCity(), fortnite: battleBus() };
+    const events: Partial<Record<string, Scene>> = { gtav: losSantos(), fortnite: battleBus() };
     // those scenes draw at half resolution (6px cells) and are blown up 2x, so their sprites read
     const half = document.createElement("canvas");
     const hctx = half.getContext("2d")!;
@@ -186,6 +186,8 @@ export function ThemeScenery() {
               }
           }
         }
+      } else if (theme === "fortnite") {
+        fortniteProps(l, w, h);
       } else if (theme === "blade") {
         // blood moon, top right, with a dithered halo
         const mx = w * 0.86, my = h * 0.16, r = h * 0.08;
@@ -340,7 +342,7 @@ export function ThemeScenery() {
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(half, 0, 0, w2 * 2, h2 * 2);
       }
-      const moving = !reduce && ["gtav", "gtavi", "fortnite", "blade", "matrix", "cyberpunk", "minecraft", "spiderman"].includes(theme);
+      const moving = !reduce && ["gtav", "fortnite", "blade", "matrix", "cyberpunk", "minecraft", "spiderman"].includes(theme);
       raf = moving && !document.hidden ? requestAnimationFrame(frame) : 0;
     };
 

@@ -1,7 +1,6 @@
-// Background events for three station themes, drawn into ThemeScenery's 3px-cell canvas:
+// Background events for two station themes, drawn into ThemeScenery's 3px-cell canvas:
 // los santos: police chases (a car, a bike, or an Oppressor that blows up a car first) with cruisers and a
 //   helicopter, and fighter jets passing over (inspired by the P-996 Lazer); sirens, rotors, jets, booms.
-// vice city: Jason and Lucia by their convertible, now and then taking it for a spin.
 // battle bus: the bus crosses and drops players, they fight, and "you" win.
 // All original pixel drawings. Each scene keeps its own state; ThemeScenery calls frame() every frame on a
 // half-resolution canvas (one cell = 6 screen px), so speeds are in those cells per second.
@@ -171,53 +170,6 @@ export function losSantos(): Scene {
   };
 }
 
-// ---------------------------------------------------------------- vice city
-
-const JASON = ["..kkk..", "..sss..", "..sss..", ".ttttt.", "sttttts", "s.ttt.s", "..jjj..", "..j.j..", "..j.j..", ".kk.kk."];
-const LUCIA = ["..hhh..", ".hsssh.", ".hsssh.", ".hrrrh.", "srrrrrs", "s.rrr.s", "..ddd..", "..s.s..", "..s.s..", ".kk.kk."];
-const HEADS = { jason: ["kkk", "sss", "sss"], lucia: ["hhh", "hsh", "hsh"] };
-const VERT = ["......w...........", ".....ww...........", "pppppppppppppppppp", "pwpppppppppppppppp", "..kk........kk...."];
-const JPAL = { k: "#1a1414", s: "#b8835c", t: "#5c7a5a", j: "#2d4a73" };
-const LPAL = { h: "#3a2418", s: "#d69a72", r: "#e2383b", d: "#4a6fa5", k: "#1a1414" };
-const CPAL = { p: "#ff4f9a", w: "#bfe8ff", k: "#111" };
-
-export function viceCity(): Scene {
-  // chill by the car; every so often, a spin: drive off right, come back in from the left, park again
-  let cruise: number | null = null;
-  let nextCruise = 0;
-  return {
-    reset(t) {
-      cruise = null;
-      nextCruise = t + rand(25, 40);
-    },
-    frame(ctx, w, h, t) {
-      const ground = groundOf(h);
-      const park = Math.round(w * 0.84);
-      const carY = ground - VERT.length;
-      if (cruise === null && t > nextCruise) cruise = t;
-      if (cruise !== null) {
-        const k = t - cruise, v = 22;
-        const out = (w + 30 - park) / v, back = (park + 30) / v;
-        const x = k < out ? park + k * v : k < out + 2 ? w + 40 : -30 + (k - out - 2) * v;
-        put(ctx, HEADS.jason, JPAL, x + 4, carY - 3);
-        put(ctx, HEADS.lucia, LPAL, x + 9, carY - 3);
-        put(ctx, VERT, CPAL, x, carY);
-        if (k > out + 2 + back) {
-          cruise = null;
-          nextCruise = t + rand(30, 50);
-        }
-        return;
-      }
-      put(ctx, VERT, CPAL, park, carY);
-      // Jason leans on the back of the car; Lucia sits on the hood, swinging her legs
-      put(ctx, JASON, JPAL, park - 6, ground - JASON.length);
-      const swing = Math.floor(t * 1.5) % 2;
-      const lucia = swing ? LUCIA : [...LUCIA.slice(0, 7), "...s.s.", "...s.s.", "..kk.kk"];
-      put(ctx, lucia, LPAL, park + 10, carY - LUCIA.length + 5);
-    },
-  };
-}
-
 // ---------------------------------------------------------------- battle bus
 
 const BUS = ["....bbbbbbbb....", "...bwwbbbbwwb...", "....bbbbbbbb....", ".....b....b.....", "..BBBBBBBBBBBBB.", "..BwwBwwBwwBwwB.", "..BBBBBBBBBBBBB.", "...kk......kk..."];
@@ -247,7 +199,8 @@ export function battleBus(): Scene {
       if (!bus && !players.length && t > nextBus) {
         // drop points in the side margins, where the page doesn't cover them
         const side = () => (Math.random() < 0.5 ? rand(0.03, 0.18) : rand(0.82, 0.96)) * w;
-        bus = { t0: t, dir: Math.random() < 0.5 ? 1 : -1, drops: Array.from({ length: 6 }, side) };
+        // at least one on the left: that's where "you" land
+        bus = { t0: t, dir: Math.random() < 0.5 ? 1 : -1, drops: [rand(0.04, 0.16) * w, ...Array.from({ length: 5 }, side)] };
       }
       if (bus) {
         const b = bus, x = b.dir > 0 ? -20 + (t - b.t0) * 22 : w + 4 - (t - b.t0) * 22;
@@ -259,7 +212,8 @@ export function battleBus(): Scene {
         });
         if (b.dir > 0 ? x > w + 20 : x < -24) {
           bus = null;
-          const you = players[Math.floor(Math.random() * players.length)];
+          const left = players.filter((p) => p.x < w / 2);
+          const you = left[Math.floor(Math.random() * left.length)] ?? players[0];
           if (you) Object.assign(you, { you: true, hp: 6 });
         }
       }
@@ -305,4 +259,28 @@ export function battleBus(): Scene {
       drawSparks(ctx, fx, dt);
     },
   };
+}
+
+// Battle bus props for the empty sides (ThemeScenery's static layer, 3px cells, drawn at 2x):
+// a loot llama and a pine on the left, a gold chest, a bush and a supply drop on the right.
+const LLAMA = ["...pp.......", "...ppp......", "..pwkp......", "..pppp......", "...pp.......", "...pp.......", "...pppppppp.", "..pybbpybbp.", "..pmmyymmpp.", "..pppppppppp", "..p.p...p.p.", "..p.p...p.p."];
+const PINE = ["....g....", "...ggg...", "..ggggg..", "...ggg...", "..ggggg..", ".ggggggg.", "..ggggg..", ".ggggggg.", "ggggggggg", "....t....", "....t...."];
+const CHEST = ["..yyyyyy..", ".yooooooy.", "yooooooooy", "yyyyqqyyyy", "yooooooooy", "yooooooooy", "yyyyyyyyyy"];
+const BUSH = ["..gggg..", ".gggggg.", "gggggggg", "gggggggg"];
+const DROP = ["..bbbb..", ".bbbbbb.", ".bbbbbb.", "..bbbb..", "...ll...", "..l..l..", ".cccccc.", ".cwccwc.", ".cccccc."];
+
+export function fortniteProps(l: CanvasRenderingContext2D, w: number, h: number) {
+  const S = 2;
+  const ground = h - 60; // 180px up: level with where the players land, above the radio card and dock
+  const at = (rows: string[], pal: Record<string, string>, fx: number, y?: number) =>
+    put(l, rows, pal, Math.round(w * fx), y ?? ground - rows.length * S, S);
+  // a strip of grass in each margin
+  l.fillStyle = "#2f8f3a";
+  l.fillRect(0, ground, Math.round(w * 0.19), 2);
+  l.fillRect(Math.round(w * 0.81), ground, w, 2);
+  at(LLAMA, { p: "#b37bff", w: "#fff", k: "#111", b: "#3aa3ff", m: "#ff5fa2", y: "#f2c94c" }, 0.03);
+  at(PINE, { g: "#2f8f3a", t: "#6b4a2b" }, 0.12);
+  at(CHEST, { y: "#f2c94c", o: "#c8932a", q: "#fff6c2" }, 0.85);
+  at(BUSH, { g: "#3fa34d" }, 0.93);
+  at(DROP, { b: "#3aa3ff", l: "#cfd8e3", c: "#6b4a2b", w: "#c8932a" }, 0.9, Math.round(h * 0.2));
 }
