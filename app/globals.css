@@ -2723,6 +2723,7 @@ html[data-boot] .radio {
   grid-column: 1 / -1;
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .radio-ctl button {
@@ -3003,8 +3004,7 @@ html[data-bloody] .cursor { filter: drop-shadow(0 3px 0 #9b0f16); }
 }
 
 .radio-time input:disabled {
-  cursor: default;
-  opacity: 0.5;
+  cursor: default; /* loops and not-yet-loaded songs: progress only, no seeking */
 }
 
 .radio-foot {
@@ -3030,12 +3030,23 @@ html[data-bloody] .cursor { filter: drop-shadow(0 3px 0 #9b0f16); }
   text-decoration: underline;
 }
 
-/* a round knob with a tick mark; --turn runs -135deg (silent) to 135deg (full) */
+/* the volume knob, right of the transport; --turn runs -135deg (silent) to 135deg (full) */
+.radio-vol {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6ch;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .radio-knob {
   flex: none;
   position: relative;
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 1px solid var(--muted);
   background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--text) 18%, transparent), transparent 60%), var(--ink);
@@ -3048,9 +3059,9 @@ html[data-bloody] .cursor { filter: drop-shadow(0 3px 0 #9b0f16); }
   content: "";
   position: absolute;
   left: 50%;
-  top: 2px;
+  top: 3px;
   width: 2px;
-  height: 7px;
+  height: 9px;
   translate: -50% 0;
   border-radius: 1px;
   background: var(--amber);

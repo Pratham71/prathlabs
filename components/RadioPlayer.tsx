@@ -94,7 +94,7 @@ export function RadioPlayer() {
   const station = STATIONS[theme]!;
   const track = playlist(theme)[radio.theme === theme ? radio.index : 0];
   const playing = radio.playing && radio.theme === theme;
-  const pos = radio.theme === theme ? position() : null;
+  const pos = position(theme);
 
   const toggle = () => {
     if (playing) return pause();
@@ -121,31 +121,6 @@ export function RadioPlayer() {
         <button type="button" onClick={() => skip(theme, 1)} aria-label="Next track">
           &gt;&gt;
         </button>
-      </div>
-      {pos && (
-        <div className="radio-time">
-          <span>{clock(pos.cur)}</span>
-          <input
-            type="range"
-            min={0}
-            max={Number.isFinite(pos.dur) ? pos.dur : 0}
-            step={0.5}
-            value={Math.min(pos.cur, Number.isFinite(pos.dur) ? pos.dur : 0)}
-            onChange={(e) => (seek(Number(e.target.value)), tick((n) => n + 1))}
-            disabled={!Number.isFinite(pos.dur)}
-            aria-label="Seek"
-            aria-valuetext={`${clock(pos.cur)} of ${clock(pos.dur)}`}
-            style={{ "--p": `${Number.isFinite(pos.dur) && pos.dur ? (pos.cur / pos.dur) * 100 : 0}%` } as CSSProperties}
-          />
-          <span>{clock(pos.dur)}</span>
-        </div>
-      )}
-      <div className="radio-foot">
-        {!playing && THEME_CLUE[theme] ? (
-          <Scroll className="radio-note muted">{THEME_CLUE[theme]}</Scroll>
-        ) : (
-          <Note artist={track.artist} />
-        )}
         <Knob
           value={vol}
           onChange={(v) => {
@@ -153,6 +128,29 @@ export function RadioPlayer() {
             setVolume(v);
           }}
         />
+      </div>
+      <div className="radio-time">
+        <span>{clock(pos.cur)}</span>
+        <input
+          type="range"
+          min={0}
+          max={Number.isFinite(pos.dur) ? pos.dur : 0}
+          step={0.5}
+          value={Math.min(pos.cur, Number.isFinite(pos.dur) ? pos.dur : 0)}
+          onChange={(e) => (seek(Number(e.target.value)), tick((n) => n + 1))}
+          disabled={pos.loop || !Number.isFinite(pos.dur)}
+          aria-label="Seek"
+          aria-valuetext={`${clock(pos.cur)} of ${clock(pos.dur)}`}
+          style={{ "--p": `${Number.isFinite(pos.dur) && pos.dur ? (pos.cur / pos.dur) * 100 : 0}%` } as CSSProperties}
+        />
+        <span title={pos.loop ? "loop length" : undefined}>{clock(pos.dur)}</span>
+      </div>
+      <div className="radio-foot">
+        {!playing && THEME_CLUE[theme] ? (
+          <Scroll className="radio-note muted">{THEME_CLUE[theme]}</Scroll>
+        ) : (
+          <Note artist={track.artist} />
+        )}
       </div>
     </aside>
   );
@@ -179,28 +177,31 @@ function Knob({ value, onChange }: { value: number; onChange: (v: number) => voi
   const set = (v: number) => onChange(Math.min(1, Math.max(0, Math.round(v * 20) / 20)));
   const step: Record<string, number> = { ArrowUp: 0.05, ArrowRight: 0.05, ArrowDown: -0.05, ArrowLeft: -0.05, Home: -1, End: 1 };
   return (
-    <span
-      className="radio-knob"
-      role="slider"
-      tabIndex={0}
-      aria-label="Volume"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(value * 100)}
-      title={`volume ${Math.round(value * 100)}%`}
-      style={{ "--turn": `${-135 + value * 270}deg` } as CSSProperties}
-      onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        drag.current = { y: e.clientY, v: value };
-      }}
-      onPointerMove={(e) => drag.current && set(drag.current.v + (drag.current.y - e.clientY) / 120)}
-      onPointerUp={() => (drag.current = null)}
-      onKeyDown={(e) => {
-        if (!(e.key in step)) return;
-        e.preventDefault();
-        set(value + step[e.key]);
-      }}
-    />
+    <span className="radio-vol">
+      <span
+        className="radio-knob"
+        role="slider"
+        tabIndex={0}
+        aria-label="Volume"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(value * 100)}
+        title={`volume ${Math.round(value * 100)}%`}
+        style={{ "--turn": `${-135 + value * 270}deg` } as CSSProperties}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          drag.current = { y: e.clientY, v: value };
+        }}
+        onPointerMove={(e) => drag.current && set(drag.current.v + (drag.current.y - e.clientY) / 120)}
+        onPointerUp={() => (drag.current = null)}
+        onKeyDown={(e) => {
+          if (!(e.key in step)) return;
+          e.preventDefault();
+          set(value + step[e.key]);
+        }}
+      />
+      <span className="radio-vol-text" aria-hidden="true">vol {Math.round(value * 100)}%</span>
+    </span>
   );
 }
 

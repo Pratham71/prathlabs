@@ -432,6 +432,7 @@ let file: HTMLAudioElement | null = null;
 let fileGain: GainNode | null = null;
 let level: GainNode | null = null;
 let timer = 0;
+let loopT0 = 0; // when the current synth loop started (audio clock)
 let step = 0;
 let nextAt = 0;
 
@@ -460,11 +461,17 @@ export function splitArtist(artist: string): [string, string?] {
   return m ? [m[1], m[2]] : [artist];
 }
 
-// Where the current song is (seconds), for the card's timer; null on the synth loops.
-export function position(): { cur: number; dur: number } | null {
-  const e = state.theme ? playlist(state.theme)[state.index] : undefined;
-  if (!e?.src) return null;
-  if (!file || file.dataset.src !== e.src) return { cur: 0, dur: NaN };
+// Where the station is (seconds), for the card's timer. Songs: the file's time (dur NaN until it loads).
+// Synth loops: position within one pass of the chord progression; `loop` marks them (no seeking).
+export function position(theme: Theme): { cur: number; dur: number; loop?: true } {
+  const i = state.theme === theme ? state.index : 0;
+  const e = playlist(theme)[i];
+  const live = state.theme === theme && state.playing;
+  if (e?.synth) {
+    const dur = (e.synth.chords.length * 16 * 60) / e.synth.bpm / 4;
+    return { cur: live && out ? (out.ac.currentTime - loopT0) % dur : 0, dur, loop: true };
+  }
+  if (!e?.src || !file || file.dataset.src !== e.src) return { cur: 0, dur: NaN };
   return { cur: file.currentTime, dur: file.duration };
 }
 export function seek(sec: number) {
@@ -556,6 +563,7 @@ function startClock() {
   clearInterval(timer);
   step = 0;
   nextAt = o.ac.currentTime + 0.08;
+  loopT0 = nextAt;
   timer = window.setInterval(run, 25);
   run();
 }
