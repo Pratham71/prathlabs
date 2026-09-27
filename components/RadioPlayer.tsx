@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react";
-import { STATIONS, getAnalyser, off, pause, play, playlist, probe, skip, snapshot, subscribe } from "@/lib/radio";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { STATIONS, getAnalyser, off, pause, play, playlist, position, probe, seek, setVolume, skip, snapshot, splitArtist, subscribe, volume } from "@/lib/radio";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { inked } from "@/lib/dither";
+import { THEME_CLUE } from "@/lib/commands";
+
+const clock = (s: number) => (Number.isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "-:--");
 
 const soundOn = () => {
   try {
@@ -19,6 +22,15 @@ export function RadioPlayer() {
   const theme = useSyncExternalStore(onThemeChange, currentTheme, () => null);
   const radio = useSyncExternalStore(subscribe, snapshot, snapshot);
   const viz = useRef<HTMLCanvasElement>(null);
+  const [, tick] = useState(0);
+  const [vol, setVol] = useState(volume);
+
+  // the timer: re-render 4x a second while playing (plenty for m:ss); position() is read at render
+  useEffect(() => {
+    if (!radio.playing) return;
+    const id = setInterval(() => tick((n) => n + 1), 250);
+    return () => clearInterval(id);
+  }, [radio.playing]);
 
   useEffect(() => {
     if (!theme) return;
@@ -82,6 +94,7 @@ export function RadioPlayer() {
   const station = STATIONS[theme]!;
   const track = playlist(theme)[radio.theme === theme ? radio.index : 0];
   const playing = radio.playing && radio.theme === theme;
+  const pos = position(theme);
 
   const toggle = () => {
     if (playing) return pause();
@@ -108,9 +121,108 @@ export function RadioPlayer() {
         <button type="button" onClick={() => skip(theme, 1)} aria-label="Next track">
           &gt;&gt;
         </button>
+        <Knob
+          value={vol}
+          onChange={(v) => {
+            setVol(v);
+            setVolume(v);
+          }}
+        />
       </div>
-      <Scroll className="radio-note muted">{track.artist ?? "original loop, made for this site"}</Scroll>
+      <div className="radio-time">
+        <span>{clock(pos.cur)}</span>
+        <input
+          type="range"
+          min={0}
+          max={Number.isFinite(pos.dur) ? pos.dur : 0}
+          step={0.5}
+          value={Math.min(pos.cur, Number.isFinite(pos.dur) ? pos.dur : 0)}
+          onChange={(e) => (seek(Number(e.target.value)), tick((n) => n + 1))}
+          disabled={pos.loop || !Number.isFinite(pos.dur)}
+          aria-label="Seek"
+          aria-valuetext={`${clock(pos.cur)} of ${clock(pos.dur)}`}
+          style={{ "--p": `${Number.isFinite(pos.dur) && pos.dur ? (pos.cur / pos.dur) * 100 : 0}%` } as CSSProperties}
+        />
+        <span title={pos.loop ? "loop length" : undefined}>{clock(pos.dur)}</span>
+      </div>
+      <div className="radio-foot">
+        {!playing && THEME_CLUE[theme] ? (
+          <Scroll className="radio-note muted">{THEME_CLUE[theme]}</Scroll>
+        ) : (
+          <Note artist={track.artist} />
+        )}
+      </div>
     </aside>
+  );
+}
+
+function Note({ artist }: { artist?: string }) {
+  if (!artist) return <Scroll className="radio-note muted">original loop, made for this site</Scroll>;
+  const [name, url] = splitArtist(artist);
+  return (
+    <>
+      <Scroll className="radio-note muted">{name}</Scroll>
+      {url && (
+        <a className="radio-link" href={url} target="_blank" rel="noopener noreferrer" aria-label={`Open ${name} link`}>
+          {/youtu\.?be/.test(url) ? "yt" : "link"} ↗
+        </a>
+      )}
+    </>
+  );
+}
+
+// Volume as a car-radio knob (drag up/down or arrow keys; a slider to assistive tech), plus a field to
+// type the level in.
+function Knob({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const drag = useRef<{ y: number; v: number } | null>(null);
+  const [draft, setDraft] = useState<string | null>(null); // what's being typed, until it's a valid 0-100
+  const set = (v: number) => onChange(Math.min(1, Math.max(0, Math.round(v * 20) / 20)));
+  const step: Record<string, number> = { ArrowUp: 0.05, ArrowRight: 0.05, ArrowDown: -0.05, ArrowLeft: -0.05, Home: -1, End: 1 };
+  return (
+    <span className="radio-vol">
+      <span
+        className="radio-knob"
+        role="slider"
+        tabIndex={0}
+        aria-label="Volume"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(value * 100)}
+        title={`volume ${Math.round(value * 100)}%`}
+        style={{ "--turn": `${-135 + value * 270}deg` } as CSSProperties}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          drag.current = { y: e.clientY, v: value };
+        }}
+        onPointerMove={(e) => drag.current && set(drag.current.v + (drag.current.y - e.clientY) / 120)}
+        onPointerUp={() => (drag.current = null)}
+        onKeyDown={(e) => {
+          if (!(e.key in step)) return;
+          e.preventDefault();
+          set(value + step[e.key]);
+        }}
+      />
+      <label className="radio-vol-text">
+        vol{" "}
+        <input
+          type="number"
+          min={0}
+          max={100}
+          step={1}
+          inputMode="numeric"
+          aria-label="Volume percent"
+          value={draft ?? Math.round(value * 100)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            const n = Number(e.target.value);
+            if (e.target.value !== "" && n >= 0 && n <= 100) onChange(Math.round(n) / 100);
+          }}
+          onBlur={() => setDraft(null)}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        />
+        %
+      </label>
+    </span>
   );
 }
 

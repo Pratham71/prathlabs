@@ -2648,7 +2648,7 @@ html[data-theme="gtavi"] .scenery {
   grid-template-columns: auto 1fr;
   gap: 0.35rem 1ch;
   align-items: center;
-  width: 17rem;
+  width: 19.5rem;
   padding: 0.6rem 0.8rem;
   font-size: 0.8rem;
   background: color-mix(in srgb, var(--ink) 88%, transparent);
@@ -2723,6 +2723,7 @@ html[data-boot] .radio {
   grid-column: 1 / -1;
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .radio-ctl button {
@@ -2851,4 +2852,325 @@ html[data-boot] .radio {
   .heat canvas {
     filter: invert(1) hue-rotate(180deg);
   }
+}
+
+/* ---------- more eggs (CommandPalette, Cursor, ThemeScenery) ---------- */
+
+/* `wanted` sets the los santos stars by hand; aezakmi (0) clears them */
+html[data-wanted] .acc-wanted i { animation: none; }
+html[data-wanted="0"] .acc-wanted { opacity: 0; transition: opacity 0.6s; }
+html[data-wanted="1"] .acc-wanted i:nth-child(-n + 1),
+html[data-wanted="2"] .acc-wanted i:nth-child(-n + 2),
+html[data-wanted="3"] .acc-wanted i:nth-child(-n + 3),
+html[data-wanted="4"] .acc-wanted i:nth-child(-n + 4),
+html[data-wanted="5"] .acc-wanted i { background: var(--ok); }
+
+/* five stars: red and blue flashing in from the edges */
+.fx-banner[data-fx="siren"] {
+  animation: fx-life 2.6s var(--ease-smooth-out) both, fx-siren 0.5s steps(1) infinite;
+}
+.fx-banner[data-fx="siren"] .fx-title { color: #fff; letter-spacing: 0.2em; }
+@keyframes fx-siren {
+  0% { box-shadow: inset 90px 0 120px -30px rgba(255, 30, 40, 0.75); }
+  50% { box-shadow: inset -90px 0 120px -30px rgba(40, 80, 255, 0.75); }
+}
+
+/* the fortnite storm: a purple wall closing to a small circle */
+.fx-storm {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  box-shadow: 0 0 0 200vmax rgba(110, 40, 190, 0.42), inset 0 0 40px 10px rgba(190, 120, 255, 0.6);
+  pointer-events: none;
+  z-index: 90;
+  animation: fx-storm 4.2s ease-in both;
+}
+@keyframes fx-storm {
+  0% { width: 170vmax; height: 170vmax; opacity: 0; }
+  10% { opacity: 1; }
+  85% { width: 38vmin; height: 38vmin; opacity: 1; }
+  100% { width: 38vmin; height: 38vmin; opacity: 0; }
+}
+
+/* /give diamond: the item drops, bounces, and is picked up */
+.fx-diamond {
+  position: fixed;
+  top: 0;
+  width: 40px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  z-index: 90;
+  animation: fx-drop 2.4s cubic-bezier(0.5, 0, 1, 1) both;
+}
+@keyframes fx-drop {
+  0% { transform: translateY(-60px); }
+  55% { transform: translateY(80vh) rotate(8deg); }
+  68% { transform: translateY(74vh); }
+  80%, 90% { transform: translateY(80vh); opacity: 1; }
+  100% { transform: translateY(80vh) scale(0.4); opacity: 0; }
+}
+
+/* blade bats egg */
+.fx-banner[data-fx="blood"] .fx-title { color: #c4121b; font-size: clamp(1.4rem, 4vw, 2.6rem); text-transform: none; }
+html[data-bloody] .cursor { filter: drop-shadow(0 3px 0 #9b0f16); }
+
+/* with great power: web strands behind the cursor */
+.web-strand {
+  position: fixed;
+  height: 1px;
+  background: rgba(223, 230, 245, 0.75);
+  transform-origin: 0 50%;
+  pointer-events: none;
+  z-index: 95;
+  animation: web-fade 1.2s ease-out forwards;
+}
+@keyframes web-fade { to { opacity: 0; } }
+
+/* blade: drops that land on the screen and run */
+.blood-drop {
+  position: fixed;
+  width: 13px;
+  height: 16px;
+  background: #8a0c14;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  pointer-events: none;
+  z-index: 15;
+  animation: blood 7s ease-in both;
+}
+.blood-drop::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 5px;
+  height: var(--run, 40px);
+  background: #7a0a12;
+  border-radius: 0 0 3px 3px;
+  transform-origin: top;
+  animation: blood-run 7s ease-out both;
+  animation-delay: inherit;
+}
+@keyframes blood {
+  0% { transform: scale(0); opacity: 0.9; }
+  6% { transform: scale(1.25); }
+  10% { transform: scale(1); }
+  80% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+@keyframes blood-run {
+  0%, 10% { transform: scaleY(0); }
+  60%, 100% { transform: scaleY(1); }
+}
+
+/* ---------- radio card: timer, song link, volume knob ---------- */
+
+.radio-time {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.radio-time input {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  appearance: none;
+  background: linear-gradient(to right, var(--amber) var(--p, 0%), var(--line) var(--p, 0%));
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.radio-time input::-webkit-slider-thumb {
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.radio-time input::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.radio-time input:disabled {
+  cursor: default; /* loops and not-yet-loaded songs: progress only, no seeking */
+}
+
+.radio-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  min-width: 0;
+}
+
+.radio-foot .radio-note {
+  flex: 1;
+}
+
+.radio-link {
+  flex: none;
+  font-size: 0.7rem;
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.radio-link:hover {
+  text-decoration: underline;
+}
+
+/* the volume knob, right of the transport; --turn runs -135deg (silent) to 135deg (full) */
+.radio-vol {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6ch;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.radio-knob {
+  flex: none;
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--text) 18%, transparent), transparent 60%), var(--ink);
+  rotate: var(--turn, 135deg);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.radio-knob::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 2px;
+  height: 9px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: var(--amber);
+}
+
+.radio-knob:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* typed volume: the radio's field and the admin panel's */
+.radio-vol-text input,
+.admin-vol {
+  width: 4.5ch;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 0.3ch;
+  text-align: right;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.admin-vol {
+  width: 5ch;
+}
+
+.radio-vol-text input::-webkit-inner-spin-button,
+.radio-vol-text input::-webkit-outer-spin-button,
+.admin-vol::-webkit-inner-spin-button,
+.admin-vol::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.radio-vol-text input:focus-visible,
+.admin-vol:focus-visible {
+  outline: 1px solid var(--amber);
+  border-color: var(--amber);
+}
+
+/* page eggs (name, screensaver, 3am, debug): a quieter banner */
+.fx-banner[data-fx="note"] .fx-title {
+  font-size: clamp(1.1rem, 3vw, 2rem);
+  text-transform: none;
+  font-stretch: 100%;
+}
+
+/* ---------- quirks: screensaver, ?debug, birthday ---------- */
+
+.saver {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #000;
+  cursor: none;
+  animation: fx-life-in 0.6s ease-out both;
+}
+
+@keyframes fx-life-in {
+  from { opacity: 0; }
+}
+
+.saver-logo {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 0.6rem 1.4rem;
+  border: 3px solid currentColor;
+  border-radius: 50% / 40%;
+  font-family: var(--font-mono);
+  line-height: 1;
+  will-change: transform;
+}
+
+.saver-logo strong {
+  font-size: 2.6rem;
+  font-weight: 800;
+  font-stretch: 125%;
+}
+
+.saver-logo span {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+}
+
+html[data-debug] body *:not(.debug-panel) {
+  outline: 1px solid rgba(255, 0, 128, 0.28);
+}
+
+.debug-panel {
+  position: fixed;
+  right: 1rem;
+  top: 3.5rem;
+  z-index: 150;
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font: 0.7rem/1.5 var(--font-mono);
+  color: #7dffa5;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #7dffa5;
+  pointer-events: none;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  pointer-events: none;
 }

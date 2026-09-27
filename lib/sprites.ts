@@ -149,3 +149,19 @@ export function cursorSprite(theme: Theme): Sprite | null {
   cache.set(theme, s);
   return s;
 }
+
+// A pixel sprite from rows of palette keys ("." is clear) as a data URL, `px` screen pixels per cell.
+export function pixelArt(rows: string[], colors: Record<string, string>, px: number) {
+  const c = document.createElement("canvas");
+  c.width = rows[0].length * px;
+  c.height = rows.length * px;
+  const ctx = c.getContext("2d")!;
+  rows.forEach((row, y) =>
+    [...row].forEach((ch, x) => {
+      if (ch === ".") return;
+      ctx.fillStyle = colors[ch];
+      ctx.fillRect(x * px, y * px, px, px);
+    }),
+  );
+  return c.toDataURL();
+}

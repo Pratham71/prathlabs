@@ -1,4 +1,4 @@
-import { STATIONS, midi, playlist, steps } from "@/lib/radio";
+import { STATIONS, midi, playlist, splitArtist, steps } from "@/lib/radio";
 
 test("note names map to midi", () => {
   expect(midi("A4")).toBe(69);
@@ -27,4 +27,11 @@ test("every track parses: notes valid, drum bars 16 steps, bass bar-aligned", ()
 test("a station with no real files plays its loops; every station theme has one", () => {
   for (const t of ["blade", "gtav", "gtavi", "fortnite"] as const) expect(playlist(t).length).toBeGreaterThan(0);
   expect(playlist("blade")[0]).toMatchObject({ title: "sprinkler system" });
+});
+
+test("a link pasted after the artist is split off", () => {
+  expect(splitArtist("M83 (https://www.youtube.com/watch?v=dX3k_QDnzHE)")).toEqual(["M83", "https://www.youtube.com/watch?v=dX3k_QDnzHE"]);
+  expect(splitArtist("M83 https://youtu.be/x")).toEqual(["M83", "https://youtu.be/x"]);
+  expect(splitArtist("Maroon 5 feat. Christina Aguilera")).toEqual(["Maroon 5 feat. Christina Aguilera"]);
+  expect(splitArtist("x (javascript:alert(1))")).toEqual(["x (javascript:alert(1))"]);
 });

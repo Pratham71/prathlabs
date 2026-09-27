@@ -16,6 +16,7 @@ import { ThemeAccents } from "@/components/ThemeAccents";
 import { ThemeIcon } from "@/components/ThemeIcon";
 import { ThemeScenery } from "@/components/ThemeScenery";
 import { site } from "@/content/site";
+import { Quirks } from "@/components/Quirks";
 import { getSettings } from "@/lib/settings";
 import "./globals.css";
 
@@ -61,6 +62,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body>
+        {/* for view-source readers */}
+        <div hidden dangerouslySetInnerHTML={{ __html: "<!-- there's more than one way in. try the konami code, or press : and type eggs -->" }} />
         <a className="skip" href="#main">
           Skip to content
         </a>
@@ -73,6 +76,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <RadioPlayer />
         <ThemeAccents />
         <ThemeIcon />
+        <Quirks />
         <ThemeScenery />
         <div className="dock">
           <CommandPalette />

@@ -6,6 +6,7 @@ import { onThemeChange } from "@/lib/theme";
 type Dot = { x: number; y: number; c: number; d: number; sx: number; sy: number; sz: number; o: number };
 
 const RESOLVE_MS = 1600;
+const BLAST_MS = 450; // the egg: five clicks blow the dots out this fast, then they reassemble
 let resolved = false; // assemble once per page load, not on every client-side return to /
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -33,6 +34,8 @@ export function DotName({ text }: { text: string }) {
     let built = "";
     let start: number | null = resolved || reduce ? -Infinity : null;
     let raf = 0;
+    let blast = -Infinity;
+    let clicks: number[] = [];
     let visible = false;
     const pointer = { x: 0, y: 0, nx: 0, ny: 0, on: false };
     const tilt = { x: 0, y: 0 };
@@ -53,7 +56,7 @@ export function DotName({ text }: { text: string }) {
       const cs = getComputedStyle(el);
       fs = parseFloat(cs.fontSize);
       P = Math.max(2, Math.round(fs / 15)); // fine grid: letters stay readable as dots
-      const B = Math.round(fs * 0.6); // bleed so tilted/lifted dots aren't clipped
+      const B = Math.round(fs * 1.2); // bleed so tilted, lifted and blasted dots aren't clipped
       W = Math.ceil(r.width + 2 * B);
       H = Math.ceil(r.height + 2 * B);
 
@@ -167,7 +170,7 @@ export function DotName({ text }: { text: string }) {
       const buckets: Path2D[] = Array.from({ length: 10 }, () => new Path2D());
 
       for (const p of dots) {
-        const k = still ? 1 : 1 - Math.pow(1 - clamp(e * 1.7 - p.o * 0.7), 3);
+        const k = still ? 1 : now < start ? 1 - Math.sqrt(clamp((now - blast) / BLAST_MS)) : 1 - Math.pow(1 - clamp(e * 1.7 - p.o * 0.7), 3);
         let x = p.x - W / 2;
         let y = p.y - H / 2;
         let z = p.d * depth + (still ? 0 : Math.sin(t * 1.6 - p.d * 5) * fs * 0.035);
@@ -240,6 +243,24 @@ export function DotName({ text }: { text: string }) {
       pointer.on = true;
     };
     const onLeave = () => (pointer.on = false);
+    // five clicks within 2.5s: the dots blow apart and reassemble (in the theme's own colours, as always)
+    const onClick = () => {
+      const now = performance.now();
+      clicks = [...clicks.filter((c) => now - c < 2500), now];
+      if (clicks.length < 5 || reduce || !dots.length || start === null || now < start + RESOLVE_MS) return;
+      clicks = [];
+      for (const p of dots) {
+        const ang = Math.random() * Math.PI * 2;
+        const rad = fs * (0.4 + Math.random() * 0.8);
+        p.sx = Math.cos(ang) * rad;
+        p.sy = Math.sin(ang) * rad * 0.6;
+        p.sz = (Math.random() - 0.3) * fs * 3;
+      }
+      blast = now;
+      start = now + BLAST_MS;
+      kick();
+      dispatchEvent(new CustomEvent("egg", { detail: { name: "dots" } }));
+    };
     const onUp = (ev: PointerEvent) => ev.pointerType !== "mouse" && onLeave(); // touch: release on lift
     const onVis = () => !document.hidden && visible && kick();
 
@@ -254,6 +275,7 @@ export function DotName({ text }: { text: string }) {
     });
     io.observe(el);
     ro.observe(el);
+    el.addEventListener("click", onClick);
     addEventListener("pointermove", onMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onLeave);
     addEventListener("pointerup", onUp);
@@ -279,6 +301,7 @@ export function DotName({ text }: { text: string }) {
       io.disconnect();
       ro.disconnect();
       removeEventListener("boot:done", begin);
+      el.removeEventListener("click", onClick);
       removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
       removeEventListener("pointerup", onUp);
