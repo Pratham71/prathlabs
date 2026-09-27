@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
-import { STATIONS, getAnalyser, off, pause, play, playlist, position, probe, seek, setVolume, skip, snapshot, splitArtist, subscribe, volume } from "@/lib/radio";
+import { isSoundCloud } from "@/content/music";
+import { STATIONS, getAnalyser, soundCloudFrame, off, pause, play, playlist, position, probe, seek, setVolume, skip, snapshot, splitArtist, subscribe, volume } from "@/lib/radio";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { inked } from "@/lib/dither";
 import { THEME_CLUE } from "@/lib/commands";
@@ -61,9 +62,16 @@ export function RadioPlayer() {
     const css = getComputedStyle(document.documentElement);
     const bins = new Uint8Array(128);
     let raf = 0;
+    const cur = playlist(theme!)[radio.theme === theme ? radio.index : 0];
+    const cloud = radio.playing && isSoundCloud(cur?.src);
     const draw = () => {
       const a = getAnalyser();
-      if (a && radio.playing) a.getByteFrequencyData(bins);
+      // SoundCloud's audio stays inside its player, out of Web Audio's reach: the bars dance to a
+      // made-up signal instead (a slow wobble per band, falling off toward the highs)
+      if (cloud) {
+        const t = performance.now() / 1000;
+        for (let i = 0; i < 128; i++) bins[i] = 255 * Math.max(0, (0.55 + 0.35 * Math.sin(t * (2.1 + i * 0.13) + i) * Math.sin(t * 3.7 + i * 0.7)) * (1 - i / 110));
+      } else if (a && radio.playing) a.getByteFrequencyData(bins);
       else bins.fill(0);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, COLS * P, ROWS * P);
@@ -95,6 +103,7 @@ export function RadioPlayer() {
   const track = playlist(theme)[radio.theme === theme ? radio.index : 0];
   const playing = radio.playing && radio.theme === theme;
   const pos = position(theme);
+  const cloud = isSoundCloud(track.src);
 
   const toggle = () => {
     if (playing) return pause();
@@ -144,6 +153,11 @@ export function RadioPlayer() {
           style={{ "--p": `${Number.isFinite(pos.dur) && pos.dur ? (pos.cur / pos.dur) * 100 : 0}%` } as CSSProperties}
         />
         <span title={pos.loop ? "loop length" : undefined}>{clock(pos.dur)}</span>
+      </div>
+      {/* SoundCloud songs: their player, visible and credited, framed in the card's dither. It stays mounted
+          (moving an iframe reloads it) and only shows while a SoundCloud song is up. */}
+      <div className="radio-cloud" hidden={!cloud}>
+        <iframe ref={soundCloudFrame} title="SoundCloud player" allow="autoplay; encrypted-media" />
       </div>
       <div className="radio-foot">
         {!playing && THEME_CLUE[theme] ? (

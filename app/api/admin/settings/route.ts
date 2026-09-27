@@ -1,6 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { del } from "@vercel/blob";
 import { isAdminRequest } from "@/lib/admin";
+import { isSoundCloud } from "@/content/music";
 import { SETTINGS_TAG, clean, isBlob, isSitePath, readSettings, writeSettings, type Settings } from "@/lib/settings";
 
 const deny = () => Response.json({ error: "not logged in" }, { status: 401 });
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   if (!(await isAdminRequest(req))) return deny();
   const next = clean(await req.json().catch(() => null));
-  if (!files(next).every((u) => typeof u === "string" && (isBlob(u) || isSitePath(u)))) return Response.json({ error: "bad file url" }, { status: 400 });
+  if (!files(next).every((u) => typeof u === "string" && (isBlob(u) || isSitePath(u) || isSoundCloud(u)))) return Response.json({ error: "bad file url" }, { status: 400 });
   const prev = await readSettings();
   try {
     await writeSettings(next);

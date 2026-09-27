@@ -3174,3 +3174,23 @@ html[data-debug] body *:not(.debug-panel) {
   z-index: 95;
   pointer-events: none;
 }
+
+/* radio card: SoundCloud's player (songs streamed from SoundCloud), framed in a pixel dither */
+.radio-cloud {
+  grid-column: 1 / -1;
+  padding: 4px;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--amber) 55%, transparent) 0 25%, transparent 0 50%) 0 0 / 4px 4px;
+  image-rendering: pixelated;
+}
+
+.radio-cloud[hidden] {
+  display: none;
+}
+
+.radio-cloud iframe {
+  display: block;
+  width: 100%;
+  height: 20px;
+  border: 0;
+  background: var(--ink);
+}

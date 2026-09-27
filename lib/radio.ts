@@ -3,7 +3,7 @@
 // with a lookahead scheduler (drums, bass, chords, a lead; all Web Audio). Browser only. Everything runs
 // through lib/audio's master, so the dock's sound toggle still silences it.
 import { bedOn, graph } from "@/lib/audio";
-import { MUSIC } from "@/content/music";
+import { MUSIC, isSoundCloud } from "@/content/music";
 import { clientSettings } from "@/lib/client-settings";
 import type { Theme } from "@/lib/theme";
 
@@ -401,7 +401,7 @@ const probed = new Set<Theme>();
 export function playlist(theme: Theme): Entry[] {
   // songs uploaded in /admin (Blob URLs, known to exist) play before the repo's files
   const uploaded = clientSettings().music?.[theme] ?? [];
-  const real = (MUSIC[theme] ?? []).filter((r) => found.has(r.src));
+  const real = (MUSIC[theme] ?? []).filter((r) => isSoundCloud(r.src) || found.has(r.src));
   return [...uploaded, ...real, ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
 }
 
@@ -410,7 +410,7 @@ export async function probe(theme: Theme) {
   if (probed.has(theme)) return;
   probed.add(theme);
   await Promise.all(
-    (MUSIC[theme] ?? []).map((r) =>
+    (MUSIC[theme] ?? []).filter((r) => !isSoundCloud(r.src)).map((r) =>
       fetch(r.src, { method: "HEAD" })
         .then((res) => res.ok && (res.headers.get("content-type") ?? "").startsWith("audio") && found.add(r.src))
         .catch(() => {}),
@@ -453,6 +453,8 @@ export function setVolume(v: number) {
     localStorage.setItem("radio-volume", String(v));
   } catch {}
   if (level && out) level.gain.setTargetAtTime(LEVEL * v, out.ac.currentTime, 0.03);
+  const e = state.theme ? playlist(state.theme)[state.index] : undefined;
+  if (e && isSoundCloud(e.src)) widget?.setVolume(scLevel(e));
 }
 
 // "M83 (https://youtube.com/...)": the artist, and a link to the song if one was pasted after it.
@@ -471,11 +473,15 @@ export function position(theme: Theme): { cur: number; dur: number; loop?: true 
     const dur = (e.synth.chords.length * 16 * 60) / e.synth.bpm / 4;
     return { cur: live && out ? (out.ac.currentTime - loopT0) % dur : 0, dur, loop: true };
   }
+  if (isSoundCloud(e?.src)) return sc.src === e?.src ? { cur: sc.cur, dur: sc.dur } : { cur: 0, dur: NaN };
   if (!e?.src || !file || file.dataset.src !== e.src) return { cur: 0, dur: NaN };
   return { cur: file.currentTime, dur: file.duration };
 }
 export function seek(sec: number) {
-  if (file && Number.isFinite(sec)) file.currentTime = sec;
+  if (!Number.isFinite(sec)) return;
+  const e = state.theme ? playlist(state.theme)[state.index] : undefined;
+  if (isSoundCloud(e?.src)) return void (widget?.seekTo(sec * 1000), (sc.cur = sec));
+  if (file) file.currentTime = sec;
 }
 
 function setup(): Out {
@@ -516,6 +522,80 @@ function fileEl(o: Out) {
 function stopAll() {
   clearInterval(timer);
   file?.pause();
+  widget?.pause();
+}
+
+// ---- SoundCloud ----
+// Songs whose src is a SoundCloud page stream through SoundCloud's embedded player (their Widget API),
+// which RadioPlayer keeps visible in the card: that's the licence (SoundCloud's player, credited, linked).
+// The site only drives it: play, pause, seek, volume, next. Its audio can't reach Web Audio, so the
+// visualizer fakes it and the site's master gain doesn't apply (the sound toggle pauses it instead).
+type Widget = {
+  play(): void;
+  pause(): void;
+  seekTo(ms: number): void;
+  setVolume(v: number): void;
+  getDuration(cb: (ms: number) => void): void;
+  load(url: string, o: Record<string, unknown>): void;
+  bind(ev: string, cb: (e?: { currentPosition: number }) => void): void;
+};
+type SCApi = { Widget: ((el: HTMLIFrameElement) => Widget) & { Events: Record<"READY" | "PLAY_PROGRESS" | "FINISH", string> } };
+let frame: HTMLIFrameElement | null = null;
+let widget: Widget | null = null;
+const sc = { src: "", cur: 0, dur: NaN, moved: false };
+
+// the card hands over its iframe (and takes it back when it unmounts)
+export function soundCloudFrame(el: HTMLIFrameElement | null) {
+  frame = el;
+  if (!el) [widget, sc.src] = [null, ""];
+}
+
+let api: Promise<SCApi> | null = null;
+const loadApi = () =>
+  (api ??= new Promise<SCApi>((ok, no) => {
+    const s = document.createElement("script");
+    s.src = "https://w.soundcloud.com/player/api.js";
+    s.onload = () => ok((window as unknown as { SC: SCApi }).SC);
+    s.onerror = () => ((api = null), no(new Error("soundcloud api")));
+    document.head.append(s);
+  }));
+
+// same level a hosted file would get: 2x the station level, times the song's own volume, as 0..100
+const scLevel = (e: Entry) => Math.round(Math.min(1, 2 * LEVEL * volume() * (e.volume ?? 1)) * 100);
+
+// SoundCloud's mini player, its buttons in the theme's accent
+function widgetUrl(src: string) {
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--amber").trim().replace("#", "");
+  const q = new URLSearchParams({ url: src, auto_play: "true", color: accent || "ffb547", hide_related: "true", show_comments: "false", show_reposts: "false", show_teaser: "false", visual: "false" });
+  return `https://w.soundcloud.com/player/?${q}`;
+}
+
+async function playSoundCloud(e: Entry) {
+  const src = e.src!;
+  if (!frame) return;
+  if (widget && sc.src === src) return widget.play(); // same song: resume
+  const SC = await loadApi().catch(() => null);
+  if (!SC || !frame) return state.theme && skip(state.theme, 1);
+  Object.assign(sc, { src, cur: e.start ?? 0, dur: NaN, moved: false });
+  const ready = () => {
+    if (sc.src !== src || !widget) return;
+    widget.setVolume(scLevel(e));
+    if (e.start) widget.seekTo(e.start * 1000);
+    widget.getDuration((ms) => (sc.dur = ms / 1000));
+    if (state.playing) widget.play();
+    else widget.pause();
+    // a song SoundCloud won't play here (blocked in the visitor's country, taken down) never makes
+    // progress and fires no error: give it 8s, then move on
+    setTimeout(() => sc.src === src && !sc.moved && state.playing && state.theme && skip(state.theme, 1), 8000);
+  };
+  if (widget) return widget.load(src, { auto_play: state.playing, callback: ready });
+  frame.src = widgetUrl(src);
+  const w = (widget = SC.Widget(frame));
+  const E = SC.Widget.Events;
+  w.bind(E.READY, ready);
+  w.bind(E.PLAY_PROGRESS, (p) => p && Object.assign(sc, { cur: p.currentPosition / 1000, moved: true }));
+  w.bind(E.FINISH, () => state.playing && state.theme && skip(state.theme, 1));
+  // ponytail: presses on SoundCloud's own play button aren't mirrored into the card's state
 }
 
 function schedule(o: Out, tr: Track, s: number, t: number) {
@@ -582,7 +662,10 @@ export async function play(theme: Theme, index = state.index) {
   bedOn(false);
   stopAll();
   const e = list[i];
-  if (e.src) {
+  if (isSoundCloud(e.src)) {
+    o.bus.gain.setTargetAtTime(0, o.ac.currentTime, 0.05);
+    void playSoundCloud(e);
+  } else if (e.src) {
     o.bus.gain.setTargetAtTime(0, o.ac.currentTime, 0.05);
     const el = fileEl(o);
     fileGain!.gain.value = 2 * (e.volume ?? 1);

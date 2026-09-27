@@ -7,6 +7,10 @@ import type { Theme } from "@/lib/theme";
 // `start` (seconds) is where the song begins when it comes on: set it to the drop, chorus or hook.
 // These are commercial recordings: hosting them on the public site is the owner's call.
 // volume: this song's level, 0 to 1 (default 1), so a loud master doesn't jump out of the station
+// `src` can also be a SoundCloud track page (https://soundcloud.com/artist/track): that song streams through
+// SoundCloud's own player in the radio card instead of being hosted here.
+export const isSoundCloud = (u?: string) => !!u && /^https:\/\/(www\.|m\.|on\.)?soundcloud\.com\/[\w./?=&%-]+$/.test(u);
+
 export type RealTrack = { title: string; artist: string; src: string; start?: number; volume?: number };
 
 export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
@@ -14,8 +18,8 @@ export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
     { title: "Lady (Hear Me Tonight)", artist: "Modjo", src: "/music/gtav/lady-hear-me-tonight.mp3" },
     { title: "Meet Me Halfway", artist: "The Black Eyed Peas", src: "/music/gtav/meet-me-halfway.mp3" },
     { title: "Music Sounds Better with You", artist: "Stardust", src: "/music/gtav/music-sounds-better-with-you.mp3" },
-    { title: "Moves Like Jagger", artist: "Maroon 5 feat. Christina Aguilera", src: "/music/gtav/moves-like-jagger.mp3" },
-    { title: "Midnight City", artist: "M83", src: "/music/gtav/midnight-city.mp3" },
+    { title: "Moves Like Jagger", artist: "Maroon 5 feat. Christina Aguilera", src: "https://soundcloud.com/maroon-5/moves-like-jagger" },
+    { title: "Midnight City", artist: "M83", src: "https://soundcloud.com/m83/midnight-city" },
     { title: "Welcome to Los Santos", artist: "Oh No & The Alchemist", src: "/music/gtav/welcome-to-los-santos.mp3" },
     { title: "Sleepwalking", artist: "The Chain Gang of 1974", src: "/music/gtav/sleepwalking.mp3" },
   ],
@@ -25,6 +29,7 @@ export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
   ],
   fortnite: [{ title: "Lobby Theme (Chapter 1)", artist: "Epic Games", src: "/music/fortnite/lobby-chapter-1.mp3" }],
   blade: [
+    { title: "Blade", artist: "D'Angello & Francis", src: "https://soundcloud.com/dangellofrancis/blade" },
     { title: "Confusion (Pump Panel Reconstruction Mix)", artist: "New Order", src: "/music/blade/confusion.mp3" },
   ],
   matrix: [

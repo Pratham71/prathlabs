@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { Section } from "@/components/Man";
-import { MUSIC, REBOOT_SOUNDS } from "@/content/music";
+import { MUSIC, REBOOT_SOUNDS, isSoundCloud } from "@/content/music";
 import { THEMES, THEME_LABEL, type Theme } from "@/lib/theme";
 import { EGG_SOUNDS, SCENE_SOUNDS, type EggSound, type SceneSound, type Settings } from "@/lib/settings";
 
@@ -260,6 +260,42 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               volume <input key={s.uploadVolume} className="admin-vol" name="volume" type="number" min={0} max={100} step={1} inputMode="numeric" defaultValue={Math.round(s.uploadVolume * 100)} />%
             </label>
             <button type="submit">upload</button>
+          </fieldset>
+        </form>
+
+        {/* nothing hosted here: the song plays in SoundCloud's own player inside the radio card */}
+        <form
+          className="admin-form"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const f = new FormData(e.currentTarget);
+            const src = String(f.get("url")).trim().split(/[?#]/)[0];
+            if (!isSoundCloud(src)) return setStatus("that's not a soundcloud.com track link");
+            const start = Number(f.get("start")) || undefined;
+            const volume = Math.min(100, Math.max(0, Number(f.get("volume") ?? 100))) / 100;
+            const track = { title: String(f.get("title")).trim(), artist: String(f.get("artist")).trim(), src, ...(start ? { start } : {}), ...(volume !== 1 ? { volume } : {}) };
+            (e.target as HTMLFormElement).reset();
+            await save({ ...s, music: { ...s.music, [theme]: [...songs, track] } }, "soundcloud song added");
+          }}
+        >
+          <fieldset disabled={locked}>
+            <legend>or add a SoundCloud song to {THEME_LABEL[theme]}</legend>
+            <label>
+              link <input name="url" type="url" required placeholder="https://soundcloud.com/m83/midnight-city" />
+            </label>
+            <label>
+              title <input name="title" required maxLength={120} />
+            </label>
+            <label>
+              artist <input name="artist" maxLength={120} />
+            </label>
+            <label>
+              start at (seconds) <input name="start" type="number" min={0} step={1} inputMode="numeric" />
+            </label>
+            <label>
+              volume <input key={s.uploadVolume} className="admin-vol" name="volume" type="number" min={0} max={100} step={1} inputMode="numeric" defaultValue={Math.round(s.uploadVolume * 100)} />%
+            </label>
+            <button type="submit">add</button>
           </fieldset>
         </form>
       </Section>
