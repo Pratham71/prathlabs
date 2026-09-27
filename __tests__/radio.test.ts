@@ -1,5 +1,5 @@
 import { STATIONS, midi, playlist, splitArtist, steps } from "@/lib/radio";
-import { isSoundCloud } from "@/content/music";
+import { fmtTime, isSoundCloud, parseTime } from "@/content/music";
 
 test("note names map to midi", () => {
   expect(midi("A4")).toBe(69);
@@ -45,4 +45,14 @@ test("only soundcloud.com track pages count as SoundCloud songs", () => {
   expect(isSoundCloud("http://soundcloud.com/m83/midnight-city")).toBe(false);
   expect(isSoundCloud("https://soundcloud.com.evil.io/x")).toBe(false);
   expect(isSoundCloud("/music/gtav/x.mp3")).toBe(false);
+});
+
+test("start times read as seconds, m:ss or h:mm:ss", () => {
+  expect(parseTime("83")).toBe(83);
+  expect(parseTime("1:23")).toBe(83);
+  expect(parseTime(" 1:02:03 ")).toBe(3723);
+  expect(parseTime("1:75")).toBeUndefined();
+  expect(parseTime("abc")).toBeUndefined();
+  expect(fmtTime(83)).toBe("1:23");
+  expect(fmtTime(3723)).toBe("1:02:03");
 });

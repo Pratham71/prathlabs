@@ -11,6 +11,17 @@ import type { Theme } from "@/lib/theme";
 // SoundCloud's own player in the radio card instead of being hosted here.
 export const isSoundCloud = (u?: string) => !!u && /^https:\/\/(www\.|m\.|on\.)?soundcloud\.com\/[\w./?=&%-]+$/.test(u);
 
+// Start times as people write them: "83", "1:23" or "1:02:03" -> seconds (undefined if it isn't one).
+export function parseTime(s: string): number | undefined {
+  const t = s.trim();
+  if (!/^\d+(:[0-5]?\d){0,2}$/.test(t)) return undefined;
+  return t.split(":").reduce((a, n) => a * 60 + Number(n), 0);
+}
+export const fmtTime = (sec: number) => {
+  const [h, m, s] = [Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), Math.floor(sec % 60)];
+  return `${h ? `${h}:${String(m).padStart(2, "0")}` : m}:${String(s).padStart(2, "0")}`;
+};
+
 export type RealTrack = { title: string; artist: string; src: string; start?: number; volume?: number };
 
 export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {

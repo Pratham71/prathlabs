@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { Section } from "@/components/Man";
-import { MUSIC, REBOOT_SOUNDS, isSoundCloud } from "@/content/music";
+import { MUSIC, REBOOT_SOUNDS, fmtTime, isSoundCloud, parseTime } from "@/content/music";
 import { THEMES, THEME_LABEL, type Theme } from "@/lib/theme";
 import { EGG_SOUNDS, SCENE_SOUNDS, type EggSound, type SceneSound, type Settings } from "@/lib/settings";
 
@@ -71,6 +71,33 @@ function Vol({ value, onSave, disabled }: { value: number; onSave: (v: number) =
         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), e.currentTarget.blur())}
       />
       %
+    </label>
+  );
+}
+
+// Where a song starts, typed as 1:23 (or 83, or 1:02:03); blank starts it at 0:00. Saves on blur or Enter.
+function Start({ value, onSave, disabled }: { value?: number; onSave: (sec: number | undefined) => void; disabled?: boolean }) {
+  const shown = value ? fmtTime(value) : "";
+  const commit = (el: HTMLInputElement) => {
+    const t = el.value.trim();
+    const sec = t ? parseTime(t) : undefined;
+    if (t && sec === undefined) return void (el.value = shown); // not a time: put it back
+    if ((sec || undefined) !== (value || undefined)) onSave(sec || undefined);
+  };
+  return (
+    <label>
+      from{" "}
+      <input
+        key={shown}
+        className="admin-vol admin-start"
+        inputMode="numeric"
+        placeholder="0:00"
+        aria-label="Start at (m:ss)"
+        defaultValue={shown}
+        disabled={disabled}
+        onBlur={(e) => commit(e.currentTarget)}
+        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), e.currentTarget.blur())}
+      />
     </label>
   );
 }
@@ -193,7 +220,16 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             {songs.map((song, i) => (
               <li key={song.src}>
                 {song.title} · <span className="muted">{song.artist}</span>
-                {song.start ? <span className="muted"> · from {song.start}s</span> : null}{" "}
+                {isSoundCloud(song.src) && <span className="muted"> · soundcloud</span>}{" "}
+                <Start
+                  value={song.start}
+                  disabled={locked}
+                  onSave={(sec) => {
+                    const { start: _old, ...rest } = song;
+                    void _old;
+                    void save({ ...s, music: { ...s.music, [theme]: songs.map((x) => (x === song ? { ...rest, ...(sec ? { start: sec } : {}) } : x)) } }, sec ? `starts at ${fmtTime(sec)}` : "starts at 0:00");
+                  }}
+                />{" "}
                 <Vol value={song.volume ?? 1} disabled={locked} onSave={(v) => save({ ...s, music: { ...s.music, [theme]: songs.map((x) => (x === song ? { ...x, volume: v } : x)) } })} />{" "}
                 <button type="button" disabled={locked || i === 0} onClick={() => save({ ...s, music: { ...s.music, [theme]: songs.map((x, j) => (j === i - 1 ? song : j === i ? songs[i - 1] : x)) } })} aria-label={`Move ${song.title} up`}>
                   up
@@ -212,11 +248,21 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
           <p>none yet</p>
         )}
 
-        <p className="muted">in the repo (public/music, see AUDIO.md; edit content/music.ts to change)</p>
+        <p className="muted">in the repo (content/music.ts; start times set here override its)</p>
         <ul className="admin-list">
           {(MUSIC[theme] ?? []).map((m) => (
             <li key={m.src}>
               {m.title} · <span className="muted">{m.artist}</span>
+              {isSoundCloud(m.src) && <span className="muted"> · soundcloud</span>}{" "}
+              <Start
+                value={s.starts[m.src] ?? m.start}
+                disabled={locked}
+                onSave={(sec) => {
+                  const { [m.src]: _old, ...rest } = s.starts;
+                  void _old;
+                  void save({ ...s, starts: sec ? { ...rest, [m.src]: sec } : rest }, sec ? `starts at ${fmtTime(sec)}` : "starts at 0:00");
+                }}
+              />
             </li>
           ))}
         </ul>
@@ -231,7 +277,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             setBusy(true);
             try {
               const src = await put(file, "music", (n) => setStatus(`uploading ${n}%`));
-              const start = Number(f.get("start")) || undefined;
+              const start = parseTime(String(f.get("start") ?? "")) || undefined;
               const volume = Math.min(100, Math.max(0, Number(f.get("volume") ?? 100))) / 100;
               const track = { title: String(f.get("title")).trim(), artist: String(f.get("artist")).trim(), src, ...(start ? { start } : {}), ...(volume !== 1 ? { volume } : {}) };
               (e.target as HTMLFormElement).reset();
@@ -254,7 +300,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               artist <input name="artist" maxLength={120} placeholder="M83 (https://youtu.be/...) links the song" />
             </label>
             <label>
-              start at (seconds) <input name="start" type="number" min={0} step={1} inputMode="numeric" />
+              start at <input name="start" inputMode="numeric" placeholder="1:23" pattern="\d+(:[0-5]?\d){0,2}" title="seconds, m:ss or h:mm:ss" />
             </label>
             <label>
               volume <input key={s.uploadVolume} className="admin-vol" name="volume" type="number" min={0} max={100} step={1} inputMode="numeric" defaultValue={Math.round(s.uploadVolume * 100)} />%
@@ -271,7 +317,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             const f = new FormData(e.currentTarget);
             const src = String(f.get("url")).trim().split(/[?#]/)[0];
             if (!isSoundCloud(src)) return setStatus("that's not a soundcloud.com track link");
-            const start = Number(f.get("start")) || undefined;
+            const start = parseTime(String(f.get("start") ?? "")) || undefined;
             const volume = Math.min(100, Math.max(0, Number(f.get("volume") ?? 100))) / 100;
             const track = { title: String(f.get("title")).trim(), artist: String(f.get("artist")).trim(), src, ...(start ? { start } : {}), ...(volume !== 1 ? { volume } : {}) };
             (e.target as HTMLFormElement).reset();
@@ -290,7 +336,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               artist <input name="artist" maxLength={120} />
             </label>
             <label>
-              start at (seconds) <input name="start" type="number" min={0} step={1} inputMode="numeric" />
+              start at <input name="start" inputMode="numeric" placeholder="1:23" pattern="\d+(:[0-5]?\d){0,2}" title="seconds, m:ss or h:mm:ss" />
             </label>
             <label>
               volume <input key={s.uploadVolume} className="admin-vol" name="volume" type="number" min={0} max={100} step={1} inputMode="numeric" defaultValue={Math.round(s.uploadVolume * 100)} />%

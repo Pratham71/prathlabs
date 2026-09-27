@@ -14,6 +14,7 @@ export type Settings = {
   sfx: Partial<Record<EggSound, RebootSound>>; // sounds for the eggs that have one (uploaded through the panel)
   uploadVolume: number; // 0..1, what new uploads start at in the panel
   scene: Partial<Record<SceneSound, SceneSetting>>; // los santos background sounds: off, louder/quieter, or a file
+  starts: Record<string, number>; // where the repo's songs (content/music.ts) start, by src, set in the panel
 };
 
 // The los santos background scene's sounds (ThemeScenery). Each can be switched off, turned up or down,
@@ -26,7 +27,7 @@ export type SceneSetting = { off?: true; src?: string; volume?: number };
 export const EGG_SOUNDS = ["storm", "greatpower", "wanted"] as const;
 export type EggSound = (typeof EGG_SOUNDS)[number];
 
-export const DEFAULT_SETTINGS: Settings = { defaultTheme: "amber", themes: [...THEMES], spotify: true, music: {}, reboot: {}, sfx: {}, uploadVolume: 1, scene: {} };
+export const DEFAULT_SETTINGS: Settings = { defaultTheme: "amber", themes: [...THEMES], spotify: true, music: {}, reboot: {}, sfx: {}, uploadVolume: 1, scene: {}, starts: {} };
 export const SETTINGS_TAG = "site-settings";
 const KEY = "site:settings";
 
@@ -44,6 +45,11 @@ export function clean(raw: unknown): Settings {
     music: perTheme(r.music, (v) => (Array.isArray(v) ? v.filter(isTrack).map(({ title, artist, src, start, volume }) => ({ title, artist, src, ...(start ? { start } : {}), ...(volume !== undefined && volume !== 1 ? { volume } : {}) })) : undefined)),
     reboot: perTheme(r.reboot, sound),
     scene: Object.fromEntries(SCENE_SOUNDS.flatMap((k) => (sceneSetting((r.scene as Record<string, unknown> | undefined)?.[k]) ? [[k, sceneSetting((r.scene as Record<string, unknown>)[k])]] : []))),
+    starts: Object.fromEntries(
+      Object.entries(r.starts && typeof r.starts === "object" ? r.starts : {})
+        .filter(([k, v]) => k.length <= 500 && typeof v === "number" && Number.isFinite(v) && v > 0 && v < 36000)
+        .slice(0, 300),
+    ),
     uploadVolume: typeof r.uploadVolume === "number" && r.uploadVolume >= 0 && r.uploadVolume <= 1 ? r.uploadVolume : 1,
     sfx: Object.fromEntries(EGG_SOUNDS.flatMap((k) => (sound((r.sfx as Record<string, unknown> | undefined)?.[k]) ? [[k, sound((r.sfx as Record<string, unknown>)[k])]] : []))),
   };

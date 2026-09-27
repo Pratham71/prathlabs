@@ -401,7 +401,8 @@ const probed = new Set<Theme>();
 export function playlist(theme: Theme): Entry[] {
   // songs uploaded in /admin (Blob URLs, known to exist) play before the repo's files
   const uploaded = clientSettings().music?.[theme] ?? [];
-  const real = (MUSIC[theme] ?? []).filter((r) => isSoundCloud(r.src) || found.has(r.src));
+  const starts = clientSettings().starts ?? {};
+  const real = (MUSIC[theme] ?? []).filter((r) => isSoundCloud(r.src) || found.has(r.src)).map((r) => (starts[r.src] ? { ...r, start: starts[r.src] } : r));
   return [...uploaded, ...real, ...(STATIONS[theme]?.tracks ?? []).map((t) => ({ title: t.title, synth: t }))];
 }
 
@@ -536,6 +537,7 @@ type Widget = {
   seekTo(ms: number): void;
   setVolume(v: number): void;
   getDuration(cb: (ms: number) => void): void;
+  getCurrentSound(cb: (s: { policy?: string } | null) => void): void;
   load(url: string, o: Record<string, unknown>): void;
   bind(ev: string, cb: (e?: { currentPosition: number }) => void): void;
 };
@@ -564,10 +566,12 @@ const loadApi = () =>
 const scLevel = (e: Entry) => Math.round(Math.min(1, 2 * LEVEL * volume() * (e.volume ?? 1)) * 100);
 
 // SoundCloud's mini player, its buttons in the theme's accent
-function widgetUrl(src: string) {
-  const accent = getComputedStyle(document.documentElement).getPropertyValue("--amber").trim().replace("#", "");
-  const q = new URLSearchParams({ url: src, auto_play: "true", color: accent || "ffb547", hide_related: "true", show_comments: "false", show_reposts: "false", show_teaser: "false", visual: "false" });
-  return `https://w.soundcloud.com/player/?${q}`;
+// SoundCloud's mini player options (the first load's URL and every later load() take the same ones; load() resets them)
+function playerOptions() {
+  // the card shows the player inverted (dark): hand it the accent's inverse so its buttons come out in the accent
+  const hex = getComputedStyle(document.documentElement).getPropertyValue("--amber").trim().replace("#", "");
+  const color = /^[0-9a-f]{6}$/i.test(hex) ? (0xffffff ^ parseInt(hex, 16)).toString(16).padStart(6, "0") : "004ab8";
+  return { color, hide_related: true, show_comments: false, show_reposts: false, show_teaser: false, visual: false }; // booleans: load() reads "false" as true
 }
 
 async function playSoundCloud(e: Entry) {
@@ -582,14 +586,16 @@ async function playSoundCloud(e: Entry) {
     widget.setVolume(scLevel(e));
     if (e.start) widget.seekTo(e.start * 1000);
     widget.getDuration((ms) => (sc.dur = ms / 1000));
+    // BLOCK: not playable in this visitor's country. SNIP: a 30s preview, then FINISH moves on. Both are the label's call.
+    widget.getCurrentSound((s) => s?.policy === "BLOCK" && sc.src === src && state.playing && state.theme && skip(state.theme, 1));
     if (state.playing) widget.play();
     else widget.pause();
     // a song SoundCloud won't play here (blocked in the visitor's country, taken down) never makes
     // progress and fires no error: give it 8s, then move on
     setTimeout(() => sc.src === src && !sc.moved && state.playing && state.theme && skip(state.theme, 1), 8000);
   };
-  if (widget) return widget.load(src, { auto_play: state.playing, callback: ready });
-  frame.src = widgetUrl(src);
+  if (widget) return widget.load(src, { ...playerOptions(), auto_play: state.playing, callback: ready });
+  frame.src = `https://w.soundcloud.com/player/?${new URLSearchParams(Object.entries({ ...playerOptions(), url: src, auto_play: true }).map(([k, v]) => [k, String(v)]))}`;
   const w = (widget = SC.Widget(frame));
   const E = SC.Widget.Events;
   w.bind(E.READY, ready);
