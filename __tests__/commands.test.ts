@@ -55,8 +55,7 @@ test("tab completion covers commands and arguments", () => {
 });
 
 test("egg hunt: commands report their egg, eggs counts, hint skips found ones", () => {
-  expect(EGGS).toHaveLength(32);
-  expect(new Set(EGGS.map(([n]) => n)).size).toBe(32);
+  expect(new Set(EGGS.map(([n]) => n)).size).toBe(EGGS.length);
   expect(run("creeper").egg).toBe("creeper");
   expect(run("minecraft").egg).toBe("creeper");
   expect(run("sudo make me a sandwich").egg).toBe("sandwich");
@@ -66,7 +65,7 @@ test("egg hunt: commands report their egg, eggs counts, hint skips found ones", 
   expect(run("rm notes.txt").egg).toBeUndefined();
   expect(run("help").egg).toBeUndefined();
   const eggs = run("eggs", undefined, ["gg", "sl"]).out;
-  expect(eggs[0]).toBe("found 2/32");
+  expect(eggs[0]).toBe(`found 2/${EGGS.length}`);
   expect(eggs.join(" ")).toContain("gg");
   expect(eggs.join(" ")).not.toContain("hesoyam");
   const all = EGGS.map(([n]) => n);
@@ -78,4 +77,17 @@ test("egg names complete only after the first find, from 3 letters", () => {
   expect(complete("hes")).toEqual([]);
   expect(complete("hes", ["gg"])).toEqual(["hesoyam"]);
   expect(complete("he", ["gg"])).toEqual(["help"]);
+});
+
+test("game eggs: minecraft slash commands, phrases, and the ones not found by typing", () => {
+  expect(run("/give diamond")).toMatchObject({ egg: "give diamond", action: { type: "fx", name: "diamond" } });
+  expect(run("/give dirt").egg).toBeUndefined();
+  expect(run("/gamemode creative")).toMatchObject({ egg: "gamemode", out: ["Set own game mode to Creative Mode"] });
+  expect(run("gamemode hardcore").egg).toBeUndefined();
+  expect(run("with great power")).toMatchObject({ egg: "great power", action: { type: "webtrail" } });
+  expect(run("there is no spoon")).toMatchObject({ egg: "spoon", action: { type: "fx", name: "spoon" } });
+  expect(run("aezakmi").action).toEqual({ type: "wanted", clear: true });
+  expect(run("wanted")).toEqual({ out: [], action: { type: "wanted" } }); // counted at five stars, by the palette
+  expect(run("bats").egg).toBeUndefined();
+  expect(complete("kon", ["gg"])).toEqual([]);
 });

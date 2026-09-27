@@ -28,7 +28,7 @@ export function clean(raw: unknown): Settings {
     defaultTheme,
     themes: THEMES.filter((t) => themes.includes(t)), // keep the canonical order
     spotify: r.spotify !== false,
-    music: perTheme(r.music, (v) => (Array.isArray(v) ? v.filter(isTrack).map(({ title, artist, src, start }) => ({ title, artist, src, ...(start ? { start } : {}) })) : undefined)),
+    music: perTheme(r.music, (v) => (Array.isArray(v) ? v.filter(isTrack).map(({ title, artist, src, start, volume }) => ({ title, artist, src, ...(start ? { start } : {}), ...(volume !== undefined && volume !== 1 ? { volume } : {}) })) : undefined)),
     reboot: perTheme(r.reboot, (v) => (v && typeof v === "object" && str((v as RebootSound).src) ? { src: (v as RebootSound).src, volume: vol((v as RebootSound).volume) } : undefined)),
   };
 }
@@ -42,7 +42,7 @@ const str = (s: unknown): s is string => typeof s === "string" && s.length > 0 &
 const vol = (v: unknown) => (typeof v === "number" && v >= 0 && v <= 1 ? v : 0.6);
 const isTrack = (t: unknown): t is RealTrack => {
   const x = t as RealTrack;
-  return !!x && str(x.title) && typeof x.artist === "string" && str(x.src) && (x.start === undefined || (typeof x.start === "number" && x.start >= 0));
+  return !!x && str(x.title) && typeof x.artist === "string" && str(x.src) && (x.start === undefined || (typeof x.start === "number" && x.start >= 0)) && (x.volume === undefined || (typeof x.volume === "number" && x.volume >= 0 && x.volume <= 1));
 };
 function perTheme<T>(raw: unknown, pick: (v: unknown) => T | undefined): Partial<Record<Theme, T>> {
   const out: Partial<Record<Theme, T>> = {};

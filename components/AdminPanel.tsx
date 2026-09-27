@@ -159,6 +159,20 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               <li key={song.src}>
                 {song.title} · <span className="muted">{song.artist}</span>
                 {song.start ? <span className="muted"> · from {song.start}s</span> : null}{" "}
+                <label>
+                  vol{" "}
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    defaultValue={song.volume ?? 1}
+                    disabled={locked}
+                    aria-label={`${song.title} volume`}
+                    onPointerUp={(e) => save({ ...s, music: { ...s.music, [theme]: songs.map((x) => (x === song ? { ...x, volume: Number(e.currentTarget.value) } : x)) } })}
+                    onKeyUp={(e) => save({ ...s, music: { ...s.music, [theme]: songs.map((x) => (x === song ? { ...x, volume: Number(e.currentTarget.value) } : x)) } })}
+                  />
+                </label>{" "}
                 <button type="button" disabled={locked || i === 0} onClick={() => save({ ...s, music: { ...s.music, [theme]: songs.map((x, j) => (j === i - 1 ? song : j === i ? songs[i - 1] : x)) } })} aria-label={`Move ${song.title} up`}>
                   up
                 </button>{" "}
@@ -196,7 +210,8 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             try {
               const src = await put(file, "music", (n) => setStatus(`uploading ${n}%`));
               const start = Number(f.get("start")) || undefined;
-              const track = { title: String(f.get("title")).trim(), artist: String(f.get("artist")).trim(), src, ...(start ? { start } : {}) };
+              const volume = Number(f.get("volume") ?? 1);
+              const track = { title: String(f.get("title")).trim(), artist: String(f.get("artist")).trim(), src, ...(start ? { start } : {}), ...(volume !== 1 ? { volume } : {}) };
               (e.target as HTMLFormElement).reset();
               await save({ ...s, music: { ...s.music, [theme]: [...songs, track] } }, "song added");
             } catch (err) {
@@ -214,10 +229,13 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               title <input name="title" required maxLength={120} />
             </label>
             <label>
-              artist <input name="artist" maxLength={120} />
+              artist <input name="artist" maxLength={120} placeholder="M83 (https://youtu.be/...) links the song" />
             </label>
             <label>
               start at (seconds) <input name="start" type="number" min={0} step={1} inputMode="numeric" />
+            </label>
+            <label>
+              volume <input name="volume" type="range" min={0} max={1} step={0.05} defaultValue={1} />
             </label>
             <button type="submit">upload</button>
           </fieldset>

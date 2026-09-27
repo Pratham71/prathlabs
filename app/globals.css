@@ -2852,3 +2852,211 @@ html[data-boot] .radio {
     filter: invert(1) hue-rotate(180deg);
   }
 }
+
+/* ---------- more eggs (CommandPalette, Cursor, ThemeScenery) ---------- */
+
+/* `wanted` sets the los santos stars by hand; aezakmi (0) clears them */
+html[data-wanted] .acc-wanted i { animation: none; }
+html[data-wanted="0"] .acc-wanted { opacity: 0; transition: opacity 0.6s; }
+html[data-wanted="1"] .acc-wanted i:nth-child(-n + 1),
+html[data-wanted="2"] .acc-wanted i:nth-child(-n + 2),
+html[data-wanted="3"] .acc-wanted i:nth-child(-n + 3),
+html[data-wanted="4"] .acc-wanted i:nth-child(-n + 4),
+html[data-wanted="5"] .acc-wanted i { background: var(--ok); }
+
+/* five stars: red and blue flashing in from the edges */
+.fx-banner[data-fx="siren"] {
+  animation: fx-life 2.6s var(--ease-smooth-out) both, fx-siren 0.5s steps(1) infinite;
+}
+.fx-banner[data-fx="siren"] .fx-title { color: #fff; letter-spacing: 0.2em; }
+@keyframes fx-siren {
+  0% { box-shadow: inset 90px 0 120px -30px rgba(255, 30, 40, 0.75); }
+  50% { box-shadow: inset -90px 0 120px -30px rgba(40, 80, 255, 0.75); }
+}
+
+/* the fortnite storm: a purple wall closing to a small circle */
+.fx-storm {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  box-shadow: 0 0 0 200vmax rgba(110, 40, 190, 0.42), inset 0 0 40px 10px rgba(190, 120, 255, 0.6);
+  pointer-events: none;
+  z-index: 90;
+  animation: fx-storm 4.2s ease-in both;
+}
+@keyframes fx-storm {
+  0% { width: 170vmax; height: 170vmax; opacity: 0; }
+  10% { opacity: 1; }
+  85% { width: 38vmin; height: 38vmin; opacity: 1; }
+  100% { width: 38vmin; height: 38vmin; opacity: 0; }
+}
+
+/* /give diamond: the item drops, bounces, and is picked up */
+.fx-diamond {
+  position: fixed;
+  top: 0;
+  width: 40px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  z-index: 90;
+  animation: fx-drop 2.4s cubic-bezier(0.5, 0, 1, 1) both;
+}
+@keyframes fx-drop {
+  0% { transform: translateY(-60px); }
+  55% { transform: translateY(80vh) rotate(8deg); }
+  68% { transform: translateY(74vh); }
+  80%, 90% { transform: translateY(80vh); opacity: 1; }
+  100% { transform: translateY(80vh) scale(0.4); opacity: 0; }
+}
+
+/* blade bats egg */
+.fx-banner[data-fx="blood"] .fx-title { color: #c4121b; font-size: clamp(1.4rem, 4vw, 2.6rem); text-transform: none; }
+html[data-bloody] .cursor { filter: drop-shadow(0 3px 0 #9b0f16); }
+
+/* with great power: web strands behind the cursor */
+.web-strand {
+  position: fixed;
+  height: 1px;
+  background: rgba(223, 230, 245, 0.75);
+  transform-origin: 0 50%;
+  pointer-events: none;
+  z-index: 95;
+  animation: web-fade 1.2s ease-out forwards;
+}
+@keyframes web-fade { to { opacity: 0; } }
+
+/* blade: drops that land on the screen and run */
+.blood-drop {
+  position: fixed;
+  width: 13px;
+  height: 16px;
+  background: #8a0c14;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  pointer-events: none;
+  z-index: 15;
+  animation: blood 7s ease-in both;
+}
+.blood-drop::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 5px;
+  height: var(--run, 40px);
+  background: #7a0a12;
+  border-radius: 0 0 3px 3px;
+  transform-origin: top;
+  animation: blood-run 7s ease-out both;
+  animation-delay: inherit;
+}
+@keyframes blood {
+  0% { transform: scale(0); opacity: 0.9; }
+  6% { transform: scale(1.25); }
+  10% { transform: scale(1); }
+  80% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+@keyframes blood-run {
+  0%, 10% { transform: scaleY(0); }
+  60%, 100% { transform: scaleY(1); }
+}
+
+/* ---------- radio card: timer, song link, volume knob ---------- */
+
+.radio-time {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.radio-time input {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  appearance: none;
+  background: linear-gradient(to right, var(--amber) var(--p, 0%), var(--line) var(--p, 0%));
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.radio-time input::-webkit-slider-thumb {
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.radio-time input::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.radio-time input:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.radio-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1ch;
+  min-width: 0;
+}
+
+.radio-foot .radio-note {
+  flex: 1;
+}
+
+.radio-link {
+  flex: none;
+  font-size: 0.7rem;
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.radio-link:hover {
+  text-decoration: underline;
+}
+
+/* a round knob with a tick mark; --turn runs -135deg (silent) to 135deg (full) */
+.radio-knob {
+  flex: none;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--text) 18%, transparent), transparent 60%), var(--ink);
+  rotate: var(--turn, 135deg);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.radio-knob::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 2px;
+  height: 7px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: var(--amber);
+}
+
+.radio-knob:focus-visible {
+  outline: 1px solid var(--amber);
+  outline-offset: 2px;
+}

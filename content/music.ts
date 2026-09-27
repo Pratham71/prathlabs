@@ -6,7 +6,8 @@ import type { Theme } from "@/lib/theme";
 //
 // `start` (seconds) is where the song begins when it comes on: set it to the drop, chorus or hook.
 // These are commercial recordings: hosting them on the public site is the owner's call.
-export type RealTrack = { title: string; artist: string; src: string; start?: number };
+// volume: this song's level, 0 to 1 (default 1), so a loud master doesn't jump out of the station
+export type RealTrack = { title: string; artist: string; src: string; start?: number; volume?: number };
 
 export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
   gtav: [
@@ -23,7 +24,10 @@ export const MUSIC: Partial<Record<Theme, RealTrack[]>> = {
     { title: "Hot Together", artist: "The Pointer Sisters", src: "/music/gtavi/hot-together.mp3" },
   ],
   fortnite: [{ title: "Lobby Theme (Chapter 1)", artist: "Epic Games", src: "/music/fortnite/lobby-chapter-1.mp3" }],
-  blade: [{ title: "Confusion (Pump Panel Reconstruction Mix)", artist: "New Order", src: "/music/blade/confusion.mp3" }],
+  blade: [
+    { title: "Blade", artist: "D'Angello & Francis", src: "/music/blade/blade.mp3" },
+    { title: "Confusion (Pump Panel Reconstruction Mix)", artist: "New Order", src: "/music/blade/confusion.mp3" },
+  ],
   matrix: [
     { title: "Clubbed to Death", artist: "Rob Dougan", src: "/music/matrix/clubbed-to-death.mp3" },
     { title: "Spybreak!", artist: "Propellerheads", src: "/music/matrix/spybreak.mp3" },

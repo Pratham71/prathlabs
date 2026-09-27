@@ -393,7 +393,7 @@ function bassNote(o: Out, m: number, t: number, dur: number, sub: boolean) {
 
 // ---- transport ----
 // One playlist per station: real files (content/music.ts) first, then the synth loops.
-export type Entry = { title: string; artist?: string; src?: string; start?: number; synth?: Track };
+export type Entry = { title: string; artist?: string; src?: string; start?: number; volume?: number; synth?: Track };
 // Real files count only once a HEAD check (probe) has found them; until then the station shows its loops.
 const found = new Set<string>();
 const probed = new Set<Theme>();
@@ -429,11 +429,47 @@ export const snapshot = () => state;
 let out: Out | null = null;
 let analyser: AnalyserNode | null = null;
 let file: HTMLAudioElement | null = null;
+let fileGain: GainNode | null = null;
+let level: GainNode | null = null;
 let timer = 0;
 let step = 0;
 let nextAt = 0;
 
 export const getAnalyser = () => analyser;
+
+// The listener's own volume knob (0 to 1), kept in their browser. Scales the whole station.
+const LEVEL = 0.16; // under the page, not over it
+export function volume() {
+  try {
+    const v = Number(localStorage.getItem("radio-volume") ?? 1);
+    return v >= 0 && v <= 1 ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+export function setVolume(v: number) {
+  try {
+    localStorage.setItem("radio-volume", String(v));
+  } catch {}
+  if (level && out) level.gain.setTargetAtTime(LEVEL * v, out.ac.currentTime, 0.03);
+}
+
+// "M83 (https://youtube.com/...)": the artist, and a link to the song if one was pasted after it.
+export function splitArtist(artist: string): [string, string?] {
+  const m = artist.match(/^(.*?)\s*\(?\s*(https:\/\/[^\s()]+)\s*\)?\s*$/);
+  return m ? [m[1], m[2]] : [artist];
+}
+
+// Where the current song is (seconds), for the card's timer; null on the synth loops.
+export function position(): { cur: number; dur: number } | null {
+  const e = state.theme ? playlist(state.theme)[state.index] : undefined;
+  if (!e?.src) return null;
+  if (!file || file.dataset.src !== e.src) return { cur: 0, dur: NaN };
+  return { cur: file.currentTime, dur: file.duration };
+}
+export function seek(sec: number) {
+  if (file && Number.isFinite(sec)) file.currentTime = sec;
+}
 
 function setup(): Out {
   if (out) return out;
@@ -446,8 +482,8 @@ function setup(): Out {
   analyser = ac.createAnalyser();
   analyser.fftSize = 256;
   analyser.smoothingTimeConstant = 0.75;
-  const level = ac.createGain();
-  level.gain.value = 0.16; // under the page, not over it
+  level = ac.createGain();
+  level.gain.value = LEVEL * volume();
   bus.connect(comp).connect(analyser).connect(level).connect(master);
   const noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
   const d = noise.getChannelData(0);
@@ -462,9 +498,9 @@ function fileEl(o: Out) {
   el.preload = "auto";
   el.crossOrigin = "anonymous"; // uploads live on the Blob host; without CORS mode Web Audio gets silence
   el.addEventListener("ended", () => state.theme && skip(state.theme, 1)); // songs advance; loops loop
-  const g = o.ac.createGain();
-  g.gain.value = 2; // times the shared 0.16 level: mastered tracks sit a little above the loops
-  o.ac.createMediaElementSource(el).connect(g).connect(analyser!);
+  // times the shared level: mastered tracks sit a little above the loops (and each song's own volume)
+  fileGain = o.ac.createGain();
+  o.ac.createMediaElementSource(el).connect(fileGain).connect(analyser!);
   // a listed file that isn't there (or won't decode): move on rather than sit silent
   el.addEventListener("error", () => state.playing && state.theme && skip(state.theme, 1));
   return el;
@@ -541,6 +577,7 @@ export async function play(theme: Theme, index = state.index) {
   if (e.src) {
     o.bus.gain.setTargetAtTime(0, o.ac.currentTime, 0.05);
     const el = fileEl(o);
+    fileGain!.gain.value = 2 * (e.volume ?? 1);
     // new song: start at its peak (media fragment #t=); same song: resume where it paused
     if (el.dataset.src !== e.src) {
       el.dataset.src = e.src;

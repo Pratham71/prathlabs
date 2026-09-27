@@ -6,6 +6,7 @@ import { EGGS, KONAMI, complete, run, type Action, type Fx } from "@/lib/command
 import { currentTheme, isGame, setTheme } from "@/lib/theme";
 import { REBOOT_SOUNDS } from "@/content/music";
 import { clientSettings } from "@/lib/client-settings";
+import { pixelArt } from "@/lib/sprites";
 
 type Entry = { cmd?: string; out: string[] };
 const PROMPT = "visitor@prathlab:~$";
@@ -13,7 +14,7 @@ const GREETING: Entry = {
   out: ["type help for commands · Tab completes · ↑↓ history · Esc closes"],
 };
 
-const FX_TEXT: Record<Exclude<Fx, "dance">, [string, string?]> = {
+const FX_TEXT: Partial<Record<Fx, [string, string?]>> = {
   wasted: ["wasted"],
   passed: ["mission passed", "respect +"],
   victory: ["#1 victory royale"],
@@ -23,7 +24,11 @@ const FX_TEXT: Record<Exclude<Fx, "dance">, [string, string?]> = {
   flatline: ["flatlined", "rebooting cyberware"],
   tbc: ["to be continued...", "your friendly neighbourhood reboot"],
   died: ["you died!", "score: 0"],
+  siren: ["★★★★★", "the cops are on the way"],
 };
+
+// A Minecraft-style diamond (original pixels) for /give diamond.
+const DIAMOND = ["...kkkk...", "..kcwwck..", ".kccwccck.", "kcccccccck", ".kcccccck.", "..kcccck..", "...kcck...", "....kk...."];
 
 // Full-screen game moments from the eggs: a banner over the page for ~2.6s, or a little dance.
 function playFx(name: Fx, text?: [string, string?]) {
@@ -34,12 +39,31 @@ function playFx(name: Fx, text?: [string, string?]) {
     );
     return;
   }
+  if (name === "spoon") {
+    document.querySelector(".man")?.animate(
+      [{ transform: "none" }, { transform: "perspective(900px) rotateY(5deg) skewY(-1.5deg)" }, { transform: "perspective(900px) rotateY(-3deg) skewY(1deg)" }, { transform: "none" }],
+      { duration: 1800, easing: "ease-in-out" },
+    );
+    return;
+  }
+  if (name === "storm" || name === "diamond") {
+    const el = document.createElement(name === "storm" ? "div" : "img");
+    el.className = `fx-${name}`;
+    el.setAttribute("aria-hidden", "true");
+    if (el instanceof HTMLImageElement) {
+      el.src = pixelArt(DIAMOND, { k: "#1a5b57", c: "#4ee6d6", w: "#d6fff9" }, 4);
+      el.style.left = `${15 + Math.random() * 70}vw`;
+    }
+    document.body.append(el);
+    el.addEventListener("animationend", () => el.remove());
+    return;
+  }
   document.querySelector(".fx-banner")?.remove();
   const el = document.createElement("div");
   el.className = "fx-banner";
   el.dataset.fx = name;
   el.setAttribute("role", "status");
-  const [title, sub] = text ?? FX_TEXT[name];
+  const [title, sub] = text ?? FX_TEXT[name] ?? [""];
   el.innerHTML = `<p class="fx-title"></p>${sub ? '<p class="fx-sub"></p>' : ""}`;
   el.querySelector(".fx-title")!.textContent = title;
   if (sub) el.querySelector(".fx-sub")!.textContent = sub;
@@ -169,11 +193,19 @@ export function CommandPalette() {
       }
     };
     const onOpen = () => open();
+    // eggs found on the page itself (the blade bats): {name, text}
+    const onEgg = (e: Event) => {
+      const { name, text } = (e as CustomEvent<{ name: string; text: string }>).detail;
+      const n = markEgg(name);
+      playFx("blood", [text, n ? eggLine(n) : undefined]);
+    };
     addEventListener("keydown", onKey);
     addEventListener("palette:open", onOpen);
+    addEventListener("egg", onEgg);
     return () => {
       removeEventListener("keydown", onKey);
       removeEventListener("palette:open", onOpen);
+      removeEventListener("egg", onEgg);
     };
   }, []);
 
@@ -208,6 +240,20 @@ export function CommandPalette() {
     }
     if (a.type === "close") dialog.current?.close();
     if (a.type === "login") setAskPass(true);
+    if (a.type === "webtrail") document.documentElement.setAttribute("data-webtrail", "");
+    if (a.type === "wanted") {
+      // the level lives on <html> for the los santos stars (globals.css); 0 hides them
+      const html = document.documentElement;
+      const level = a.clear ? 0 : Math.min(5, Number(html.dataset.wanted ?? 0) + 1);
+      html.setAttribute("data-wanted", String(level));
+      if (a.clear) return;
+      const n = level === 5 ? markEgg("wanted") : 0;
+      say([`wanted level: ${"★".repeat(level)}${"☆".repeat(5 - level)}`, ...(n ? [eggLine(n)] : [])]);
+      if (level === 5) {
+        dialog.current?.close();
+        playFx("siren");
+      }
+    }
     if (a.type === "np")
       void fetch("/api/now-playing")
         .then((r) => r.json())

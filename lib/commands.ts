@@ -14,9 +14,13 @@ export type Action =
   | { type: "close" }
   | { type: "login" }
   | { type: "np" }
-  | { type: "shake" };
+  | { type: "shake" }
+  | { type: "wanted"; clear?: true }
+  | { type: "webtrail" };
 
-export type Fx = "wasted" | "passed" | "victory" | "dance" | "placed" | "slash" | "failure" | "flatline" | "tbc" | "died";
+export type Fx =
+  | "wasted" | "passed" | "victory" | "dance" | "placed" | "slash" | "failure" | "flatline" | "tbc" | "died"
+  | "siren" | "storm" | "diamond" | "spoon" | "blood";
 export type Result = { out: string[]; action?: Action; egg?: string };
 
 // The hidden commands `eggs` counts: [name it shows, clue for `hint`, other words that count as it].
@@ -53,10 +57,30 @@ export const EGGS: [string, string, ...string[]][] = [
   ["gg", "say it after every match.", "victory"],
   ["dance", "do an emote.", "emote"],
   ["konami", "up up down down left right left right b a. anywhere on the page."],
+  ["rockstar", "ask the studio when the next one is out."],
+  ["aezakmi", "the san andreas cheat that loses the cops."],
+  ["baguvix", "the san andreas cheat for infinite health."],
+  ["wanted", "say wanted. then keep saying it. five stars."],
+  ["storm", "the circle is closing. what's in it?"],
+  ["gamemode", "minecraft: switch yourself to creative. slash and all."],
+  ["give diamond", "minecraft: /give yourself something shiny."],
+  ["great power", "with great power..."],
+  ["neo", "who is the one?"],
+  ["trinity", "neo's partner. one word."],
+  ["spoon", "there is no ___."],
+  ["bats", "blade theme: click a bat. then two more."],
 ];
+
+// Found some other way than typing its name (the Konami code, clicking bats; wanted counts at five).
+const UNTYPED = ["konami", "bats", "wanted"];
 
 // Which egg a command line finds. The ones that depend on the argument are spelled out.
 function eggOf(cmd: string, arg: string) {
+  if (UNTYPED.includes(cmd)) return undefined;
+  if (cmd === "gamemode") return MODES.includes(arg) ? "gamemode" : undefined;
+  if (cmd === "give") return arg === "diamond" ? "give diamond" : undefined;
+  if (cmd === "with") return arg === "great power" ? "great power" : undefined;
+  if (cmd === "there") return arg === "is no spoon" ? "spoon" : undefined;
   if (cmd === "sudo") return arg === "su" || arg === "-i" ? undefined : arg === "make me a sandwich" ? "sandwich" : "sudo";
   if (cmd === "make") return arg === "me a sandwich" ? "sandwich" : undefined;
   if (cmd === "rm") return /-\w*r\w*f|-\w*f\w*r/.test(arg) ? "rm -rf" : undefined;
@@ -74,6 +98,8 @@ export const THEME_CLUE: Partial<Record<Theme, string>> = {
   minecraft: "try: diamonds",
   blade: "try: garlic",
 };
+
+const MODES = ["survival", "creative", "adventure", "spectator"];
 
 const FORTUNES = [
   "it works on my machine. the machine is a raspberry pi.",
@@ -117,7 +143,7 @@ export function complete(input: string, found: string[] = []): string[] {
   const parts = input.trimStart().split(/\s+/);
   if (parts.length <= 1) {
     const word = parts[0] ?? "";
-    const eggs = found.length && word.length >= 3 ? EGGS.map(([n]) => n).filter((n) => !n.includes(" ")) : [];
+    const eggs = found.length && word.length >= 3 ? EGGS.map(([n]) => n).filter((n) => !n.includes(" ") && !UNTYPED.includes(n)) : [];
     return [...COMMANDS, ...eggs].filter((c) => c.startsWith(word));
   }
   const [cmd, arg = ""] = parts;
@@ -139,9 +165,11 @@ export function complete(input: string, found: string[] = []): string[] {
 const pad = (s: string, n: number) => s + " ".repeat(Math.max(1, n - s.length));
 
 export function run(line: string, home = "your nearest edge", found: string[] = []): Result {
-  const [cmd = "", ...rest] = line.trim().split(/\s+/);
+  const [raw = "", ...rest] = line.trim().split(/\s+/);
+  const cmd = raw.replace(/^\/(?=\w)/, ""); // "/give", "/gamemode": minecraft-style, slash optional
+  const arg = rest.join(" ").toLowerCase();
   const r = answer(cmd, rest.join(" "), home, found);
-  const egg = eggOf(cmd.toLowerCase(), rest.join(" "));
+  const egg = eggOf(cmd.toLowerCase(), arg);
   return egg ? { ...r, egg } : r;
 }
 
@@ -333,6 +361,38 @@ function answer(cmd: string, arg: string, home: string, found: string[]): Result
     case "dance":
     case "emote":
       return { out: ["*default dance*"], action: { type: "fx", name: "dance" } };
+    case "rockstar":
+      return { out: ["gta vi release date: yes."] };
+    case "aezakmi":
+      return { out: ["cheat activated: wanted level cleared."], action: { type: "wanted", clear: true } };
+    case "baguvix":
+      return { out: ["cheat activated: infinite health. (the homelab still needs backups.)"] };
+    case "wanted":
+      return { out: [], action: { type: "wanted" } };
+    case "storm":
+      return { out: ["the storm is closing in. get to the circle."], action: { type: "fx", name: "storm" } };
+    case "gamemode": {
+      const mode = arg.toLowerCase();
+      if (!MODES.includes(mode)) return { out: ["usage: /gamemode survival|creative|adventure|spectator"] };
+      return { out: [`Set own game mode to ${mode[0].toUpperCase()}${mode.slice(1)} Mode`], action: { type: "theme", name: "minecraft" } };
+    }
+    case "give":
+      return arg.toLowerCase() === "diamond"
+        ? { out: ["Gave 1 [Diamond] to visitor"], action: { type: "fx", name: "diamond" } }
+        : { out: [`Unknown item '${arg || "?"}'. try: /give diamond`] };
+    case "with":
+      return arg.toLowerCase() === "great power"
+        ? { out: ["comes great responsibility.", "(your cursor spins webs now. spider-man theme only.)"], action: { type: "webtrail" } }
+        : { out: [`command not found: ${cmd}. Try: help`] };
+    case "neo":
+      return { out: ["whoa."] };
+    case "trinity":
+      return { out: ["dodge this."] };
+    case "spoon":
+    case "there":
+      return cmd === "spoon" || arg.toLowerCase() === "is no spoon"
+        ? { out: ["then it's not the spoon that bends. it's the page."], action: { type: "fx", name: "spoon" } }
+        : { out: [`command not found: ${cmd}. Try: help`] };
     default:
       return { out: [`command not found: ${cmd}. Try: help`] };
   }

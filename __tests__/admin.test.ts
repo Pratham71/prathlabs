@@ -49,3 +49,9 @@ test("settings are cleaned", () => {
   expect(s.reboot).toEqual({ blade: { src: "/sfx/slash.mp3", volume: 0.6 } });
   expect(clean(null).themes.length).toBeGreaterThan(5);
 });
+
+test("song volume survives clean; out-of-range drops the song", () => {
+  const src = "https://abc.public.blob.vercel-storage.com/music/gtav/a.mp3";
+  const s = clean({ music: { gtav: [{ title: "a", artist: "", src, volume: 0.4 }, { title: "b", artist: "", src, volume: 3 }, { title: "c", artist: "", src, volume: 1 }] } });
+  expect(s.music.gtav).toEqual([{ title: "a", artist: "", src, volume: 0.4 }, { title: "c", artist: "", src }]);
+});
