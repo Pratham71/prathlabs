@@ -17,7 +17,63 @@ export type Action =
   | { type: "shake" };
 
 export type Fx = "wasted" | "passed" | "victory" | "dance" | "placed" | "slash" | "failure" | "flatline" | "tbc" | "died";
-export type Result = { out: string[]; action?: Action };
+export type Result = { out: string[]; action?: Action; egg?: string };
+
+// The hidden commands `eggs` counts: [name it shows, clue for `hint`, other words that count as it].
+export const EGGS: [string, string, ...string[]][] = [
+  ["sudo", "ask for root. it won't go well."],
+  ["sandwich", "xkcd 149 still works here."],
+  ["rm -rf", "try deleting everything. it's fine."],
+  ["vim", "open the editor nobody can quit.", "vi", "nano"],
+  ["coffee", "order a hot drink.", "brew"],
+  ["gym", "where is he at 06:00?", "lift"],
+  ["legday", "the day nobody skips. supposedly."],
+  ["uptime", "how long has he been running?"],
+  ["sl", "typo ls. on purpose."],
+  ["xyzzy", "a magic word from 1976."],
+  ["42", "the answer to everything."],
+  ["ssh", "try connecting somewhere."],
+  ["redpill", "take the pill morpheus offers.", "matrix"],
+  ["bluepill", "or take the other one."],
+  ["whiterabbit", "the rabbit is white. one word."],
+  ["nightcity", "wake up, samurai. which city?", "cyberpunk"],
+  ["spiderman", "your friendly neighbourhood...", "spidey", "peter"],
+  ["web", "what do web-shooters shoot?"],
+  ["creeper", "the green thing that hisses.", "minecraft"],
+  ["diamonds", "what every miner digs for."],
+  ["daywalker", "a vampire who walks in the sun.", "blade"],
+  ["garlic", "what vampires can't stand."],
+  ["vampire", "is anything hiding in the homelab?", "vampires"],
+  ["hesoyam", "some cheats still work in 2026."],
+  ["wasted", "what gta says when you die."],
+  ["passed", "mission ___. respect +", "mission"],
+  ["gta6", "the one everyone is waiting for.", "gtavi", "vice", "leonida"],
+  ["fortnite", "thank the ___ driver.", "bus"],
+  ["drop", "where we droppin'?"],
+  ["gg", "say it after every match.", "victory"],
+  ["dance", "do an emote.", "emote"],
+  ["konami", "up up down down left right left right b a. anywhere on the page."],
+];
+
+// Which egg a command line finds. The ones that depend on the argument are spelled out.
+function eggOf(cmd: string, arg: string) {
+  if (cmd === "sudo") return arg === "su" || arg === "-i" ? undefined : arg === "make me a sandwich" ? "sandwich" : "sudo";
+  if (cmd === "make") return arg === "me a sandwich" ? "sandwich" : undefined;
+  if (cmd === "rm") return /-\w*r\w*f|-\w*f\w*r/.test(arg) ? "rm -rf" : undefined;
+  return EGGS.find(([name, , ...also]) => name === cmd || also.includes(cmd))?.[0];
+}
+
+// One clue per station theme, on the radio card while it's paused.
+export const THEME_CLUE: Partial<Record<Theme, string>> = {
+  gtav: "cheats still work: hesoyam",
+  gtavi: "try: mission",
+  fortnite: "try: gg",
+  matrix: "try: bluepill",
+  cyberpunk: "try: sudo",
+  spiderman: "try: web",
+  minecraft: "try: diamonds",
+  blade: "try: garlic",
+};
 
 const FORTUNES = [
   "it works on my machine. the machine is a raspberry pi.",
@@ -26,6 +82,9 @@ const FORTUNES = [
   "the best time to write the backup script was yesterday.",
   "DNS. it's always DNS.",
   "rest days are part of the program.",
+  "the rabbit is white.",
+  "some cheats still work in 2026.",
+  "not everything here is in help. try: eggs",
 ];
 
 const HELP: [string, string][] = [
@@ -44,16 +103,23 @@ const HELP: [string, string][] = [
   ["spotify", "what i'm listening to"],
   ["neofetch · fortune", "system info · a fortune"],
   ["whoami · date · ping", "the usual"],
+  ["eggs · hint", "easter eggs found · a clue"],
   ["clear", "clear the screen"],
   ["exit", "close this prompt"],
 ];
 
 // Words the prompt completes on Tab (first word, then project names after open/man/cd).
-export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune", "reboot", "hobbies", "radio", "spotify"];
+export const COMMANDS = ["help", "ls", "projects", "open", "man", "cd", "cat", "github", "mail", "sound", "theme", "clear", "exit", "whoami", "date", "ping", "neofetch", "fortune", "reboot", "hobbies", "radio", "spotify", "eggs", "hint"];
 
-export function complete(input: string): string[] {
+// `found`: eggs this visitor has. Once they have one, egg names complete too (from 3 letters, so it's a nudge,
+// not a list).
+export function complete(input: string, found: string[] = []): string[] {
   const parts = input.trimStart().split(/\s+/);
-  if (parts.length <= 1) return COMMANDS.filter((c) => c.startsWith(parts[0] ?? ""));
+  if (parts.length <= 1) {
+    const word = parts[0] ?? "";
+    const eggs = found.length && word.length >= 3 ? EGGS.map(([n]) => n).filter((n) => !n.includes(" ")) : [];
+    return [...COMMANDS, ...eggs].filter((c) => c.startsWith(word));
+  }
   const [cmd, arg = ""] = parts;
   const pool =
     cmd === "open" || cmd === "man" || cmd === "cd"
@@ -72,10 +138,14 @@ export function complete(input: string): string[] {
 
 const pad = (s: string, n: number) => s + " ".repeat(Math.max(1, n - s.length));
 
-export function run(line: string, home = "your nearest edge"): Result {
-  const input = line.trim();
-  const [cmd = "", ...rest] = input.split(/\s+/);
-  const arg = rest.join(" ");
+export function run(line: string, home = "your nearest edge", found: string[] = []): Result {
+  const [cmd = "", ...rest] = line.trim().split(/\s+/);
+  const r = answer(cmd, rest.join(" "), home, found);
+  const egg = eggOf(cmd.toLowerCase(), rest.join(" "));
+  return egg ? { ...r, egg } : r;
+}
+
+function answer(cmd: string, arg: string, home: string, found: string[]): Result {
   const project = (name: string) => projects.find((p) => p.slug === name.toLowerCase() || p.name.toLowerCase() === name.toLowerCase());
 
   switch (cmd.toLowerCase()) {
@@ -142,6 +212,17 @@ export function run(line: string, home = "your nearest edge"): Result {
       return { out: [new Date().toString()] };
     case "ping":
       return { out: [`PING prathlabs.com: 64 bytes from ${home}: time=2 ms`] };
+    case "eggs": {
+      const cells = EGGS.map(([n]) => pad(found.includes(n) ? n : "???", 14));
+      const rows = [];
+      for (let i = 0; i < cells.length; i += 4) rows.push(cells.slice(i, i + 4).join("").trimEnd());
+      const got = EGGS.filter(([n]) => found.includes(n)).length;
+      return { out: [`found ${got}/${EGGS.length}${got ? "" : ". stuck? try: hint"}`, ...rows] };
+    }
+    case "hint": {
+      const left = EGGS.filter(([n]) => !found.includes(n));
+      return { out: [left.length ? `hint: ${left[Math.floor(Math.random() * left.length)][1]}` : "all found. go touch grass."] };
+    }
     // --- easter eggs ---
     case "spotify":
     case "np":

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from "react"
 import { STATIONS, getAnalyser, off, pause, play, playlist, probe, skip, snapshot, subscribe } from "@/lib/radio";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { inked } from "@/lib/dither";
+import { THEME_CLUE } from "@/lib/commands";
 
 const soundOn = () => {
   try {
@@ -109,7 +110,7 @@ export function RadioPlayer() {
           &gt;&gt;
         </button>
       </div>
-      <Scroll className="radio-note muted">{track.artist ?? "original loop, made for this site"}</Scroll>
+      <Scroll className="radio-note muted">{(!playing && THEME_CLUE[theme]) || (track.artist ?? "original loop, made for this site")}</Scroll>
     </aside>
   );
 }

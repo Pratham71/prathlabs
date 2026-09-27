@@ -61,6 +61,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body>
+        {/* for view-source readers */}
+        <div hidden dangerouslySetInnerHTML={{ __html: "<!-- there's more than one way in. try the konami code, or press : and type eggs -->" }} />
         <a className="skip" href="#main">
           Skip to content
         </a>

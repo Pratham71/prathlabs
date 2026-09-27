@@ -1,4 +1,4 @@
-import { complete, run } from "@/lib/commands";
+import { EGGS, complete, run } from "@/lib/commands";
 
 test("navigation commands resolve projects by slug, name or man ref", () => {
   expect(run("open vessel").action).toEqual({ type: "nav", href: "/projects/vessel" });
@@ -52,4 +52,30 @@ test("tab completion covers commands and arguments", () => {
   expect(complete("open ve")).toEqual(["open vessel"]);
   expect(complete("theme m")).toEqual(["theme matrix", "theme minecraft"]);
   expect(complete("theme gta")).toEqual(["theme gtav", "theme gtavi"]);
+});
+
+test("egg hunt: commands report their egg, eggs counts, hint skips found ones", () => {
+  expect(EGGS).toHaveLength(32);
+  expect(new Set(EGGS.map(([n]) => n)).size).toBe(32);
+  expect(run("creeper").egg).toBe("creeper");
+  expect(run("minecraft").egg).toBe("creeper");
+  expect(run("sudo make me a sandwich").egg).toBe("sandwich");
+  expect(run("sudo reboot").egg).toBe("sudo");
+  expect(run("sudo su").egg).toBeUndefined();
+  expect(run("rm -rf /").egg).toBe("rm -rf");
+  expect(run("rm notes.txt").egg).toBeUndefined();
+  expect(run("help").egg).toBeUndefined();
+  const eggs = run("eggs", undefined, ["gg", "sl"]).out;
+  expect(eggs[0]).toBe("found 2/32");
+  expect(eggs.join(" ")).toContain("gg");
+  expect(eggs.join(" ")).not.toContain("hesoyam");
+  const all = EGGS.map(([n]) => n);
+  expect(run("hint", undefined, all.slice(1)).out[0]).toBe(`hint: ${EGGS[0][1]}`);
+  expect(run("hint", undefined, all).out[0]).toMatch(/all found/);
+});
+
+test("egg names complete only after the first find, from 3 letters", () => {
+  expect(complete("hes")).toEqual([]);
+  expect(complete("hes", ["gg"])).toEqual(["hesoyam"]);
+  expect(complete("he", ["gg"])).toEqual(["help"]);
 });

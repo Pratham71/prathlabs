@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
+import { EGGS, KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
 import { currentTheme, isGame, setTheme } from "@/lib/theme";
 import { REBOOT_SOUNDS } from "@/content/music";
 import { clientSettings } from "@/lib/client-settings";
@@ -46,6 +46,28 @@ function playFx(name: Fx, text?: [string, string?]) {
   document.body.append(el);
   setTimeout(() => el.remove(), 2600);
 }
+
+// Eggs this visitor has found, kept in their browser only.
+function foundEggs(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem("eggs") ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+// Records an egg; returns the new total, or 0 if it was already found.
+function markEgg(name: string) {
+  const found = foundEggs();
+  if (found.includes(name)) return 0;
+  found.push(name);
+  try {
+    localStorage.setItem("eggs", JSON.stringify(found));
+  } catch {}
+  return found.length;
+}
+
+const eggLine = (n: number) => `egg found (${n}/${EGGS.length}). type: eggs`;
 
 // Everyone who dropped in this week (the globe's region tally), for Fortnite's "you placed #N".
 async function visitorCount() {
@@ -122,6 +144,8 @@ export function CommandPalette() {
   };
 
   useEffect(() => {
+    // for the people who open devtools first
+    console.log("%c\n  prathlabs\n  curious? press : then try sudo. there are " + EGGS.length + " eggs.\n", "font-family:monospace;color:#ffb000");
     const konami: string[] = [];
     const onKey = (e: KeyboardEvent) => {
       konami.push(e.key.length === 1 ? e.key.toLowerCase() : e.key);
@@ -129,6 +153,8 @@ export function CommandPalette() {
       if (konami.join() === KONAMI.join()) {
         setTheme(currentTheme() === "matrix" ? "amber" : "matrix");
         konami.length = 0;
+        const n = markEgg("konami");
+        if (n && dialog.current?.open) setLog((l) => [...l, { out: [eggLine(n)] }]);
       }
       const t = e.target as HTMLElement;
       const typing =
@@ -243,12 +269,13 @@ export function CommandPalette() {
   const submit = () => {
     if (askPass) return void login();
     const line = value;
-    const r = run(line, document.documentElement.dataset.bootHome);
+    const r = run(line, document.documentElement.dataset.bootHome, foundEggs());
     if (line.trim()) history.current.push(line);
     cursor.current = -1;
     setValue("");
+    const n = r.egg ? markEgg(r.egg) : 0;
     if (r.action?.type !== "clear")
-      setLog((l) => [...l, { cmd: line, out: r.out }]);
+      setLog((l) => [...l, { cmd: line, out: n ? [...r.out, eggLine(n)] : r.out }]);
     act(r.action);
   };
 
@@ -261,7 +288,7 @@ export function CommandPalette() {
     if (askPass) return; // no completion or history on a password
     if (e.key === "Tab") {
       e.preventDefault();
-      const c = complete(value);
+      const c = complete(value, foundEggs());
       if (c.length === 1) setValue(c[0] + " ");
       else if (c.length > 1)
         setLog((l) => [...l, { cmd: value, out: [c.join("   ")] }]);
@@ -281,7 +308,7 @@ export function CommandPalette() {
     }
   };
 
-  const hints = value.trim() && !askPass ? complete(value).slice(0, 6) : [];
+  const hints = value.trim() && !askPass ? complete(value, foundEggs()).slice(0, 6) : [];
 
   return (
     <>
