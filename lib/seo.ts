@@ -1,3 +1,4 @@
+import { EGGS } from "@/lib/commands";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { projects, type Project } from "@/content/projects";
@@ -101,6 +102,9 @@ export function llmsTxt(full = false) {
     "## Contact",
     `- Email: ${site.email} (replies ${site.responseTime}, ${site.timezone})`,
     `- GitHub: ${site.github}`,
+    "",
+    "## Easter eggs",
+    `- The site has a terminal (press ":" or Ctrl+K). It hides ${EGGS.length} easter eggs; "eggs" shows how many a visitor has found and "hint" gives a clue.`,
     "",
     ...(full ? [] : ["## Optional", `- [Full text](${site.url}/llms-full.txt): everything above plus each project's write-up`, ""]),
   ].join("\n");

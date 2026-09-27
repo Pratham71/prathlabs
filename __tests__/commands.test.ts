@@ -1,4 +1,4 @@
-import { complete, run } from "@/lib/commands";
+import { EGGS, complete, run } from "@/lib/commands";
 
 test("navigation commands resolve projects by slug, name or man ref", () => {
   expect(run("open vessel").action).toEqual({ type: "nav", href: "/projects/vessel" });
@@ -52,4 +52,53 @@ test("tab completion covers commands and arguments", () => {
   expect(complete("open ve")).toEqual(["open vessel"]);
   expect(complete("theme m")).toEqual(["theme matrix", "theme minecraft"]);
   expect(complete("theme gta")).toEqual(["theme gtav", "theme gtavi"]);
+});
+
+test("egg hunt: commands report their egg, eggs counts, hint skips found ones", () => {
+  expect(new Set(EGGS.map(([n]) => n)).size).toBe(EGGS.length);
+  expect(run("creeper").egg).toBe("creeper");
+  expect(run("minecraft").egg).toBe("creeper");
+  expect(run("sudo make me a sandwich").egg).toBe("sandwich");
+  expect(run("sudo reboot").egg).toBe("sudo");
+  expect(run("sudo su").egg).toBeUndefined();
+  expect(run("rm -rf /").egg).toBe("rm -rf");
+  expect(run("rm notes.txt").egg).toBeUndefined();
+  expect(run("help").egg).toBeUndefined();
+  const eggs = run("eggs", undefined, ["gg", "sl"]).out;
+  expect(eggs[0]).toBe(`found 2/${EGGS.length}`);
+  expect(eggs.join(" ")).toContain("gg");
+  expect(eggs.join(" ")).not.toContain("hesoyam");
+  const all = EGGS.map(([n]) => n);
+  expect(run("hint", undefined, all.slice(1)).out[0]).toBe(`hint: ${EGGS[0][1]}`);
+  expect(run("hint", undefined, all).out[0]).toMatch(/all found/);
+});
+
+test("egg names complete only after the first find, from 3 letters", () => {
+  expect(complete("hes")).toEqual([]);
+  expect(complete("hes", ["gg"])).toEqual(["hesoyam"]);
+  expect(complete("he", ["gg"])).toEqual(["help"]);
+});
+
+test("game eggs: minecraft slash commands, phrases, and the ones not found by typing", () => {
+  expect(run("/give diamond")).toMatchObject({ egg: "give diamond", action: { type: "fx", name: "diamond" } });
+  expect(run("/give dirt").egg).toBeUndefined();
+  expect(run("/gamemode creative")).toMatchObject({ egg: "gamemode", out: ["Set own game mode to Creative Mode"] });
+  expect(run("gamemode hardcore").egg).toBeUndefined();
+  expect(run("with great power")).toMatchObject({ egg: "great power", action: { type: "webtrail" } });
+  expect(run("there is no spoon")).toMatchObject({ egg: "spoon", action: { type: "fx", name: "spoon" } });
+  expect(run("aezakmi").action).toEqual({ type: "wanted", clear: true });
+  expect(run("wanted")).toEqual({ out: [], action: { type: "wanted" } }); // counted at five stars, by the palette
+  expect(run("bats").egg).toBeUndefined();
+  expect(complete("kon", ["gg"])).toEqual([]);
+});
+
+test("theme eggs only work in their theme; theme switchers work anywhere", () => {
+  expect(run("storm", undefined, [], "amber")).toEqual({ out: ["storm: only works in battle bus. try: theme fortnite"] });
+  expect(run("storm", undefined, [], "fortnite").egg).toBe("storm");
+  expect(run("wanted", undefined, [], "gtavi").action).toEqual({ type: "wanted" });
+  expect(run("wanted", undefined, [], "matrix").action).toBeUndefined();
+  expect(run("/give diamond", undefined, [], "gtav").egg).toBeUndefined();
+  expect(run("there is no spoon", undefined, [], "matrix").egg).toBe("spoon");
+  expect(run("hesoyam", undefined, [], "amber").egg).toBe("hesoyam");
+  expect(run("hint", undefined, EGGS.map(([n]) => n).filter((n) => n !== "storm")).out[0]).toMatch(/^hint: \(battle bus\)/);
 });

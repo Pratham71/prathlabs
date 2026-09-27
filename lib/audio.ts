@@ -1,3 +1,5 @@
+import type { SceneSetting, SceneSound } from "@/lib/settings";
+
 // Site audio: a quiet generated ambient bed plus tiny UI/boot sound effects, all synthesized with Web Audio
 // (no files). Browser only; nothing is created until the visitor turns sound on.
 // ponytail: generated bed; to use a recorded track instead, play an <audio loop> through `master` in start().
@@ -254,6 +256,103 @@ function synthSting(kind: Sting) {
     n.start(t);
     tone("sine", 2350, 2300, t + 0.12, 0.9, 0.12);
     tone("sine", 3520, 3480, t + 0.12, 0.7, 0.06);
+  }
+}
+
+// Background-scene sounds (ThemeScenery): quiet, and only with the site sound on.
+// siren: a police wail; heli: rotor chop; jet: a flyby roar; boom: an explosion.
+// `set` is /admin's say: off, a volume (scales the synth; the file's own level), or an uploaded clip.
+export function scene(kind: SceneSound, dur = 4, set: SceneSetting = {}) {
+  if (!ctx || !master || ctx.state !== "running" || !wanted || set.off) return;
+  if (set.src) {
+    const clip = new Audio(set.src);
+    clip.volume = set.volume ?? 0.6;
+    void clip.play().catch(() => {});
+    window.setTimeout(() => clip.pause(), dur * 1000); // cut with the scene (a long siren file)
+    return;
+  }
+  const ac = ctx;
+  const t = ac.currentTime + 0.02;
+  const out = ac.createGain();
+  const level = ac.createGain();
+  level.gain.value = set.volume ?? 1;
+  out.connect(level).connect(master);
+  const env = (peak: number, attack: number, release: number) => {
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(peak, t + attack);
+    out.gain.setValueAtTime(peak, t + Math.max(attack, dur - release));
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  };
+  const noise = () => {
+    const b = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const n = ac.createBufferSource();
+    n.buffer = b;
+    n.start(t);
+    n.stop(t + dur);
+    return n;
+  };
+  if (kind === "siren") {
+    // US-style wail: a sawtooth sweeping 650-1450 Hz, softened
+    const o = ac.createOscillator();
+    const lfo = ac.createOscillator();
+    const amt = ac.createGain();
+    const lp = ac.createBiquadFilter();
+    o.type = "sawtooth";
+    o.frequency.value = 1050;
+    lfo.frequency.value = 0.55;
+    amt.gain.value = 400;
+    lp.type = "lowpass";
+    lp.frequency.value = 1800;
+    lfo.connect(amt).connect(o.frequency);
+    o.connect(lp).connect(out);
+    env(0.018, 0.8, 1.5);
+    [o, lfo].forEach((x) => (x.start(t), x.stop(t + dur)));
+  } else if (kind === "heli") {
+    // low noise chopped at ~13 Hz
+    const lp = ac.createBiquadFilter();
+    const chop = ac.createGain();
+    const lfo = ac.createOscillator();
+    const depth = ac.createGain();
+    lp.type = "lowpass";
+    lp.frequency.value = 260;
+    chop.gain.value = 0.5;
+    lfo.type = "square";
+    lfo.frequency.value = 13;
+    depth.gain.value = 0.5;
+    lfo.connect(depth).connect(chop.gain);
+    noise().connect(lp).connect(chop).connect(out);
+    env(0.12, 1, 1.5);
+    lfo.start(t);
+    lfo.stop(t + dur);
+  } else if (kind === "jet") {
+    // a roar that rises and passes: band-passed noise swept up then down
+    const bp = ac.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = 0.7;
+    bp.frequency.setValueAtTime(300, t);
+    bp.frequency.exponentialRampToValueAtTime(1800, t + dur * 0.45);
+    bp.frequency.exponentialRampToValueAtTime(220, t + dur);
+    noise().connect(bp).connect(out);
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(0.09, t + dur * 0.45);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  } else {
+    // explosion: a low thump under a falling rumble
+    const lp = ac.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(900, t);
+    lp.frequency.exponentialRampToValueAtTime(70, t + dur);
+    noise().connect(lp).connect(out);
+    const o = ac.createOscillator();
+    o.frequency.setValueAtTime(90, t);
+    o.frequency.exponentialRampToValueAtTime(28, t + dur * 0.6);
+    o.connect(out);
+    o.start(t);
+    o.stop(t + dur);
+    out.gain.setValueAtTime(0.25, t);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   }
 }
 

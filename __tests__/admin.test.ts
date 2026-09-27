@@ -49,3 +49,23 @@ test("settings are cleaned", () => {
   expect(s.reboot).toEqual({ blade: { src: "/sfx/slash.mp3", volume: 0.6 } });
   expect(clean(null).themes.length).toBeGreaterThan(5);
 });
+
+test("song volume survives clean; out-of-range drops the song", () => {
+  const src = "https://abc.public.blob.vercel-storage.com/music/gtav/a.mp3";
+  const s = clean({ music: { gtav: [{ title: "a", artist: "", src, volume: 0.4 }, { title: "b", artist: "", src, volume: 3 }, { title: "c", artist: "", src, volume: 1 }] } });
+  expect(s.music.gtav).toEqual([{ title: "a", artist: "", src, volume: 0.4 }, { title: "c", artist: "", src }]);
+});
+
+test("egg sounds keep only known eggs; upload volume defaults to full", () => {
+  const src = "https://abc.public.blob.vercel-storage.com/sfx/egg-storm/a.mp3";
+  const s = clean({ sfx: { storm: { src, volume: 0.3 }, nope: { src }, wanted: { src: "" } }, uploadVolume: 7 });
+  expect(s.sfx).toEqual({ storm: { src, volume: 0.3 } });
+  expect(s.uploadVolume).toBe(1);
+  expect(clean({ uploadVolume: 0.6 }).uploadVolume).toBe(0.6);
+});
+
+test("scene sounds: off, volume and a clip survive clean; junk and unknown sounds don't", () => {
+  const src = "https://abc.public.blob.vercel-storage.com/sfx/scene-siren/a.mp3";
+  const s = clean({ scene: { siren: { off: true }, boom: { volume: 0.2, src }, jet: { volume: 9, off: "yes" }, horn: { off: true } } });
+  expect(s.scene).toEqual({ siren: { off: true }, boom: { src, volume: 0.2 } });
+});

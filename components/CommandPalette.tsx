@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
+import { EGGS, KONAMI, complete, run, type Action, type Fx } from "@/lib/commands";
 import { currentTheme, isGame, setTheme } from "@/lib/theme";
 import { REBOOT_SOUNDS } from "@/content/music";
 import { clientSettings } from "@/lib/client-settings";
+import { pixelArt } from "@/lib/sprites";
+import type { EggSound } from "@/lib/settings";
 
 type Entry = { cmd?: string; out: string[] };
 const PROMPT = "visitor@prathlab:~$";
@@ -13,7 +15,7 @@ const GREETING: Entry = {
   out: ["type help for commands · Tab completes · ↑↓ history · Esc closes"],
 };
 
-const FX_TEXT: Record<Exclude<Fx, "dance">, [string, string?]> = {
+const FX_TEXT: Partial<Record<Fx, [string, string?]>> = {
   wasted: ["wasted"],
   passed: ["mission passed", "respect +"],
   victory: ["#1 victory royale"],
@@ -23,7 +25,11 @@ const FX_TEXT: Record<Exclude<Fx, "dance">, [string, string?]> = {
   flatline: ["flatlined", "rebooting cyberware"],
   tbc: ["to be continued...", "your friendly neighbourhood reboot"],
   died: ["you died!", "score: 0"],
+  siren: ["★★★★★", "the cops are on the way"],
 };
+
+// A Minecraft-style diamond (original pixels) for /give diamond.
+const DIAMOND = ["...kkkk...", "..kcwwck..", ".kccwccck.", "kcccccccck", ".kcccccck.", "..kcccck..", "...kcck...", "....kk...."];
 
 // Full-screen game moments from the eggs: a banner over the page for ~2.6s, or a little dance.
 function playFx(name: Fx, text?: [string, string?]) {
@@ -34,18 +40,68 @@ function playFx(name: Fx, text?: [string, string?]) {
     );
     return;
   }
+  if (name === "spoon") {
+    document.querySelector(".man")?.animate(
+      [{ transform: "none" }, { transform: "perspective(900px) rotateY(5deg) skewY(-1.5deg)" }, { transform: "perspective(900px) rotateY(-3deg) skewY(1deg)" }, { transform: "none" }],
+      { duration: 1800, easing: "ease-in-out" },
+    );
+    return;
+  }
+  if (name === "storm" || name === "diamond") {
+    const el = document.createElement(name === "storm" ? "div" : "img");
+    el.className = `fx-${name}`;
+    el.setAttribute("aria-hidden", "true");
+    if (el instanceof HTMLImageElement) {
+      el.src = pixelArt(DIAMOND, { k: "#1a5b57", c: "#4ee6d6", w: "#d6fff9" }, 4);
+      el.style.left = `${15 + Math.random() * 70}vw`;
+    }
+    document.body.append(el);
+    el.addEventListener("animationend", () => el.remove());
+    return;
+  }
   document.querySelector(".fx-banner")?.remove();
   const el = document.createElement("div");
   el.className = "fx-banner";
   el.dataset.fx = name;
   el.setAttribute("role", "status");
-  const [title, sub] = text ?? FX_TEXT[name];
+  const [title, sub] = text ?? FX_TEXT[name] ?? [""];
   el.innerHTML = `<p class="fx-title"></p>${sub ? '<p class="fx-sub"></p>' : ""}`;
   el.querySelector(".fx-title")!.textContent = title;
   if (sub) el.querySelector(".fx-sub")!.textContent = sub;
   document.body.append(el);
   setTimeout(() => el.remove(), 2600);
 }
+
+// Eggs this visitor has found, kept in their browser only.
+function foundEggs(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem("eggs") ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+// Records an egg; returns the new total, or 0 if it was already found.
+function markEgg(name: string) {
+  const found = foundEggs();
+  if (found.includes(name)) return 0;
+  found.push(name);
+  try {
+    localStorage.setItem("eggs", JSON.stringify(found));
+  } catch {}
+  return found.length;
+}
+
+// An egg's sound, if one was uploaded in /admin (EGG SOUNDS).
+function eggSound(k: EggSound) {
+  const x = clientSettings().sfx?.[k];
+  if (!x) return;
+  const a = new Audio(x.src);
+  a.volume = x.volume ?? 0.6;
+  void a.play().catch(() => {});
+}
+
+const eggLine = (n: number) => `egg found (${n}/${EGGS.length}). type: eggs`;
 
 // Everyone who dropped in this week (the globe's region tally), for Fortnite's "you placed #N".
 async function visitorCount() {
@@ -122,6 +178,8 @@ export function CommandPalette() {
   };
 
   useEffect(() => {
+    // for the people who open devtools first
+    console.log("%c\n  prathlabs\n  curious? press : then try sudo. there are " + EGGS.length + " eggs.\n", "font-family:monospace;color:#ffb000");
     const konami: string[] = [];
     const onKey = (e: KeyboardEvent) => {
       konami.push(e.key.length === 1 ? e.key.toLowerCase() : e.key);
@@ -129,6 +187,8 @@ export function CommandPalette() {
       if (konami.join() === KONAMI.join()) {
         setTheme(currentTheme() === "matrix" ? "amber" : "matrix");
         konami.length = 0;
+        const n = markEgg("konami");
+        if (n && dialog.current?.open) setLog((l) => [...l, { out: [eggLine(n)] }]);
       }
       const t = e.target as HTMLElement;
       const typing =
@@ -143,11 +203,20 @@ export function CommandPalette() {
       }
     };
     const onOpen = () => open();
+    // eggs found on the page itself (bats, the name, the screensaver...): {name, text?, fx?}.
+    // A banner if there's something to say or the egg is new; nothing on a repeat of a silent one.
+    const onEgg = (e: Event) => {
+      const { name, text, fx } = (e as CustomEvent<{ name?: string; text?: string; fx?: Fx }>).detail;
+      const n = name ? markEgg(name) : 0;
+      if (text || n) playFx(fx ?? "note", [text ?? "egg found", n ? eggLine(n) : undefined]);
+    };
     addEventListener("keydown", onKey);
     addEventListener("palette:open", onOpen);
+    addEventListener("egg", onEgg);
     return () => {
       removeEventListener("keydown", onKey);
       removeEventListener("palette:open", onOpen);
+      removeEventListener("egg", onEgg);
     };
   }, []);
 
@@ -182,6 +251,24 @@ export function CommandPalette() {
     }
     if (a.type === "close") dialog.current?.close();
     if (a.type === "login") setAskPass(true);
+    if (a.type === "webtrail") {
+      document.documentElement.setAttribute("data-webtrail", "");
+      eggSound("greatpower");
+    }
+    if (a.type === "wanted") {
+      // the level lives on <html> for the los santos stars (globals.css); 0 hides them
+      const html = document.documentElement;
+      const level = a.clear ? 0 : Math.min(5, Number(html.dataset.wanted ?? 0) + 1);
+      html.setAttribute("data-wanted", String(level));
+      if (a.clear) return;
+      const n = level === 5 ? markEgg("wanted") : 0;
+      say([`wanted level: ${"★".repeat(level)}${"☆".repeat(5 - level)}`, ...(n ? [eggLine(n)] : [])]);
+      if (level === 5) {
+        dialog.current?.close();
+        playFx("siren");
+        eggSound("wanted");
+      }
+    }
     if (a.type === "np")
       void fetch("/api/now-playing")
         .then((r) => r.json())
@@ -201,6 +288,7 @@ export function CommandPalette() {
       dispatchEvent(new CustomEvent("sound:set", { detail: a.on }));
     if (a.type === "theme") setTheme(a.name);
     if (a.type === "fx") {
+      if (a.name === "storm") eggSound("storm");
       dialog.current?.close();
       playFx(a.name);
     }
@@ -243,12 +331,13 @@ export function CommandPalette() {
   const submit = () => {
     if (askPass) return void login();
     const line = value;
-    const r = run(line, document.documentElement.dataset.bootHome);
+    const r = run(line, document.documentElement.dataset.bootHome, foundEggs(), currentTheme());
     if (line.trim()) history.current.push(line);
     cursor.current = -1;
     setValue("");
+    const n = r.egg ? markEgg(r.egg) : 0;
     if (r.action?.type !== "clear")
-      setLog((l) => [...l, { cmd: line, out: r.out }]);
+      setLog((l) => [...l, { cmd: line, out: n ? [...r.out, eggLine(n)] : r.out }]);
     act(r.action);
   };
 
@@ -261,7 +350,7 @@ export function CommandPalette() {
     if (askPass) return; // no completion or history on a password
     if (e.key === "Tab") {
       e.preventDefault();
-      const c = complete(value);
+      const c = complete(value, foundEggs());
       if (c.length === 1) setValue(c[0] + " ");
       else if (c.length > 1)
         setLog((l) => [...l, { cmd: value, out: [c.join("   ")] }]);
@@ -281,7 +370,7 @@ export function CommandPalette() {
     }
   };
 
-  const hints = value.trim() && !askPass ? complete(value).slice(0, 6) : [];
+  const hints = value.trim() && !askPass ? complete(value, foundEggs()).slice(0, 6) : [];
 
   return (
     <>

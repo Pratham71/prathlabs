@@ -6,7 +6,7 @@ import { upload } from "@vercel/blob/client";
 import { Section } from "@/components/Man";
 import { MUSIC, REBOOT_SOUNDS } from "@/content/music";
 import { THEMES, THEME_LABEL, type Theme } from "@/lib/theme";
-import type { Settings } from "@/lib/settings";
+import { EGG_SOUNDS, SCENE_SOUNDS, type EggSound, type SceneSound, type Settings } from "@/lib/settings";
 
 // /admin, logged out: same password as the palette's `sudo su`.
 export function AdminLogin({ configured }: { configured: boolean }) {
@@ -43,6 +43,38 @@ const ext = (name: string) => (name.match(/\.[a-z0-9]{2,4}$/i)?.[0] ?? ".mp3").t
 
 type Ready = { redis: boolean; blob: boolean; spotify: boolean };
 
+const SCENE_LABEL: Record<SceneSound, string> = { siren: "police siren", heli: "helicopter", jet: "jets", boom: "explosion" };
+const EGG_LABEL: Record<EggSound, string> = { storm: "storm", greatpower: "with great power", wanted: "wanted (five stars)" };
+
+// A volume typed as 0-100. Saves on Enter or when the field loses focus, only if it changed.
+function Vol({ value, onSave, disabled }: { value: number; onSave: (v: number) => void; disabled?: boolean }) {
+  const pct = Math.round(value * 100);
+  const commit = (el: HTMLInputElement) => {
+    const n = Math.round(Number(el.value));
+    if (el.value === "" || !Number.isFinite(n) || n < 0 || n > 100) return void (el.value = String(pct));
+    if (n !== pct) onSave(n / 100);
+  };
+  return (
+    <label>
+      vol{" "}
+      <input
+        key={pct}
+        className="admin-vol"
+        type="number"
+        min={0}
+        max={100}
+        step={1}
+        inputMode="numeric"
+        defaultValue={pct}
+        disabled={disabled}
+        onBlur={(e) => commit(e.currentTarget)}
+        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), e.currentTarget.blur())}
+      />
+      %
+    </label>
+  );
+}
+
 // Every change saves right away (PUT /api/admin/settings) and reaches visitors on their next page load.
 export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready }) {
   const router = useRouter();
@@ -62,9 +94,9 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
     } else setStatus(`error: ${r ? ((await r.json().catch(() => ({}))).error ?? r.status) : "network"}`);
   };
 
-  const put = async (file: File, dir: "music" | "sfx", onPct: (n: number) => void) =>
+  const put = async (file: File, dir: "music" | "sfx", onPct: (n: number) => void, folder: string = theme) =>
     (
-      await upload(`${dir}/${theme}/${slug(file.name)}${ext(file.name)}`, file, {
+      await upload(`${dir}/${folder}/${slug(file.name)}${ext(file.name)}`, file, {
         access: "public",
         handleUploadUrl: "/api/admin/upload",
         multipart: file.size > 8 * 1024 * 1024,
@@ -152,6 +184,9 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
           </select>
         </label>
 
+        <p className="admin-row">
+          default volume for new uploads: <Vol value={s.uploadVolume} disabled={locked} onSave={(v) => save({ ...s, uploadVolume: v })} />
+        </p>
         <p className="muted">uploaded (play first)</p>
         {songs.length ? (
           <ol className="admin-list">
@@ -159,6 +194,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               <li key={song.src}>
                 {song.title} · <span className="muted">{song.artist}</span>
                 {song.start ? <span className="muted"> · from {song.start}s</span> : null}{" "}
+                <Vol value={song.volume ?? 1} disabled={locked} onSave={(v) => save({ ...s, music: { ...s.music, [theme]: songs.map((x) => (x === song ? { ...x, volume: v } : x)) } })} />{" "}
                 <button type="button" disabled={locked || i === 0} onClick={() => save({ ...s, music: { ...s.music, [theme]: songs.map((x, j) => (j === i - 1 ? song : j === i ? songs[i - 1] : x)) } })} aria-label={`Move ${song.title} up`}>
                   up
                 </button>{" "}
@@ -196,7 +232,8 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             try {
               const src = await put(file, "music", (n) => setStatus(`uploading ${n}%`));
               const start = Number(f.get("start")) || undefined;
-              const track = { title: String(f.get("title")).trim(), artist: String(f.get("artist")).trim(), src, ...(start ? { start } : {}) };
+              const volume = Math.min(100, Math.max(0, Number(f.get("volume") ?? 100))) / 100;
+              const track = { title: String(f.get("title")).trim(), artist: String(f.get("artist")).trim(), src, ...(start ? { start } : {}), ...(volume !== 1 ? { volume } : {}) };
               (e.target as HTMLFormElement).reset();
               await save({ ...s, music: { ...s.music, [theme]: [...songs, track] } }, "song added");
             } catch (err) {
@@ -214,10 +251,13 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               title <input name="title" required maxLength={120} />
             </label>
             <label>
-              artist <input name="artist" maxLength={120} />
+              artist <input name="artist" maxLength={120} placeholder="M83 (https://youtu.be/...) links the song" />
             </label>
             <label>
               start at (seconds) <input name="start" type="number" min={0} step={1} inputMode="numeric" />
+            </label>
+            <label>
+              volume <input key={s.uploadVolume} className="admin-vol" name="volume" type="number" min={0} max={100} step={1} inputMode="numeric" defaultValue={Math.round(s.uploadVolume * 100)} />%
             </label>
             <button type="submit">upload</button>
           </fieldset>
@@ -227,23 +267,11 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
       <Section name="REBOOT SOUND">
         {why && <p className="admin-why">{why}</p>}
         <p>
-          {THEME_LABEL[theme]}: {reboot ? `uploaded file, volume ${reboot.volume ?? 0.6}` : REBOOT_SOUNDS[theme] ? `repo default ${REBOOT_SOUNDS[theme]!.src}` : "synth"}
+          {THEME_LABEL[theme]}: {reboot ? `uploaded file, volume ${Math.round((reboot.volume ?? 0.6) * 100)}%` : REBOOT_SOUNDS[theme] ? `repo default ${REBOOT_SOUNDS[theme]!.src}` : "synth"}
         </p>
         {reboot && (
           <p>
-            <label>
-              volume{" "}
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                defaultValue={reboot.volume ?? 0.6}
-                disabled={locked}
-                onPointerUp={(e) => save({ ...s, reboot: { ...s.reboot, [theme]: { ...reboot, volume: Number(e.currentTarget.value) } } })}
-                onKeyUp={(e) => save({ ...s, reboot: { ...s.reboot, [theme]: { ...reboot, volume: Number(e.currentTarget.value) } } })}
-              />
-            </label>{" "}
+            <Vol value={reboot.volume ?? 0.6} disabled={locked} onSave={(v) => save({ ...s, reboot: { ...s.reboot, [theme]: { ...reboot, volume: v } } })} />{" "}
             <button type="button" disabled={locked} onClick={() => new Audio(reboot.src).play()}>
               play
             </button>{" "}
@@ -273,7 +301,7 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
               try {
                 const src = await put(file, "sfx", (n) => setStatus(`uploading ${n}%`));
                 e.target.value = "";
-                await save({ ...s, reboot: { ...s.reboot, [theme]: { src, volume: reboot?.volume ?? 0.6 } } }, "reboot sound set");
+                await save({ ...s, reboot: { ...s.reboot, [theme]: { src, volume: reboot?.volume ?? s.uploadVolume } } }, "reboot sound set");
               } catch (err) {
                 setBusy(false);
                 setStatus(`upload failed: ${(err as Error).message}`);
@@ -281,6 +309,112 @@ export function AdminPanel({ initial, ready }: { initial: Settings; ready: Ready
             }}
           />
         </label>
+      </Section>
+
+      <Section name="SCENE SOUNDS">
+        {why && <p className="admin-why">{why}</p>}
+        <p className="muted">los santos background: chases, jets, the oppressor&apos;s missile. only with the site sound on.</p>
+        <ul className="admin-list">
+          {SCENE_SOUNDS.map((k) => {
+            const cur = s.scene[k] ?? {};
+            const set = (next: typeof cur, msg?: string) => save({ ...s, scene: { ...s.scene, [k]: next } }, msg);
+            return (
+              <li key={k}>
+                <label>
+                  <input type="checkbox" checked={!cur.off} disabled={locked} onChange={(e) => set({ ...cur, off: e.target.checked ? undefined : true }, e.target.checked ? `${SCENE_LABEL[k]} on` : `${SCENE_LABEL[k]} off`)} /> {SCENE_LABEL[k]}
+                </label>{" "}
+                <span className="muted">{cur.src ? "uploaded clip" : "synth"}</span>{" "}
+                <Vol value={cur.volume ?? (cur.src ? 0.6 : 1)} disabled={locked} onSave={(v) => set({ ...cur, volume: v })} />{" "}
+                {cur.src && (
+                  <>
+                    <button type="button" disabled={locked} onClick={() => Object.assign(new Audio(cur.src), { volume: cur.volume ?? 0.6 }).play()}>
+                      play
+                    </button>{" "}
+                    <button type="button" disabled={locked} onClick={() => set({ ...cur, src: undefined }, "back to the synth")}>
+                      use synth
+                    </button>{" "}
+                  </>
+                )}
+                <label>
+                  {cur.src ? "replace" : "upload clip"}{" "}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    disabled={noUpload}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setBusy(true);
+                      try {
+                        const src = await put(file, "sfx", (n) => setStatus(`uploading ${n}%`), `scene-${k}`);
+                        e.target.value = "";
+                        await set({ ...cur, src, volume: cur.src ? cur.volume : s.uploadVolume }, `${SCENE_LABEL[k]} clip set`);
+                      } catch (err) {
+                        setBusy(false);
+                        setStatus(`upload failed: ${(err as Error).message}`);
+                      }
+                    }}
+                  />
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      </Section>
+
+      <Section name="EGG SOUNDS">
+        {why && <p className="admin-why">{why}</p>}
+        <p className="muted">played with the egg&apos;s effect, on every theme</p>
+        <ul className="admin-list">
+          {EGG_SOUNDS.map((k) => {
+            const cur = s.sfx[k];
+            return (
+              <li key={k}>
+                {EGG_LABEL[k]}: {cur ? "uploaded" : <span className="muted">none</span>}{" "}
+                {cur && (
+                  <>
+                    <Vol value={cur.volume ?? 0.6} disabled={locked} onSave={(v) => save({ ...s, sfx: { ...s.sfx, [k]: { ...cur, volume: v } } })} />{" "}
+                    <button type="button" disabled={locked} onClick={() => Object.assign(new Audio(cur.src), { volume: cur.volume ?? 0.6 }).play()}>
+                      play
+                    </button>{" "}
+                    <button
+                      type="button"
+                      disabled={locked}
+                      onClick={() => {
+                        const { [k]: _gone, ...rest } = s.sfx;
+                        void _gone;
+                        void save({ ...s, sfx: rest }, "removed");
+                      }}
+                    >
+                      remove
+                    </button>{" "}
+                  </>
+                )}
+                <label>
+                  {cur ? "replace" : "upload"}{" "}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    disabled={noUpload}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setBusy(true);
+                      try {
+                        const src = await put(file, "sfx", (n) => setStatus(`uploading ${n}%`), `egg-${k}`);
+                        e.target.value = "";
+                        await save({ ...s, sfx: { ...s.sfx, [k]: { src, volume: cur?.volume ?? s.uploadVolume } } }, `${EGG_LABEL[k]} sound set`);
+                      } catch (err) {
+                        setBusy(false);
+                        setStatus(`upload failed: ${(err as Error).message}`);
+                      }
+                    }}
+                  />
+                </label>
+              </li>
+            );
+          })}
+        </ul>
       </Section>
     </>
   );

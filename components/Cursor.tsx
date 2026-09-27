@@ -72,6 +72,22 @@ export function Cursor() {
     let imageSrc: string | null = null;
     let raf = 0;
     let idle = 0;
+    let strand = { x: -1, y: -1 };
+
+    // "with great power" egg on the spider-man theme: a web strand from the last point to here, fading out
+    const web = (x: number, y: number) => {
+      if (!("webtrail" in html.dataset) || currentTheme() !== "spiderman" || snap) return;
+      const len = Math.hypot(x - strand.x, y - strand.y);
+      if (strand.x >= 0 && len < 28) return;
+      if (strand.x >= 0 && len < 300) {
+        const s = document.createElement("i");
+        s.className = "web-strand";
+        s.style.cssText = `left:${strand.x}px;top:${strand.y}px;width:${len}px;rotate:${Math.atan2(y - strand.y, x - strand.x)}rad`;
+        s.addEventListener("animationend", () => s.remove());
+        document.body.append(s);
+      }
+      strand = { x, y };
+    };
 
     const step = () => {
       const k = snap ? 1 : 0.28;
@@ -119,6 +135,7 @@ export function Cursor() {
       if (e.pointerType !== "mouse") return;
       mouse.x = e.clientX;
       mouse.y = e.clientY;
+      web(mouse.x, mouse.y);
       el.dataset.on = "";
       el.dataset.idle = "false";
       clearTimeout(idle);
