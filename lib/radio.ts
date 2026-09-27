@@ -460,6 +460,7 @@ function fileEl(o: Out) {
   if (file) return file;
   const el = (file = new Audio());
   el.preload = "auto";
+  el.crossOrigin = "anonymous"; // uploads live on the Blob host; without CORS mode Web Audio gets silence
   el.addEventListener("ended", () => state.theme && skip(state.theme, 1)); // songs advance; loops loop
   const g = o.ac.createGain();
   g.gain.value = 2; // times the shared 0.16 level: mastered tracks sit a little above the loops
