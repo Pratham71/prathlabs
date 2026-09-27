@@ -1,6 +1,6 @@
 ---
 name: add-project
-description: Add a project to the portfolio (home page row, its /projects/<slug> page, sitemap, llms.txt, structured data). Use when asked to add, feature or showcase a project or repo on prathlab.
+description: Add a project to the portfolio (home page row, its /projects/<slug> page, sitemap, llms.txt, structured data). Use when asked to add, feature or showcase a project or repo on this portfolio.
 ---
 
 # Add a project
@@ -8,8 +8,8 @@ description: Add a project to the portfolio (home page row, its /projects/<slug>
 Everything derives from `content/projects/index.ts`; the page, sitemap, llms.txt, JSON-LD, OG image
 and the prompt's `projects` / `open <name>` commands all pick the new entry up.
 
-1. Read the repo first (`gh api repos/Pratham71/<repo>/readme -H "Accept: application/vnd.github.raw"`,
-   `gh api repos/Pratham71/<repo>/languages`). Only state facts the README or code supports.
+1. Read the repo first (`gh api repos/<owner>/<repo>/readme -H "Accept: application/vnd.github.raw"`,
+   `gh api repos/<owner>/<repo>/languages`). Only state facts the README or code supports.
 2. Add an entry to `projects` in `content/projects/index.ts` (order = home page order):
    - `slug`: lowercase, `[a-z0-9-]`, short (it's shown as `slug(section)`).
    - `section`: 1 for a program/app, 7 for an overview/system (like homelab).

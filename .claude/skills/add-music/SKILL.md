@@ -1,26 +1,36 @@
 ---
 name: add-music
-description: Add, replace or remove songs and reboot sounds for the themed radio stations on prathlab. Use when asked about theme songs, radio tracks, reboot/wasted sounds, or where to put audio files.
+description: Add, replace or remove songs and sounds for the themed radio stations, reboot screens, eggs and background scenes. Use when asked about theme songs, radio tracks, reboot/wasted sounds, egg or scene sound effects, song volume or start times, or where audio files go.
 ---
 
-# Add music or a reboot sound
+# Add music or a sound
 
-Two ways; pick by whether the file should live in the public repo.
+## The admin panel (the way to do it)
 
-## No code change: the admin panel (preferred)
-Tell the user: `sudo su` in the site's prompt (or `/admin`) → MUSIC or REBOOT SOUND → upload.
-Files go to Vercel Blob, never into the repo, and show up on the next page load. Needs Redis and
-Blob connected in Vercel (the panel's STATUS line says what's missing).
+`sudo su` in the site's prompt (or `/admin`), then:
 
-## In the repo
-1. File goes in `public/music/<theme>/<lowercase-name>.mp3` (songs) or `public/sfx/<name>.mp3`
-   (reboot sounds). Themes: see `THEMES` in `lib/theme.ts`.
-2. Songs: add `{ title, artist, src, start? }` to `MUSIC[<theme>]` in `content/music.ts`.
-   `artist` is the full credit ("Maroon 5 feat. Christina Aguilera"); `start` is the second to
-   begin at (the song's peak). Order = play order; missing files are skipped at runtime.
-3. Reboot sounds: `REBOOT_SOUNDS[<theme>] = { src, volume }` (volume 0 to 1; "wasted" is 0.35).
-4. Update the tables in `AUDIO.md` to match.
-5. Remind the user: production only serves `public/` files present at build time, so rebuild or
-   push. Copyrighted audio committed here becomes public; that's their call, so say so.
+- **MUSIC**: pick the theme, upload a song with title, artist, start second and volume. Songs play
+  before the station's synth loops, in list order (the `up` button reorders). Removing a song deletes
+  its file. Pasting a link after the artist (`M83 (https://youtu.be/...)`) shows a `yt ↗` link.
+- **default volume for new uploads**: what the volume field starts at.
+- **REBOOT SOUND**: a theme's `reboot` sound, with its volume; reset returns to the repo default.
+- **EGG SOUNDS** (storm, "with great power", wanted) and **SCENE SOUNDS** (los santos siren, heli,
+  jets, explosion): on/off, volume, or an uploaded clip instead of the synth.
 
-Never download audio from YouTube or similar for the user; they supply the files.
+Files go to Vercel Blob (never the repo) and reach visitors on the next page load, no rebuild. It
+needs Redis and Blob connected in Vercel; the panel's STATUS line says what's missing.
+
+## In the repo (local only)
+
+`content/music.ts` lists songs per theme (`MUSIC`) and reboot sounds (`REBOOT_SOUNDS`), with the
+paths in `AUDIO.md`. Audio under `public/music/` and `public/sfx/` is git-ignored, so it only plays
+on the machine that has it; the live site gets songs and sounds through the panel. Listed files
+that are missing are skipped at runtime (reboot falls back to its synth sting).
+
+## Rules
+
+- Commercial songs need a licence to be hosted, on Blob or anywhere else. Say so when someone adds
+  one; it's their call, but they should know. Royalty-free libraries (Pixabay Music, Incompetech,
+  Free Music Archive) are the safe source.
+- Never download audio from YouTube, Spotify or SoundCloud for anyone; they supply the files.
+- Never `git add -A` with audio lying around in `public/`; stage files by name.

@@ -41,8 +41,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# song files: licensed music never goes in this public repo (upload via /admin instead)
+# audio files: licensed music and sounds never go in this public repo (upload via /admin instead)
 /public/music/**/*.mp3
 /public/music/**/*.m4a
 /public/music/**/*.wav
 /public/music/**/*.ogg
+/public/sfx/**/*.mp3
+/public/sfx/**/*.m4a
+/public/sfx/**/*.wav
+/public/sfx/**/*.ogg

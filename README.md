@@ -8,6 +8,26 @@ radio station, cursor, scenery and reboot screen) and a small admin panel.
 
 MIT licensed: take what's useful. Game, film and brand names belong to their owners.
 
+## Make your own
+
+Fork it, open it in [Claude Code](https://claude.com/claude-code) (or any coding agent) and ask:
+
+> make this portfolio mine
+
+The `make-it-yours` skill asks for your name, copy, projects, time zone and which themes to keep,
+then changes every place that says Pratham. Other skills cover the jobs after that:
+
+| Skill | For |
+|---|---|
+| [`make-it-yours`](.claude/skills/make-it-yours/SKILL.md) | turning the fork into your site, start to deploy |
+| [`add-project`](.claude/skills/add-project/SKILL.md) | a new project row and page |
+| [`add-theme`](.claude/skills/add-theme/SKILL.md) | a new game/film theme, or removing one |
+| [`add-egg`](.claude/skills/add-egg/SKILL.md) | a hidden command in the prompt |
+| [`add-music`](.claude/skills/add-music/SKILL.md) | songs and sounds, through /admin |
+| [`ship-change`](.claude/skills/ship-change/SKILL.md) | the checks CI runs, and shipping |
+
+Agents other than Claude Code: [AGENTS.md](AGENTS.md) has the map, the conventions and the skill list.
+
 ## Using the site
 
 | Key | Does |
@@ -133,4 +153,4 @@ Device ids are listed in `lib/heartbeat.ts`.
 | `lib/radio.ts` | synth stations and the player |
 | `lib/admin.ts`, `lib/settings.ts`, `app/admin`, `app/api/admin` | admin auth and settings |
 | `lib/seo.ts`, `app/sitemap.ts`, `app/robots.ts`, `app/llms.txt` | structured data, sitemap, robots, llms.txt |
-| `.claude/skills/` | Claude Code skills for common changes to this repo |
+| `.claude/skills/`, `AGENTS.md` | agent skills and context (see [Make your own](#make-your-own)) |
