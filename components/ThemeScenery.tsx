@@ -365,7 +365,7 @@ export function ThemeScenery() {
       bats.splice(i, 1);
       if (++hits === 3) {
         document.documentElement.dataset.bloody = "";
-        dispatchEvent(new CustomEvent("egg", { detail: { name: "bats", text: "you've got blood on your cursor." } }));
+        dispatchEvent(new CustomEvent("egg", { detail: { name: "bats", text: "you've got blood on your cursor.", fx: "blood" } }));
       }
     };
     addEventListener("pointerdown", onDown);

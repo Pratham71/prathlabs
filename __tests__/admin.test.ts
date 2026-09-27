@@ -55,3 +55,11 @@ test("song volume survives clean; out-of-range drops the song", () => {
   const s = clean({ music: { gtav: [{ title: "a", artist: "", src, volume: 0.4 }, { title: "b", artist: "", src, volume: 3 }, { title: "c", artist: "", src, volume: 1 }] } });
   expect(s.music.gtav).toEqual([{ title: "a", artist: "", src, volume: 0.4 }, { title: "c", artist: "", src }]);
 });
+
+test("egg sounds keep only known eggs; upload volume defaults to full", () => {
+  const src = "https://abc.public.blob.vercel-storage.com/sfx/egg-storm/a.mp3";
+  const s = clean({ sfx: { storm: { src, volume: 0.3 }, nope: { src }, wanted: { src: "" } }, uploadVolume: 7 });
+  expect(s.sfx).toEqual({ storm: { src, volume: 0.3 } });
+  expect(s.uploadVolume).toBe(1);
+  expect(clean({ uploadVolume: 0.6 }).uploadVolume).toBe(0.6);
+});

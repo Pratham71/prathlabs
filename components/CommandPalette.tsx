@@ -7,6 +7,7 @@ import { currentTheme, isGame, setTheme } from "@/lib/theme";
 import { REBOOT_SOUNDS } from "@/content/music";
 import { clientSettings } from "@/lib/client-settings";
 import { pixelArt } from "@/lib/sprites";
+import type { EggSound } from "@/lib/settings";
 
 type Entry = { cmd?: string; out: string[] };
 const PROMPT = "visitor@prathlab:~$";
@@ -89,6 +90,15 @@ function markEgg(name: string) {
     localStorage.setItem("eggs", JSON.stringify(found));
   } catch {}
   return found.length;
+}
+
+// An egg's sound, if one was uploaded in /admin (EGG SOUNDS).
+function eggSound(k: EggSound) {
+  const x = clientSettings().sfx?.[k];
+  if (!x) return;
+  const a = new Audio(x.src);
+  a.volume = x.volume ?? 0.6;
+  void a.play().catch(() => {});
 }
 
 const eggLine = (n: number) => `egg found (${n}/${EGGS.length}). type: eggs`;
@@ -193,11 +203,12 @@ export function CommandPalette() {
       }
     };
     const onOpen = () => open();
-    // eggs found on the page itself (the blade bats): {name, text}
+    // eggs found on the page itself (bats, the name, the screensaver...): {name, text?, fx?}.
+    // A banner if there's something to say or the egg is new; nothing on a repeat of a silent one.
     const onEgg = (e: Event) => {
-      const { name, text } = (e as CustomEvent<{ name: string; text: string }>).detail;
-      const n = markEgg(name);
-      playFx("blood", [text, n ? eggLine(n) : undefined]);
+      const { name, text, fx } = (e as CustomEvent<{ name?: string; text?: string; fx?: Fx }>).detail;
+      const n = name ? markEgg(name) : 0;
+      if (text || n) playFx(fx ?? "note", [text ?? "egg found", n ? eggLine(n) : undefined]);
     };
     addEventListener("keydown", onKey);
     addEventListener("palette:open", onOpen);
@@ -240,7 +251,10 @@ export function CommandPalette() {
     }
     if (a.type === "close") dialog.current?.close();
     if (a.type === "login") setAskPass(true);
-    if (a.type === "webtrail") document.documentElement.setAttribute("data-webtrail", "");
+    if (a.type === "webtrail") {
+      document.documentElement.setAttribute("data-webtrail", "");
+      eggSound("greatpower");
+    }
     if (a.type === "wanted") {
       // the level lives on <html> for the los santos stars (globals.css); 0 hides them
       const html = document.documentElement;
@@ -252,6 +266,7 @@ export function CommandPalette() {
       if (level === 5) {
         dialog.current?.close();
         playFx("siren");
+        eggSound("wanted");
       }
     }
     if (a.type === "np")
@@ -273,6 +288,7 @@ export function CommandPalette() {
       dispatchEvent(new CustomEvent("sound:set", { detail: a.on }));
     if (a.type === "theme") setTheme(a.name);
     if (a.type === "fx") {
+      if (a.name === "storm") eggSound("storm");
       dialog.current?.close();
       playFx(a.name);
     }

@@ -171,9 +171,11 @@ function Note({ artist }: { artist?: string }) {
   );
 }
 
-// Volume as a car-radio knob: drag up/down or use the arrow keys. A slider to assistive tech.
+// Volume as a car-radio knob (drag up/down or arrow keys; a slider to assistive tech), plus a field to
+// type the level in.
 function Knob({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const drag = useRef<{ y: number; v: number } | null>(null);
+  const [draft, setDraft] = useState<string | null>(null); // what's being typed, until it's a valid 0-100
   const set = (v: number) => onChange(Math.min(1, Math.max(0, Math.round(v * 20) / 20)));
   const step: Record<string, number> = { ArrowUp: 0.05, ArrowRight: 0.05, ArrowDown: -0.05, ArrowLeft: -0.05, Home: -1, End: 1 };
   return (
@@ -200,7 +202,26 @@ function Knob({ value, onChange }: { value: number; onChange: (v: number) => voi
           set(value + step[e.key]);
         }}
       />
-      <span className="radio-vol-text" aria-hidden="true">vol {Math.round(value * 100)}%</span>
+      <label className="radio-vol-text">
+        vol{" "}
+        <input
+          type="number"
+          min={0}
+          max={100}
+          step={1}
+          inputMode="numeric"
+          aria-label="Volume percent"
+          value={draft ?? Math.round(value * 100)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            const n = Number(e.target.value);
+            if (e.target.value !== "" && n >= 0 && n <= 100) onChange(Math.round(n) / 100);
+          }}
+          onBlur={() => setDraft(null)}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        />
+        %
+      </label>
     </span>
   );
 }

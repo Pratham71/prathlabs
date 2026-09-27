@@ -20,7 +20,7 @@ export type Action =
 
 export type Fx =
   | "wasted" | "passed" | "victory" | "dance" | "placed" | "slash" | "failure" | "flatline" | "tbc" | "died"
-  | "siren" | "storm" | "diamond" | "spoon" | "blood";
+  | "siren" | "storm" | "diamond" | "spoon" | "blood" | "note";
 export type Result = { out: string[]; action?: Action; egg?: string };
 
 // The hidden commands `eggs` counts: [name it shows, clue for `hint`, other words that count as it].
@@ -69,10 +69,14 @@ export const EGGS: [string, string, ...string[]][] = [
   ["trinity", "neo's partner. one word."],
   ["spoon", "there is no ___."],
   ["bats", "blade theme: click a bat. then two more."],
+  ["dots", "the name is made of dots. click it five times."],
+  ["screensaver", "walk away for two minutes."],
+  ["3am", "visit when dubai is asleep. around 3am."],
+  ["debug", "developers add ?debug to urls. try it here."],
 ];
 
 // Found some other way than typing its name (the Konami code, clicking bats; wanted counts at five).
-const UNTYPED = ["konami", "bats", "wanted"];
+const UNTYPED = ["konami", "bats", "wanted", "dots", "screensaver", "3am", "debug"];
 
 // Which egg a command line finds. The ones that depend on the argument are spelled out.
 function eggOf(cmd: string, arg: string) {

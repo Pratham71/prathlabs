@@ -16,6 +16,7 @@ import { ThemeAccents } from "@/components/ThemeAccents";
 import { ThemeIcon } from "@/components/ThemeIcon";
 import { ThemeScenery } from "@/components/ThemeScenery";
 import { site } from "@/content/site";
+import { Quirks } from "@/components/Quirks";
 import { getSettings } from "@/lib/settings";
 import "./globals.css";
 
@@ -75,6 +76,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <RadioPlayer />
         <ThemeAccents />
         <ThemeIcon />
+        <Quirks />
         <ThemeScenery />
         <div className="dock">
           <CommandPalette />

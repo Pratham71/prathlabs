@@ -5,8 +5,12 @@ import { SETTINGS_TAG, clean, isBlob, isSitePath, readSettings, writeSettings, t
 
 const deny = () => Response.json({ error: "not logged in" }, { status: 401 });
 
-// Every file URL the settings point at (songs + reboot sounds).
-const files = (s: Settings) => [...Object.values(s.music).flatMap((l) => l?.map((t) => t.src) ?? []), ...Object.values(s.reboot).map((r) => r?.src)];
+// Every file URL the settings point at (songs, reboot sounds, egg sounds).
+const files = (s: Settings) => [
+  ...Object.values(s.music).flatMap((l) => l?.map((t) => t.src) ?? []),
+  ...Object.values(s.reboot).map((r) => r?.src),
+  ...Object.values(s.sfx).map((r) => r?.src),
+];
 
 export async function GET(req: Request) {
   if (!(await isAdminRequest(req))) return deny();
