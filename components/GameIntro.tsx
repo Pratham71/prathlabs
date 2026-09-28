@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import { isGame } from "@/lib/theme";
-import { fightPanels } from "@/components/spidey";
+import { introSwing } from "@/components/spidey";
 
 // Game-theme boot scenes, drawn as ordered dither (4x4 Bayer) at 4px cells over a small palette:
 // los santos loading screen (sunset over the hills and skyline), vice city (striped sun over the ocean),
 // battle bus (the bus crossing a cloudy sky over the island), blade (a blood rave: strobes, crowd,
 // the sprinklers, then one silver slash), matrix (digital rain), night city (neon towers in the rain,
-// an AV overhead, glitching), spider-man (Manhattan at night, and the five suits each fighting their villain in comic panels), minecraft (block
+// an AV overhead, glitching), spider-man (Manhattan at night, a swing across it: a random suit chasing or fighting its villain), minecraft (block
 // terrain, trees, drifting clouds). Original art, drawn procedurally.
 
 const CELL = 4;
@@ -119,7 +119,7 @@ const SCENES: Record<string, Scene> = {
       }
       return Math.min(4, 1 + 2.3 * y + 1.2 * Math.exp(-(md - 0.06) * 14));
     },
-    sprite: fightPanels,
+    sprite: introSwing,
   },
   minecraft: {
     palette: ["#0e0c0a", "#3b2a1a", "#5a3d24", "#79553a", "#6d6d6d", "#8e8e8e", "#3f7d2b", "#5fa83c", "#8fd15a", "#7fb3e6", "#a9cff5", "#ffffff"],

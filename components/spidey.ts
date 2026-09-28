@@ -1,6 +1,6 @@
 // Spider-man theme: five suits and the villain each one fights, as original 8-bit drawings after the films
 // (Tobey's classic and symbiote suits, Andrew's, Tom's Iron Spider, Miles), web-swinging physics, and the
-// background chase that uses them. The intro (GameIntro) draws the same sprites, one fight per panel.
+// background chase that uses them. The intro (GameIntro) swings one of them across the screen.
 // All drawing is in the caller's canvas cells; s is sprite pixels per cell.
 
 export type Suit = "tobey" | "symbiote" | "andrew" | "tom" | "miles";
@@ -387,78 +387,37 @@ export function webChase() {
   };
 }
 
-// ---- the intro: every fight at once, as comic panels above and below the title
+// ---- the intro: one long swing across Manhattan, as a random suit either chasing its villain or fighting it
 
-const INKS: Record<Suit, [string, string]> = {
-  tobey: ["#14224a", "#1f3570"],
-  symbiote: ["#150f24", "#261a3d"],
-  andrew: ["#0b2238", "#14385a"],
-  tom: ["#2a120e", "#44201a"],
-  miles: ["#1a0a22", "#2e1238"],
-};
+let pick: { suit: Suit; foe: Foe; fight: boolean } | null = null;
 
-// panel rects as fractions of the screen: 3 over 2 in landscape; on a phone, 2 + 1 over 2
-const LAYOUT = {
-  wide: [[0.02, 0.03, 0.31, 0.28], [0.345, 0.03, 0.31, 0.28], [0.67, 0.03, 0.31, 0.28], [0.02, 0.69, 0.475, 0.28], [0.505, 0.69, 0.475, 0.28]],
-  tall: [[0.03, 0.02, 0.46, 0.15], [0.51, 0.02, 0.46, 0.15], [0.03, 0.18, 0.94, 0.15], [0.03, 0.67, 0.46, 0.15], [0.51, 0.67, 0.46, 0.15]],
-};
-
-export function fightPanels(c: Ctx, w: number, h: number, t: number) {
-  const layout = w < h ? LAYOUT.tall : LAYOUT.wide;
-  FIGHTS.forEach(([suit, foe], i) => {
-    const [fx, fy, fw, fh] = layout[i];
-    const x = Math.round(fx * w), y = Math.round(fy * h), pw = Math.round(fw * w), ph = Math.round(fh * h);
-    const open = Math.min(1, Math.max(0, (t - 0.15 - i * 0.18) / 0.25)); // panels slam in one after another
-    if (open <= 0) return;
-    const vw = Math.round(pw * open);
-    c.save();
-    c.beginPath();
-    c.rect(x, y, vw, ph);
-    c.clip();
-    // halftone sky
-    const [ink, dot] = INKS[suit];
-    c.fillStyle = ink;
-    c.fillRect(x, y, pw, ph);
-    c.fillStyle = dot;
-    for (let yy = y + 1; yy < y + ph; yy += 3) for (let xx = x + ((yy / 3) % 2 ? 1 : 2); xx < x + pw; xx += 3) if ((yy - y) / ph > 0.2 + 0.3 * (((xx * 7 + yy * 13) % 10) / 10)) c.fillRect(xx, yy, 1, 1); // denser toward the bottom
-    // spider-man on a real pendulum from above the panel: period from the rope length
-    const s = Math.max(1, Math.floor(ph / 28)); // bigger panels, bigger sprites
-    const len = ph * 0.6, g = 200 * s, ax = x + pw * 0.3, ay = y - 3;
-    const phi = 0.55 * Math.sin(Math.sqrt(g / len) * t + i * 1.3);
-    const sx = ax + Math.sin(phi) * len, sy = ay + Math.cos(phi) * len;
-    const [hx, hy] = HAND.swing;
-    const px = sx - (hx + 0.5) * s, py = sy - hy * s;
-    line(c, ax, ay, sx, sy, "#dfe6f5", s);
-    const goo = suit === "tobey" ? Math.min(1, Math.max(0, (t - 2.2) / 1.2)) : 0;
-    drawSpidey(c, suit, "swing", px, py, s, false, goo);
-    if (goo > 0 && goo < 1) for (let d = 0; d < 3; d++) {
-      // drips of symbiote falling off him
-      c.fillStyle = "#050507";
-      c.fillRect(Math.round(px + (3 + d * 2) * s), Math.round(py + (9 + ((t * 20 + d * 5) % 8)) * s), s, s);
-    }
-    // the villain, facing him
-    const [fw2, fh2] = FOE_SIZE(foe);
-    const vw2 = fw2 * s, vh = fh2 * s;
-    const vx = x + pw * 0.78 - vw2 / 2, vy = y + ph * 0.55 - vh / 2 + Math.sin(t * 2 + i) * 1.5 * s;
-    if (foe === "spot") portal(c, vx - 3 * s, vy + vh / 2, s, (4 + Math.sin(t * 3) * 1.5) * s);
-    drawFoe(c, foe, vx, vy, s, true, t);
-    if (foe === "electro" && Math.floor(t * 6) % 3 === 0) bolt(c, vx + 2 * s, vy + 6 * s, px + 8 * s, py + 8 * s, s);
-    if (foe === "goblin") {
-      // a pumpkin bomb lobbed at him on a gravity arc
-      const k = (t * 0.8) % 1;
-      const bx = vx + (px + 6 * s - vx) * k, by = vy + 8 * s - Math.sin(k * Math.PI) * ph * 0.25;
-      c.fillStyle = Math.floor(t * 10) % 2 ? "#ff8a1f" : "#ffd23f";
-      c.fillRect(Math.round(bx), Math.round(by), 2 * s, 2 * s);
-    }
-    if ((t + i * 0.4) % 1.3 < 0.12) line(c, px + 11 * s, py + 7 * s, vx + vw2 / 2, vy + vh / 2, "#eef2fa", s); // thwip
-    c.restore();
-    // the panel's ink border
-    for (const [o, col] of [[2, "#dfe6f5"], [1, "#04070f"]] as const) {
-      c.fillStyle = col; // white gutter, then the ink line
-      c.fillRect(x - o, y - o, vw + 2 * o, o);
-      c.fillRect(x - o, y + ph, vw + 2 * o, o);
-      c.fillRect(x - o, y, o, ph);
-      c.fillRect(x + vw, y, o, ph);
-    }
-  });
+export function introSwing(c: Ctx, w: number, h: number, t: number) {
+  if (!pick) {
+    const [suit, foe] = FIGHTS[Math.floor(Math.random() * FIGHTS.length)];
+    pick = { suit, foe, fight: Math.random() < 0.5 };
+  }
+  const { suit, foe, fight } = pick, s = 2;
+  // the web anchor slides across as the pendulum carries him; in a fight they face off across the title
+  const ax = Math.min(-w * 0.1 + t * w * 0.22, fight ? w * 0.1 : Infinity), L = h * 0.5;
+  const th = Math.sin(t * 2.2) * 0.85;
+  const bx = ax + Math.sin(th) * L, by = Math.cos(th) * L - h * 0.05;
+  const [hx, hy] = HAND.swing;
+  const px = bx - (hx + 0.5) * s, py = by - hy * s;
+  line(c, ax, -h * 0.05, bx, by, "#dfe6f5", s);
+  const goo = suit === "tobey" ? Math.min(1, Math.max(0, (t - 2.2) / 1.2)) : 0;
+  drawSpidey(c, suit, "swing", px, py, s, false, goo);
+  // chase: it runs ahead of him; fight: it holds its ground, turned to face him
+  const [fw, fh] = FOE_SIZE(foe);
+  const vx = fight ? w * 0.8 : px + w * 0.2, vy = h * 0.36 - fh + Math.sin(t * 2) * 2;
+  if (foe === "spot") portal(c, vx + (fight ? fw * s + 6 : -6), vy + fh, s, (4 + Math.sin(t * 3) * 1.5) * s);
+  drawFoe(c, foe, vx, vy, s, fight, t);
+  const cx = vx + (fw * s) / 2, cy = vy + (fh * s) / 2;
+  if (foe === "electro" && Math.floor(t * 6) % 3 === 0) bolt(c, cx, cy, px + 6 * s, py + 8 * s, s);
+  if (foe === "goblin") {
+    // a pumpkin bomb lobbed back at him on a gravity arc
+    const k = (t * 0.8) % 1;
+    c.fillStyle = Math.floor(t * 10) % 2 ? "#ff8a1f" : "#ffd23f";
+    c.fillRect(Math.round(cx + (px + 6 * s - cx) * k), Math.round(cy - Math.sin(k * Math.PI) * h * 0.15), 2 * s, 2 * s);
+  }
+  if (t % 1.3 < 0.12) line(c, px + 11 * s, py + 7 * s, cx, cy, "#eef2fa", s); // thwip
 }
