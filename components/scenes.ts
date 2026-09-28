@@ -212,6 +212,9 @@ export function losSantos(): Scene {
         const speed = SPEED[c.kind];
         const at = (lead: number) => (dir > 0 ? -40 + k * speed - lead : w + 10 - k * speed + lead);
         const sx = at(0);
+        // the deluxo drives until mid-screen, then folds its wheels and lifts away from the cruisers
+        if (c.kind === "deluxo" && c.liftAt === undefined && (dir > 0 ? sx > w * 0.45 : sx < w * 0.55 - DELUXO[0].length)) c.liftAt = t;
+        const up = c.liftAt === undefined ? 0 : Math.min(30, (t - c.liftAt) * 12);
         const flash = Math.floor(t * 7) % 2 ? { r: "#ff2a2a", b: "#2a5bff" } : { r: "#2a5bff", b: "#ff2a2a" };
         // the oppressor's victim: a car minding its business, until a missile finds it
         if (c.victim) {
@@ -233,13 +236,7 @@ export function losSantos(): Scene {
         if (c.kind === "car") put(ctx, CAR, sedan(c.col), sx, road - CAR.length, 1, dir < 0);
         else if (c.kind === "bike") put(ctx, BIKE, { h: "#222", r: c.col, m: "#666", k: "#151515" }, sx, road - BIKE.length * 2, 2, dir < 0);
         else if (c.kind === "mk2") put(ctx, MK2, { h: "#222", v: "#8fb3d9", r: c.col, k: "#2a2d33", K: "#5b6068", E: "#44484f", g: "#6b7079", y: Math.floor(t * 10) % 2 ? "#ffb347" : "#ff5a1a" }, sx, road - 27 + Math.sin(k * 3) * 1.5, 1, dir < 0);
-        else {
-          // the deluxo drives until mid-screen, then folds its wheels and lifts away from the cruisers
-          if (c.liftAt === undefined && (dir > 0 ? sx > w * 0.45 : sx < w * 0.55 - DELUXO[0].length)) c.liftAt = t;
-          const up = c.liftAt === undefined ? 0 : Math.min(30, (t - c.liftAt) * 12);
-          const fly = c.liftAt !== undefined;
-          put(ctx, fly ? DELUXO_FLY : DELUXO, { ...DELUXO_PAL, c: Math.floor(t * 12) % 2 ? "#3ff0ff" : "#1aa8c0" }, sx, road - DELUXO.length - up, 1, dir < 0);
-        }
+        else put(ctx, c.liftAt === undefined ? DELUXO : DELUXO_FLY, { ...DELUXO_PAL, c: Math.floor(t * 12) % 2 ? "#3ff0ff" : "#1aa8c0" }, sx, road - DELUXO.length - up, 1, dir < 0);
         // the cruisers only join once a car's been hit (the oppressor case)
         const late = c.victim ? (c.victim.hitAt === null ? Infinity : c.victim.hitAt - c.t0 + 1) : 0;
         for (let i = 0; i < c.cops; i++) {
@@ -248,13 +245,13 @@ export function losSantos(): Scene {
           put(ctx, COP, { ...COP_PAL, r: flash.r, b: flash.b }, cx, road - COP.length, 1, dir < 0);
         }
         if (c.heli) {
-          const hx = sx - dir * 14, hy = road - 46 + Math.sin(k * 1.7) * 1.5;
+          const hx = sx - dir * 14, hy = road - 46 - up + Math.sin(k * 1.7) * 1.5; // climbs with a lifting deluxo, never into it
           // searchlight on the suspect
           ctx.fillStyle = "rgba(255,255,220,0.1)";
           ctx.beginPath();
           ctx.moveTo(hx + 18, hy + 7);
-          ctx.lineTo(sx - 4, road);
-          ctx.lineTo(sx + 34, road);
+          ctx.lineTo(sx - 4, road - up);
+          ctx.lineTo(sx + 34, road - up);
           ctx.fill();
           put(ctx, Math.floor(t * 14) % 2 ? HELI : spin(HELI), HELI_PAL, hx, hy, 1, dir < 0);
         }
