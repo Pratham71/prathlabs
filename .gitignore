@@ -50,3 +50,6 @@ next-env.d.ts
 /public/sfx/**/*.m4a
 /public/sfx/**/*.wav
 /public/sfx/**/*.ogg
+
+# reference images for drawing sprites (game renders, not ours to publish)
+/images/
