@@ -267,10 +267,10 @@ export function drawSwinger(c: Ctx, p: Swinger, suit: Suit, s: number, dir: 1 | 
   const [hx, hy] = HAND[pose];
   const x = p.x - (W / 2) * s, y = p.y - 2 * s;
   const handX = x + (dir < 0 ? W - 1 - hx : hx) * s + s / 2, handY = y + hy * s;
-  if (p.anchor) line(c, p.anchor.x, p.anchor.y, handX, handY, "#dfe6f5");
+  if (p.anchor) line(c, p.anchor.x, p.anchor.y, handX, handY, "#dfe6f5", s);
   if (p.loose) {
     c.globalAlpha = 1 - p.loose.t / 0.6;
-    slack(c, p.loose.x, p.loose.y, handX - dir * 6 * s, handY + p.loose.t * 30, 4 + p.loose.t * 20, "#dfe6f5");
+    slack(c, p.loose.x, p.loose.y, handX - dir * 6 * s, handY + p.loose.t * 30 * s, (4 + p.loose.t * 20) * s, "#dfe6f5");
     c.globalAlpha = 1;
   }
   drawSpidey(c, suit, pose, x, y, s, dir < 0, goo);
@@ -279,38 +279,61 @@ export function drawSwinger(c: Ctx, p: Swinger, suit: Suit, s: number, dir: 1 | 
 // ---- the background event: one of the five fights crosses the sky
 
 type Spark = { x: number; y: number; vx: number; vy: number; life: number; c: string };
+const FIRE = ["#ff7a1a", "#ffd23f", "#ff3b1a", "#555"];
+const WEB = ["#eef2fa", "#dfe6f5", "#aab4c8"];
 
-export function webChase() {
-  type Run = { t0: number; dir: 1 | -1; suit: Suit; foe: Foe; p: Swinger; fx: number; fy: number; bomb: { x: number; y: number; vx: number; vy: number } | null; next: number; hop: { from: number; at: number } | null };
+function sparkle(list: Spark[], x: number, y: number, cols: string[], s: number, n = 24) {
+  for (let i = 0; i < n; i++) list.push({ x, y, vx: (Math.random() - 0.5) * 50 * s, vy: -Math.random() * 40 * s, life: 0.5 + Math.random(), c: cols[i % cols.length] });
+}
+function drawSparks(c: Ctx, list: Spark[], dt: number, s: number) {
+  for (let i = list.length - 1; i >= 0; i--) {
+    const p = list[i];
+    if ((p.life -= dt) <= 0) {
+      list.splice(i, 1);
+      continue;
+    }
+    p.vy += 40 * s * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    c.globalAlpha = Math.min(1, p.life);
+    c.fillStyle = p.c;
+    c.fillRect(Math.round(p.x), Math.round(p.y), s, s);
+  }
+  c.globalAlpha = 1;
+}
+
+// s scales everything (sprite pixels per cell, and so distances, speeds and gravity with them: the same
+// swing at any size). pick forces the fight and starts it at once (the intro); otherwise one comes along
+// now and then.
+export function webChase(opts: { s?: number; pick?: [Suit, Foe]; dir?: 1 | -1 } = {}) {
+  const s = opts.s ?? 1;
+  type Run = { t0: number; dir: 1 | -1; suit: Suit; foe: Foe; p: Swinger; fx: number; bomb: { x: number; y: number; vx: number; vy: number } | null; next: number; hop: { from: number; at: number } | null };
   let run: Run | null = null;
   let nextRun = 0;
   const sparks: Spark[] = [];
-  const burst = (x: number, y: number, cols: string[]) => {
-    for (let i = 0; i < 24; i++) sparks.push({ x, y, vx: (Math.random() - 0.5) * 50, vy: -Math.random() * 40, life: 0.5 + Math.random(), c: cols[i % cols.length] });
-  };
   return {
     reset(t: number) {
       run = null;
-      nextRun = t + 4;
+      nextRun = opts.pick ? t : t + 4;
       sparks.length = 0;
     },
     frame(c: Ctx, w: number, h: number, t: number, dt: number) {
       dt = Math.min(dt, 1 / 20);
-      if (!run && t > nextRun) {
-        const [suit, foe] = FIGHTS[Math.floor(Math.random() * FIGHTS.length)];
-        const dir = Math.random() < 0.5 ? 1 : -1;
-        const fx = dir > 0 ? -20 : w + 20;
-        run = { t0: t, dir, suit, foe, p: swinger(fx - dir * 40, h * 0.2, dir * 55), fx, fy: h * 0.3, bomb: null, next: t + 1.5, hop: null };
+      if (!run && t >= nextRun) {
+        const [suit, foe] = opts.pick ?? FIGHTS[Math.floor(Math.random() * FIGHTS.length)];
+        const dir = opts.dir ?? (Math.random() < 0.5 ? 1 : -1);
+        const fx = opts.pick ? (dir > 0 ? w * 0.12 : w * 0.88) : dir > 0 ? -20 * s : w + 20 * s; // the intro starts on screen
+        run = { t0: t, dir, suit, foe, p: swinger(fx - dir * 40 * s, h * 0.2, dir * 55 * s), fx, bomb: null, next: t + 1.5, hop: null };
       }
       if (run) {
         const r = run, k = t - r.t0, dir = r.dir;
-        const speed = r.foe === "goblin" ? 48 : 40;
-        const [fw, fh] = FOE_SIZE(r.foe);
+        const speed = (r.foe === "goblin" ? 48 : 40) * s * (opts.pick ? 0.8 : 1); // the intro's run lasts it out
+        const [fw, fh] = FOE_SIZE(r.foe).map((v) => v * s);
         // the villain's own way of moving
         r.fx += dir * speed * dt;
         const base = r.foe === "ock" || r.foe === "spot" ? h * 0.34 : h * 0.24;
-        let fy = base + Math.sin(k * 1.6) * 3;
-        if (r.foe === "ock") fy = base - Math.abs(Math.sin(k * 3)) * 3; // walking on the tentacles
+        let fy = base + Math.sin(k * 1.6) * 3 * s;
+        if (r.foe === "ock") fy = base - Math.abs(Math.sin(k * 3)) * 3 * s; // walking on the tentacles
         let hidden = false;
         if (r.foe === "spot" && t > r.next && !r.hop) {
           r.hop = { from: r.fx, at: t };
@@ -318,106 +341,147 @@ export function webChase() {
         }
         if (r.hop) {
           // steps into one portal and out of another further on
-          const e = t - r.hop.at, far = r.hop.from + dir * 45;
-          portal(c, r.hop.from + fw / 2, fy + fh / 2, 1, Math.min(6, e * 20) * (e < 0.7 ? 1 : Math.max(0, 1.2 - e)));
-          portal(c, far + fw / 2, fy + fh / 2, 1, e > 0.35 ? Math.min(6, (e - 0.35) * 20) * Math.max(0, 1.3 - e) : 0);
+          const e = t - r.hop.at, far = r.hop.from + dir * 45 * s;
+          portal(c, r.hop.from + fw / 2, fy + fh / 2, s, Math.min(6, e * 20) * s * (e < 0.7 ? 1 : Math.max(0, 1.2 - e)));
+          portal(c, far + fw / 2, fy + fh / 2, s, e > 0.35 ? Math.min(6, (e - 0.35) * 20) * s * Math.max(0, 1.3 - e) : 0);
           if (e > 0.25 && e < 0.55) hidden = true;
           if (e >= 0.55 && e < 0.6) r.fx = far;
           if (e > 1.3) r.hop = null;
         }
-        r.fy = fy;
         // spider-man, swinging after it
-        const gap = (r.fx + fw / 2 - r.p.x) * dir, behind = gap - 20; // centre to centre: about 20 cells back
-        stepSwing(r.p, dt, 220, dir, Math.min(60, Math.max(8, behind * 0.5 + 12)), Math.min(120, Math.max(15, speed + behind * 0.8)), -12, h * 0.55);
-        const goo = r.suit === "tobey" ? Math.min(1, Math.max(0, (k - 5) / 1.6)) : 0; // mid-chase, the symbiote takes him
-        drawSwinger(c, r.p, r.suit, 1, dir, goo);
+        const gap = (r.fx + fw / 2 - r.p.x) * dir, behind = gap - 20 * s; // centre to centre: about 20 cells back
+        stepSwing(r.p, dt, 220 * s, dir, Math.min(60 * s, Math.max(8 * s, behind * 0.5 + 12 * s)), Math.min(120 * s, Math.max(15 * s, speed + behind * 0.8)), -12 * s, h * 0.55);
+        const goo = r.suit === "tobey" ? Math.min(1, Math.max(0, (k - (opts.pick ? 2.2 : 5)) / 1.6)) : 0; // mid-chase, the symbiote takes him
+        drawSwinger(c, r.p, r.suit, s, dir, goo);
         if (!hidden) {
           if (r.foe === "mysterio" && Math.floor(k / 3) % 2 === 1) {
             // illusions: two copies drifting off either side
             c.globalAlpha = 0.35;
-            drawFoe(c, r.foe, r.fx - 14, fy - 4, 1, dir < 0, t + 1);
-            drawFoe(c, r.foe, r.fx + 14, fy + 4, 1, dir < 0, t + 2);
+            drawFoe(c, r.foe, r.fx - 14 * s, fy - 4 * s, s, dir < 0, t + 1);
+            drawFoe(c, r.foe, r.fx + 14 * s, fy + 4 * s, s, dir < 0, t + 2);
             c.globalAlpha = 1;
           }
-          drawFoe(c, r.foe, r.fx, fy, 1, dir < 0, t);
+          drawFoe(c, r.foe, r.fx, fy, s, dir < 0, t);
         }
         if (r.foe === "electro" && Math.floor(t * 2.5) % 2 === 0 && Math.random() < 0.6)
-          bolt(c, r.fx + (dir < 0 ? 2 : 9), fy + 6, r.p.x, r.p.y + 4, 1);
+          bolt(c, r.fx + (dir < 0 ? 2 : 9) * s, fy + 6 * s, r.p.x, r.p.y + 4 * s, s);
         if (r.foe === "goblin") {
           if (!r.bomb && t > r.next) {
-            r.bomb = { x: r.fx + fw / 2, y: fy + fh, vx: dir * speed, vy: -10 };
+            r.bomb = { x: r.fx + fw / 2, y: fy + fh, vx: dir * speed, vy: -10 * s };
             r.next = t + 2.2;
           }
           const b = r.bomb;
           if (b) {
-            b.vy += 60 * dt;
+            b.vy += 60 * s * dt;
             b.x += b.vx * dt;
             b.y += b.vy * dt;
             c.fillStyle = Math.floor(t * 10) % 2 ? "#ff8a1f" : "#ffd23f";
-            c.fillRect(Math.round(b.x), Math.round(b.y), 2, 2);
+            c.fillRect(Math.round(b.x), Math.round(b.y), 2 * s, 2 * s);
             if (b.y > h * 0.6) {
-              burst(b.x, b.y, ["#ff7a1a", "#ffd23f", "#ff3b1a", "#555"]);
+              sparkle(sparks, b.x, b.y, FIRE, s);
               r.bomb = null;
             }
           }
         }
         // a web shot now and then while he's in the air
-        if (!r.p.anchor && r.p.air < 0.12 && gap > 0) line(c, r.p.x, r.p.y, r.fx + fw / 2, fy + fh / 2, "rgba(223,230,245,0.8)");
-        const gone = (x: number) => (dir > 0 ? x > w + 40 : x < -40);
+        if (!r.p.anchor && r.p.air < 0.12 && gap > 0) line(c, r.p.x, r.p.y, r.fx + fw / 2, fy + fh / 2, "rgba(223,230,245,0.8)", s);
+        const gone = (x: number) => (dir > 0 ? x > w + 40 * s : x < -40 * s);
         if (gone(r.fx) && gone(r.p.x)) {
           run = null;
-          nextRun = t + 14 + Math.random() * 16;
+          nextRun = opts.pick ? Infinity : t + 14 + Math.random() * 16;
         } else if (k > 40) run = null;
       }
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const p = sparks[i];
-        if ((p.life -= dt) <= 0) {
-          sparks.splice(i, 1);
-          continue;
-        }
-        p.vy += 40 * dt;
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        c.globalAlpha = Math.min(1, p.life);
-        c.fillStyle = p.c;
-        c.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
-      }
-      c.globalAlpha = 1;
+      drawSparks(c, sparks, dt, s);
     },
   };
 }
 
-// ---- the intro: one long swing across Manhattan, as a random suit either chasing its villain or fighting it
+// ---- the intro fight: he swings on one web from a rooftop (a real pendulum he pumps to keep going), trading
+// shots with the villain across the title. Web balls and pumpkin bombs fly on gravity; a hit knocks the
+// villain back on a spring, and he shakes it off.
 
-let pick: { suit: Suit; foe: Foe; fight: boolean } | null = null;
+export function webFight(suit: Suit, foe: Foe, s: number) {
+  type Shot = { x: number; y: number; vx: number; vy: number; web: boolean };
+  let th = -1.1, om = 0, last = -1, nextWeb = 0.6, nextBomb = 1.4;
+  let kx = 0, kv = 0; // knockback offset and its speed
+  const shots: Shot[] = [];
+  const sparks: Spark[] = [];
+  // launch so it lands on (tx, ty) after T seconds under gravity g
+  const lob = (x: number, y: number, tx: number, ty: number, T: number, g: number, web: boolean) =>
+    shots.push({ x, y, vx: (tx - x) / T, vy: (ty - y) / T - (g * T) / 2, web });
+  return (c: Ctx, w: number, h: number, t: number) => {
+    const dt = last < 0 ? 0 : Math.min(1 / 20, t - last);
+    last = t;
+    const g = 220 * s, ax = w * 0.14, ay = -6 * s, L = h * 0.42;
+    // pendulum: th'' = -(g / L) sin th, and he pumps (or eases off) toward the energy of a 1 rad arc
+    const E0 = -(g / L) * Math.cos(1);
+    for (let n = 0; n < 4; n++) {
+      const q = dt / 4;
+      const E = 0.5 * om * om - (g / L) * Math.cos(th);
+      om += (-(g / L) * Math.sin(th) + Math.sign(om) * Math.max(-3, Math.min(3, (E0 - E) * 0.5))) * q;
+      th += om * q;
+    }
+    const px = ax + Math.sin(th) * L, py = ay + Math.cos(th) * L;
+    const [hx, hy] = HAND.swing;
+    const x = px - (hx + 0.5) * s, y = py - hy * s;
+    line(c, ax, ay, px, py, "#dfe6f5", s);
+    const goo = suit === "tobey" ? Math.min(1, Math.max(0, (t - 2.2) / 1.2)) : 0;
+    drawSpidey(c, suit, "swing", x, y, s, false, goo);
+    // the villain: knocked back on a damped spring when a web ball lands
+    kv += (-40 * kx - 7 * kv) * dt;
+    kx += kv * dt;
+    const [fw, fh] = FOE_SIZE(foe).map((v) => v * s);
+    const vx = w * 0.8 + kx, vy = h * 0.36 - fh + Math.sin(t * 2) * 2 * s;
+    const cx = vx + fw / 2, cy = vy + fh / 2;
+    if (foe === "spot") portal(c, vx + fw + 6 * s, vy + fh, s, (4 + Math.sin(t * 3) * 1.5) * s);
+    drawFoe(c, foe, vx, vy, s, true, t);
+    if (foe === "electro" && Math.floor(t * 6) % 3 === 0) bolt(c, cx, cy, x + 6 * s, y + 8 * s, s);
+    // shots: his web balls at it, its bombs back at him
+    if (t > nextWeb) {
+      lob(x + 11 * s, y + 7 * s, cx, cy, 0.55, g * 0.5, true);
+      nextWeb = t + 0.9 + Math.random() * 0.5;
+    }
+    if (foe === "goblin" && t > nextBomb) {
+      lob(cx, cy, x + 6 * s, y + 8 * s, 0.9, g * 0.5, false);
+      nextBomb = t + 1.6;
+    }
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const b = shots[i];
+      b.vy += g * 0.5 * dt;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      const [tx, ty] = b.web ? [cx, cy] : [x + 6 * s, y + 8 * s];
+      if (Math.hypot(b.x - tx, b.y - ty) < 5 * s || b.y > h) {
+        shots.splice(i, 1);
+        if (b.y > h) continue;
+        sparkle(sparks, b.x, b.y, b.web ? WEB : FIRE, s, 14);
+        if (b.web) kv += 90 * s; // the hit shoves it back
+        continue;
+      }
+      c.fillStyle = b.web ? "#eef2fa" : Math.floor(t * 10) % 2 ? "#ff8a1f" : "#ffd23f";
+      c.fillRect(Math.round(b.x), Math.round(b.y), 2 * s, 2 * s);
+    }
+    drawSparks(c, sparks, dt, s);
+  };
+}
+
+// ---- the intro: a random suit, either chasing its villain across Manhattan or fighting it across the title
+
+let intro: ((c: Ctx, w: number, h: number, t: number) => void) | null = null;
 
 export function introSwing(c: Ctx, w: number, h: number, t: number) {
-  if (!pick) {
+  if (!intro) {
     const [suit, foe] = FIGHTS[Math.floor(Math.random() * FIGHTS.length)];
-    pick = { suit, foe, fight: Math.random() < 0.5 };
+    if (Math.random() < 0.5) intro = webFight(suit, foe, 2);
+    else {
+      const chase = webChase({ s: 2, pick: [suit, foe], dir: 1 });
+      chase.reset(t);
+      let last = t;
+      intro = (c, w, h, t) => {
+        chase.frame(c, w, h, t, t - last);
+        last = t;
+      };
+    }
   }
-  const { suit, foe, fight } = pick, s = 2;
-  // the web anchor slides across as the pendulum carries him; in a fight they face off across the title
-  const ax = Math.min(-w * 0.1 + t * w * 0.22, fight ? w * 0.1 : Infinity), L = h * 0.5;
-  const th = Math.sin(t * 2.2) * 0.85;
-  const bx = ax + Math.sin(th) * L, by = Math.cos(th) * L - h * 0.05;
-  const [hx, hy] = HAND.swing;
-  const px = bx - (hx + 0.5) * s, py = by - hy * s;
-  line(c, ax, -h * 0.05, bx, by, "#dfe6f5", s);
-  const goo = suit === "tobey" ? Math.min(1, Math.max(0, (t - 2.2) / 1.2)) : 0;
-  drawSpidey(c, suit, "swing", px, py, s, false, goo);
-  // chase: it runs ahead of him; fight: it holds its ground, turned to face him
-  const [fw, fh] = FOE_SIZE(foe);
-  const vx = fight ? w * 0.8 : px + w * 0.2, vy = h * 0.36 - fh + Math.sin(t * 2) * 2;
-  if (foe === "spot") portal(c, vx + (fight ? fw * s + 6 : -6), vy + fh, s, (4 + Math.sin(t * 3) * 1.5) * s);
-  drawFoe(c, foe, vx, vy, s, fight, t);
-  const cx = vx + (fw * s) / 2, cy = vy + (fh * s) / 2;
-  if (foe === "electro" && Math.floor(t * 6) % 3 === 0) bolt(c, cx, cy, px + 6 * s, py + 8 * s, s);
-  if (foe === "goblin") {
-    // a pumpkin bomb lobbed back at him on a gravity arc
-    const k = (t * 0.8) % 1;
-    c.fillStyle = Math.floor(t * 10) % 2 ? "#ff8a1f" : "#ffd23f";
-    c.fillRect(Math.round(cx + (px + 6 * s - cx) * k), Math.round(cy - Math.sin(k * Math.PI) * h * 0.15), 2 * s, 2 * s);
-  }
-  if (t % 1.3 < 0.12) line(c, px + 11 * s, py + 7 * s, cx, cy, "#eef2fa", s); // thwip
+  intro(c, w, h, t);
 }
