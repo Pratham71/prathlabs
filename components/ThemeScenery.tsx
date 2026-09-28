@@ -4,13 +4,14 @@ import { useEffect, useRef } from "react";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { palm } from "@/components/GameIntro";
 import { battleBus, fortniteProps, losSantos, type Scene } from "@/components/scenes";
+import { webChase } from "@/components/spidey";
 
 // Behind-the-page scenery for the station themes, drawn in 3px cells like the intros:
 // blade: a blood moon and bats breaking out of the dark at random; vice city: palms and a striped sun
 // low on the horizon; los santos: the skyline with premiere searchlights sweeping over it; matrix: faint
 // rain; night city: neon skyline in the rain; spider-man: Manhattan and a web in the corner; minecraft:
 // block hills and drifting clouds.
-// Events: on spider-man, now and then a villain crosses the sky with spider-man swinging after it; on blade,
+// Events: on spider-man, one of five suits swings after its villain (components/spidey.ts); on blade,
 // blade walks in and cuts down a vampire (it goes up in ash), blood drops land on the screen, and clicking
 // three bats is an egg. All sprites are original pixel drawings.
 // Static layers render once per resize; only bats, beams and the events animate. Paused offscreen and in
@@ -28,20 +29,6 @@ const BAT = [
 ];
 type Bat = { x: number; y: number; vx: number; phase: number; amp: number; scale: number; cy: number };
 type Pal = Record<string, string>;
-
-const SPIDEY = ["..rrr...", ".rwrwr..", ".rrrrr..", "..rrr...", ".brrrb..", "b.rrr.b.", "..bbb...", "..b.b...", ".bb.bb..", ".r...r.."];
-const SPIDEY_PAL: Pal = { r: "#d0202a", b: "#1e3fa0", w: "#f2f2f2" };
-// hop: runs and leaps across the rooftops instead of flying
-const VILLAINS: { rows: string[]; pal: Pal; hop?: true }[] = [
-  // goblin on his glider
-  { rows: ["...ggg....", "..gyggy...", "...ggg....", "..pgggp...", "..ppppp...", "...ppp....", "...p.p....", "dddddddddd", ".d......d."], pal: { g: "#3f8f2f", y: "#f4d03f", p: "#6a2c8f", d: "#5a5a64" } },
-  // vulture
-  { rows: ["g........g", "gg..kk..gg", ".ggkppkgg.", "..gggggg..", "...gggg...", "...g..g..."], pal: { g: "#4f7a3a", k: "#222", p: "#c9b8a8" } },
-  // venom
-  { rows: ["..kkkk..", ".kwkkwk.", ".kkkkkk.", "..krrk..", ".kkkkkk.", "kkkkkkkk", "k.kkkk.k", "..kkkk..", "..k..k..", ".kk..kk."], pal: { k: "#101014", w: "#f2f2f2", r: "#b3121b" }, hop: true },
-  // doc ock
-  { rows: ["....kk....", "...kppk...", "....pp....", "m..gggg..m", ".m.gggg.m.", "..mggggm..", "...gggg...", "..mg..gm..", ".m.g..g.m.", "m..k..k..m"], pal: { k: "#1b1b1b", p: "#c9a27e", g: "#3d5a3a", m: "#8a8f99" }, hop: true },
-];
 
 const BLADE = ["...kk....", "..ksss...", "..kggs...", "...ss....", "..kkkk...", ".kkkkkk.w", ".kkkkkkw.", ".kskkkw..", "..kkkk...", "..kkkk...", "..kk.kk..", ".kk...kk.", ".kk...kk.", "kkk...kkk"];
 const BLADE_PAL: Pal = { k: "#2c2c33", s: "#6b4a3a", g: "#9aa3ad", w: "#dfe6ee" };
@@ -62,11 +49,10 @@ export function ThemeScenery() {
     let w = 0, h = 0, raf = 0, last = 0, nextBat = 0;
     let bats: Bat[] = [];
     let rain: { x: number; y: number; v: number; len: number }[] = [];
-    let chase: { t0: number; dir: 1 | -1; y: number; v: (typeof VILLAINS)[number] } | null = null;
     let fight: { t0: number; left: boolean; burnt: boolean } | null = null;
     let ash: { x: number; y: number; vx: number; vy: number; life: number; c: string }[] = [];
-    let nextChase = 0, nextFight = 0, nextBlood = 0, hits = 0;
-    const events: Partial<Record<string, Scene>> = { gtav: losSantos(), fortnite: battleBus() };
+    let nextFight = 0, nextBlood = 0, hits = 0;
+    const events: Partial<Record<string, Scene>> = { gtav: losSantos(), fortnite: battleBus(), spiderman: webChase() };
     // those scenes draw at half resolution (6px cells) and are blown up 2x, so their sprites read
     const half = document.createElement("canvas");
     const hctx = half.getContext("2d")!;
@@ -310,28 +296,6 @@ export function ThemeScenery() {
           ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
         }
         ctx.globalAlpha = 1;
-      } else if (theme === "spiderman" && !reduce) {
-        if (!chase && t > nextChase) chase = { t0: t, dir: Math.random() < 0.5 ? 1 : -1, y: h * (0.18 + Math.random() * 0.22), v: VILLAINS[Math.floor(Math.random() * VILLAINS.length)] };
-        if (chase) {
-          const k = t - chase.t0, dir = chase.dir;
-          const vx = dir > 0 ? -24 + k * 42 : w + 4 - k * 42;
-          const vy = chase.y + (chase.v.hop ? -Math.abs(Math.sin(k * 4)) * 10 : Math.sin(k * 2) * 3);
-          put(chase.v.rows, chase.v.pal, vx, vy, 2, dir < 0);
-          // spider-man on a line from the top of the screen, swinging after it
-          const ax = vx - dir * 50, L = chase.y + 6, phi = Math.sin(k * 3) * 0.5;
-          const sx = ax + Math.sin(phi) * L, sy = Math.cos(phi) * L;
-          ctx.strokeStyle = "rgba(223,230,245,0.7)";
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(ax, 0);
-          ctx.lineTo(sx + 8, sy);
-          ctx.stroke();
-          put(SPIDEY, SPIDEY_PAL, sx, sy, 2, dir < 0);
-          if (dir > 0 ? ax - 70 > w : ax + 70 < 0) {
-            chase = null;
-            nextChase = t + 18 + Math.random() * 20;
-          }
-        }
       }
       const ev = reduce ? undefined : events[theme];
       if (ev) {
@@ -353,9 +317,8 @@ export function ThemeScenery() {
       bats = [];
       rain = [];
       ash = [];
-      chase = fight = null;
+      fight = null;
       const now = performance.now() / 1000;
-      nextChase = now + 4;
       nextFight = now + 6;
       nextBlood = now + 10;
       Object.values(events).forEach((e) => e?.reset(now));
