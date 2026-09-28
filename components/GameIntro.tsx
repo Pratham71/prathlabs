@@ -2,12 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import { isGame } from "@/lib/theme";
+import { introSwing } from "@/components/spidey";
 
 // Game-theme boot scenes, drawn as ordered dither (4x4 Bayer) at 4px cells over a small palette:
 // los santos loading screen (sunset over the hills and skyline), vice city (striped sun over the ocean),
 // battle bus (the bus crossing a cloudy sky over the island), blade (a blood rave: strobes, crowd,
 // the sprinklers, then one silver slash), matrix (digital rain), night city (neon towers in the rain,
-// an AV overhead, glitching), spider-man (Manhattan at night, a swing across it), minecraft (block
+// an AV overhead, glitching), spider-man (Manhattan at night, a swing across it: a random suit chasing or fighting its villain), minecraft (block
 // terrain, trees, drifting clouds). Original art, drawn procedurally.
 
 const CELL = 4;
@@ -118,26 +119,7 @@ const SCENES: Record<string, Scene> = {
       }
       return Math.min(4, 1 + 2.3 * y + 1.2 * Math.exp(-(md - 0.06) * 14));
     },
-    sprite(c, w, h, t) {
-      // one long swing: the web anchor slides across as the pendulum carries him
-      const ax = -w * 0.1 + t * w * 0.22;
-      const L = h * 0.5;
-      const th = Math.sin(t * 2.2) * 0.85;
-      const bx = Math.round(ax + Math.sin(th) * L);
-      const by = Math.round(Math.cos(th) * L - h * 0.05);
-      const steps = 40;
-      c.fillStyle = "#dfe6f5";
-      for (let i = 0; i <= steps; i++) {
-        const k = i / steps;
-        const yy = -h * 0.05 + (by + h * 0.05) * k;
-        if (yy >= 0) c.fillRect(Math.round(ax + (bx - ax) * k), Math.round(yy), 1, 1);
-      }
-      SPIDEY.forEach((row, dy) => [...row].forEach((ch, dx) => {
-        if (ch === ".") return;
-        c.fillStyle = SPIDEY_COL[ch];
-        c.fillRect(bx - 6 + dx * 2, by + dy * 2, 2, 2); // 2x: readable at a glance
-      }));
-    },
+    sprite: introSwing,
   },
   minecraft: {
     palette: ["#0e0c0a", "#3b2a1a", "#5a3d24", "#79553a", "#6d6d6d", "#8e8e8e", "#3f7d2b", "#5fa83c", "#8fd15a", "#7fb3e6", "#a9cff5", "#ffffff"],
@@ -276,10 +258,6 @@ const SCENES: Record<string, Scene> = {
     },
   },
 };
-
-// ---- spider-man, 7x8 cells ----
-const SPIDEY = ["..rrr..", ".rwrwr.", "..rrr..", ".brrrb.", "b.rrr.b", "..bbb..", "..b.b..", ".b...b."];
-const SPIDEY_COL: Record<string, string> = { r: "#e0243a", w: "#dfe6f5", b: "#1b3fa0" };
 
 // ---- battle bus pieces (4px cells) ----
 const JUMPERS = 8;

@@ -1,6 +1,7 @@
 // Background events for two station themes, drawn into ThemeScenery's 3px-cell canvas:
-// los santos: police chases (a car, a bike, or an Oppressor that blows up a car first) with cruisers and a
-//   helicopter, and fighter jets passing over (inspired by the P-996 Lazer); sirens, rotors, jets, booms.
+// los santos: police chases (a car, a bike, a Deluxo that takes off, or an Oppressor that blows up a car
+//   first) with cruisers and a helicopter, and flybys (Lazers, Hydras, a Strikeforce, a Buzzard); sirens,
+//   rotors, jets, booms.
 // battle bus: the bus crosses and drops players, they fight, and "you" win.
 // All original pixel drawings. Each scene keeps its own state; ThemeScenery calls frame() every frame on a
 // half-resolution canvas (one cell = 6 screen px), so speeds are in those cells per second.
@@ -66,19 +67,126 @@ function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, co
 
 // ---------------------------------------------------------------- los santos
 
-const CAR = ["...cccccc...", "..cwwccwwc..", "cccccccccccc", "cccccccccccc", ".kk......kk."];
-const COP = [".....rb.....", "...WWWWWW...", "..WwwWWwwW..", "kkkkkkkkkkkk", "kWWWWWWWWWWk", ".kk......kk."];
+// side-on 8-bit drawings after the in-game vehicles (the cruiser, the police Maverick, the Deluxo, the
+// Oppressor Mk II, the Lazer, Hydra, B-11 Strikeforce and Buzzard); all face right, flipped for leftward runs
+const COP = [
+  ".............rrbb.............",
+  "..........KKKKKKKKKK..........",
+  "........Kkwwwwkwwwwwwk........",
+  "......KKkwwwwwkwwwwwwwkK......",
+  "..KKKKKKkWWWWWWWWWWWWkKKKKKK..",
+  ".RkkkkkkkWWWWWkWWWWWWkkkkkkkY.",
+  "RkkkkkkkkWWWWWkWWWWWWkkkkkkkkY",
+  "kkkkttttkkkkkkkkkkkkkkttttkkkk",
+  "....tHHt..............tHHt....",
+  ".....tt................tt.....",
+];
+const COP_PAL = { k: "#1c2026", K: "#4a525c", W: "#f2f2f2", w: "#8fb3d9", Y: "#fff3b0", R: "#c8102e", t: "#0a0a0a", H: "#8a8f96" };
+// a civilian sedan: the cruiser without its lightbar, one colour all over
+const CAR = COP.slice(1);
+const WHEELS = { w: "#8fb3d9", Y: "#fff3b0", R: "#c8102e", t: "#0a0a0a", H: "#8a8f96" };
+const sedan = (c: string) => ({ ...WHEELS, k: c, K: c, W: c });
+const WRECK_PAL = { k: "#161616", K: "#3a2a20", W: "#241c18", w: "#161616", Y: "#161616", R: "#161616", t: "#0a0a0a", H: "#2a2a2a" };
 const BIKE = ["....hh..", "...rrr..", ".mmmrmm.", "kk....kk", "kk....kk"];
-const MK2 = ["....hh....", "...rrr....", "gggggrgggg", "..gggggg..", ".y......y."];
-const HELI = ["llllllllllllll", "......k.......", "...kkkkkk.....", "..kwwkkkkkkkkk", "..kkkkkkk...kk", "...k...k......"];
-const JET = ["gg..............", "ggg.............", "gggggggggggwwgg.", "gggggggggggggggg", "...ggggggg......", "....gg.........."];
-const WRECK = ["...kkkkkk...", "..kkkkkkkk..", "kkkkkkkkkkkk", "kkkkkkkkkkkk", ".kk......kk."];
+const DELUXO = [
+  ".........SSSSSSSSS..........",
+  "......Ssdsdsswwwwwws........",
+  "...SSSsssssswwwwwwsSSSS.....",
+  "SSSSSSSSSSSSSSSSSSSSSSSSSSSY",
+  "RssssssssssssssssssssssssssY",
+  "dddddddddddddddddddddddddddd",
+  "...tHHt..............tHHt...",
+  "....tt................tt....",
+];
+// hover mode: the wheels fold flat and glow
+const DELUXO_FLY = [...DELUXO.slice(0, 6), "..cttttc............cttttc..", "....cc................cc...."];
+const DELUXO_PAL = { S: "#e4e8ec", s: "#aeb4ba", w: "#2e3947", d: "#6b7178", Y: "#fff3b0", R: "#c8102e", t: "#0a0a0a", H: "#8a8f96" };
+const MK2 = [
+  "...........hh.........",
+  "..........hhv.........",
+  ".........rrr..........",
+  "....KK...rrrKKKKKKK...",
+  "...kkkkkkrrkkkkkkkkkKK",
+  "yEEEEkkkkkkkkkkkkkk...",
+  "yEEEE..gggggggg.......",
+  ".EEE......gggg..g.....",
+  ".........g............",
+];
+const HELI = [
+  "......llllllllllllllllllllllll..",
+  "..................kk............",
+  "KK.............WWWWWWWWWW.......",
+  "Kk...........WWWWWWWWWwwwwWW....",
+  "kkkkkkkkkkkkkWWWWWWWWWWwwwwwwwW.",
+  ".k..........kkkkkkkkkkkkkwwwwk..",
+  "............kkkkkkkkkkkkkkkkk...",
+  ".............k.........k........",
+  "...........ssssssssssssssssss...",
+];
+const BUZZARD = [
+  ".....llllllllllllllllllllll.....",
+  ".................kk.............",
+  "Kk............KKKKKKKKK.........",
+  "kk...........KkkkkkkkkwwwK......",
+  "kkkkkkkkkkkkkkkkkkkkkkwwwwwk....",
+  "............kkkkkkkkkkkkkkkk....",
+  "............GGGGGGGkkkkkk.......",
+  ".............k........k.........",
+  "...........ssssssssssssssss.....",
+];
+// the rotor's other frame: a shorter blade, so it reads as spinning
+const spin = (rows: string[]) => {
+  const r = rows[0], a = r.indexOf("l"), b = r.lastIndexOf("l"), q = (b - a) >> 2;
+  return [".".repeat(a + q) + "l".repeat(b - a - 2 * q + 1) + ".".repeat(r.length - b + q - 1), ...rows.slice(1)];
+};
+const HELI_PAL = { l: "#9aa3ad", k: "#1c2026", K: "#4a525c", W: "#eef1f4", w: "#8fb3d9", s: "#5a616b" };
+const BUZZARD_PAL = { l: "#9aa3ad", k: "#23282f", K: "#4a525c", w: "#6f8aa8", G: "#6b7079", s: "#5a616b" };
+// jets: row 5 starts with the exhaust, where the afterburner and contrail attach
+const LAZER = [
+  "gg..............................",
+  "ggg.............................",
+  "gggg..................Www.......",
+  "ggggg...............gwwwww......",
+  "gggggggggggggggggggggggggggggg..",
+  "dgGgGgGgGgGgGgGgGgGgGgGgGgGgGgg.",
+  "....GGGGGGGGGGGGGGGGGG..........",
+  ".......mmmmmmmmm................",
+];
+const HYDRA = [
+  ".gg.gg..........................",
+  "gggggg..........................",
+  "gggggg................Wwww......",
+  "ggggggg............gwwwwwww.....",
+  "ggggggggggggggggggggggggggggggg.",
+  "dGgGgGgGgGgGgGgGgGgGgGgGgGgGgg..",
+  "..GGGGGGGGGGGGGGGGGGGGGGGGG.....",
+  ".....mmmmmmmmmmmm...............",
+];
+const STRIKEFORCE = [
+  "gg..............................",
+  "gg...eeeee......................",
+  "gg..eEEEEe............Www.......",
+  "ggg...gg............gwwww.......",
+  "gggggggggggggggggggggggggggggg..",
+  "dGgGgGgGgGgGgGgGgGgGgGgGgGgGggg.",
+  "........GGGGGGGGGGGGGG..........",
+  "........mm.mm.mm.mm.............",
+];
+const GLASS = { W: "#cfe3f2", w: "#2b3a4a", d: "#33383e" };
+const FLYBYS = [
+  { rows: LAZER, pal: { ...GLASS, g: "#a3acb6", G: "#6c747d", m: "#e6e9ec" }, speed: 75, max: 3 },
+  { rows: HYDRA, pal: { ...GLASS, g: "#a8a291", G: "#77725f", m: "#e6e9ec" }, speed: 70, max: 2 },
+  { rows: STRIKEFORCE, pal: { ...GLASS, g: "#d4d6d3", G: "#9b9e9a", e: "#b8bbb7", E: "#6d706c", m: "#7a8a6a" }, speed: 60, max: 2 },
+  { rows: BUZZARD, pal: BUZZARD_PAL, speed: 30, max: 1, heli: true },
+];
 const SUSPECT = ["#e2383b", "#2f7de1", "#f2c94c", "#46b36b", "#b061d6"];
+const SPEED = { car: 32, bike: 38, mk2: 26, deluxo: 34 } as const;
 
 export function losSantos(): Scene {
-  type Chase = { t0: number; dir: 1 | -1; kind: "car" | "bike" | "mk2"; cops: number; heli: boolean; col: string; victim?: { x: number; hitAt: number | null } };
+  type Kind = keyof typeof SPEED;
+  type Chase = { t0: number; dir: 1 | -1; kind: Kind; cops: number; heli: boolean; col: string; victim?: { x: number; hitAt: number | null }; liftAt?: number };
   let chase: Chase | null = null;
-  let jets: { t0: number; dir: 1 | -1; y: number; n: number } | null = null;
+  let jets: { t0: number; dir: 1 | -1; y: number; n: number; f: (typeof FLYBYS)[number] } | null = null;
   let nextChase = 0, nextJets = 0;
   const fx: Spark[] = [];
   return {
@@ -91,24 +199,27 @@ export function losSantos(): Scene {
     frame(ctx, w, h, t, dt) {
       const road = groundOf(h);
       if (!chase && t > nextChase) {
-        const kind = (["car", "bike", "mk2"] as const)[Math.floor(Math.random() * 3)];
+        const kind = (Object.keys(SPEED) as Kind[])[Math.floor(Math.random() * 4)];
         const dir = Math.random() < 0.5 ? 1 : -1;
         chase = { t0: t, dir, kind, cops: 1 + Math.floor(Math.random() * 3), heli: kind === "mk2" || Math.random() < 0.6, col: SUSPECT[Math.floor(Math.random() * SUSPECT.length)] };
-        if (kind === "mk2") chase.victim = { x: dir > 0 ? w * rand(0.1, 0.2) : w * rand(0.8, 0.9), hitAt: null };
-        const cross = (w + 120) / (kind === "mk2" ? 26 : kind === "bike" ? 38 : 32);
+        if (kind === "mk2") chase.victim = { x: dir > 0 ? w * rand(0.1, 0.2) : w * rand(0.8, 0.9) - CAR[0].length, hitAt: null };
+        const cross = (w + 200) / SPEED[kind];
         sound("siren", cross);
         if (chase.heli) sound("heli", cross);
       }
       if (chase) {
         const c = chase, k = t - c.t0, dir = c.dir;
-        const speed = c.kind === "mk2" ? 26 : c.kind === "bike" ? 38 : 32;
-        const at = (lead: number) => (dir > 0 ? -20 + k * speed - lead : w + 20 - k * speed + lead);
+        const speed = SPEED[c.kind];
+        const at = (lead: number) => (dir > 0 ? -40 + k * speed - lead : w + 10 - k * speed + lead);
         const sx = at(0);
+        // the deluxo drives until mid-screen, then folds its wheels and lifts away from the cruisers
+        if (c.kind === "deluxo" && c.liftAt === undefined && (dir > 0 ? sx > w * 0.45 : sx < w * 0.55 - DELUXO[0].length)) c.liftAt = t;
+        const up = c.liftAt === undefined ? 0 : Math.min(30, (t - c.liftAt) * 12);
         const flash = Math.floor(t * 7) % 2 ? { r: "#ff2a2a", b: "#2a5bff" } : { r: "#2a5bff", b: "#ff2a2a" };
         // the oppressor's victim: a car minding its business, until a missile finds it
         if (c.victim) {
-          const v = c.victim;
-          if (v.hitAt === null && Math.abs(sx - v.x) < 28) {
+          const v = c.victim, cx = v.x + 15, my = road - 27;
+          if (v.hitAt === null && Math.abs(sx + 11 - cx) < 34) {
             v.hitAt = t;
             sound("boom", 1.6);
           }
@@ -117,55 +228,60 @@ export function losSantos(): Scene {
             // the missile: a streak from the bike down to the car
             const p = (t - v.hitAt) / 0.35;
             ctx.fillStyle = "#ffd23f";
-            ctx.fillRect(Math.round(sx + 5 + (v.x + 6 - sx - 5) * p), Math.round(road - 20 + 16 * p), 1, 1);
+            ctx.fillRect(Math.round(sx + 11 + (cx - sx - 11) * p), Math.round(my + 6 + (road - 5 - my - 6) * p), 1, 1);
           }
-          if (hit && fx.length < 400 && t - v.hitAt! < 0.45) sparks(fx, v.x + 6, road - 5, 25, FIRE, 20);
-          put(ctx, hit ? WRECK : CAR, { c: "#7a8a9a", w: "#cfe3f2", k: "#151515" }, v.x, road - CAR.length, 1);
+          if (hit && fx.length < 400 && t - v.hitAt! < 0.45) sparks(fx, cx, road - 5, 35, FIRE, 22);
+          put(ctx, CAR, hit ? WRECK_PAL : sedan("#7a8a9a"), v.x, road - CAR.length, 1);
         }
-        if (c.kind === "car") put(ctx, CAR, { c: c.col, w: "#cfe3f2", k: "#151515" }, sx, road - CAR.length, 1, dir < 0);
-        else if (c.kind === "bike") put(ctx, BIKE, { h: "#222", r: c.col, m: "#666", k: "#151515" }, sx, road - BIKE.length, 1, dir < 0);
-        else put(ctx, MK2, { h: "#222", r: c.col, g: "#3c3f45", y: Math.floor(t * 10) % 2 ? "#ffb347" : "#ff5a1a" }, sx, road - 22 + Math.sin(k * 3) * 1.5, 1, dir < 0);
+        if (c.kind === "car") put(ctx, CAR, sedan(c.col), sx, road - CAR.length, 1, dir < 0);
+        else if (c.kind === "bike") put(ctx, BIKE, { h: "#222", r: c.col, m: "#666", k: "#151515" }, sx, road - BIKE.length * 2, 2, dir < 0);
+        else if (c.kind === "mk2") put(ctx, MK2, { h: "#222", v: "#8fb3d9", r: c.col, k: "#2a2d33", K: "#5b6068", E: "#44484f", g: "#6b7079", y: Math.floor(t * 10) % 2 ? "#ffb347" : "#ff5a1a" }, sx, road - 27 + Math.sin(k * 3) * 1.5, 1, dir < 0);
+        else put(ctx, c.liftAt === undefined ? DELUXO : DELUXO_FLY, { ...DELUXO_PAL, c: Math.floor(t * 12) % 2 ? "#3ff0ff" : "#1aa8c0" }, sx, road - DELUXO.length - up, 1, dir < 0);
         // the cruisers only join once a car's been hit (the oppressor case)
         const late = c.victim ? (c.victim.hitAt === null ? Infinity : c.victim.hitAt - c.t0 + 1) : 0;
         for (let i = 0; i < c.cops; i++) {
           if (k < late) break;
-          const cx = dir > 0 ? -20 + (k - late) * (speed + 2) - 18 - i * 16 : w + 20 - (k - late) * (speed + 2) + 18 + i * 16;
-          put(ctx, COP, { r: flash.r, b: flash.b, W: "#f2f2f2", w: "#9fb6c9", k: "#151515" }, cx, road - COP.length, 1, dir < 0);
+          const cx = dir > 0 ? -40 + (k - late) * (speed + 2) - 36 - i * 34 : w + 10 - (k - late) * (speed + 2) + 36 + i * 34;
+          put(ctx, COP, { ...COP_PAL, r: flash.r, b: flash.b }, cx, road - COP.length, 1, dir < 0);
         }
         if (c.heli) {
-          const hx = sx - dir * 10, hy = road - 34 + Math.sin(k * 1.7) * 1.5;
+          const hx = sx - dir * 14, hy = road - 46 - up + Math.sin(k * 1.7) * 1.5; // climbs with a lifting deluxo, never into it
           // searchlight on the suspect
           ctx.fillStyle = "rgba(255,255,220,0.1)";
           ctx.beginPath();
-          ctx.moveTo(hx + 7, hy + 5);
-          ctx.lineTo(sx - 6, road);
-          ctx.lineTo(sx + 16, road);
+          ctx.moveTo(hx + 18, hy + 7);
+          ctx.lineTo(sx - 4, road - up);
+          ctx.lineTo(sx + 34, road - up);
           ctx.fill();
-          const rotor = Math.floor(t * 14) % 2 ? HELI : ["...llllllll...", ...HELI.slice(1)];
-          put(ctx, rotor, { l: "#9aa3ad", k: "#1b2230", w: "#8fb3d9" }, hx, hy, 1, dir < 0);
+          put(ctx, Math.floor(t * 14) % 2 ? HELI : spin(HELI), HELI_PAL, hx, hy, 1, dir < 0);
         }
-        if (k * speed > w + 140 + (Number.isFinite(late) ? late * speed : 0)) {
+        if (k * speed > w + 200 + (Number.isFinite(late) ? late * speed : 0)) {
           chase = null;
           nextChase = t + rand(22, 40);
         }
       }
       if (!jets && t > nextJets) {
-        jets = { t0: t, dir: Math.random() < 0.5 ? 1 : -1, y: h * rand(0.05, 0.14), n: 1 + Math.floor(Math.random() * 3) };
-        sound("jet", (w + 120) / 75);
+        const f = FLYBYS[Math.floor(Math.random() * FLYBYS.length)];
+        jets = { t0: t, dir: Math.random() < 0.5 ? 1 : -1, y: h * rand(0.05, 0.14), n: 1 + Math.floor(Math.random() * f.max), f };
+        sound(f.heli ? "heli" : "jet", (w + 200) / f.speed);
       }
       if (jets) {
-        const k = t - jets.t0;
+        const k = t - jets.t0, f = jets.f, len = f.rows[0].length;
         for (let i = 0; i < jets.n; i++) {
-          const x = jets.dir > 0 ? -30 + k * 75 - i * 22 : w + 30 - k * 75 + i * 22;
-          const y = jets.y + i * 7;
+          const x = jets.dir > 0 ? -40 + k * f.speed - i * 40 : w + 10 - k * f.speed + i * 40;
+          const y = jets.y + i * 9;
+          if (f.heli) {
+            put(ctx, Math.floor(t * 14) % 2 ? f.rows : spin(f.rows), f.pal, x, y, 1, jets.dir < 0);
+            continue;
+          }
           // contrail
           ctx.fillStyle = "rgba(230,235,240,0.18)";
-          ctx.fillRect(jets.dir > 0 ? Math.max(0, x - 60) : x + 16, Math.round(y + 3), 60, 1);
+          ctx.fillRect(jets.dir > 0 ? Math.max(0, x - 60) : x + len, Math.round(y + 5), 60, 1);
           ctx.fillStyle = Math.floor(t * 20) % 2 ? "#ffb347" : "#ff5a1a";
-          ctx.fillRect(jets.dir > 0 ? x - 1 : x + 16, Math.round(y + 3), 1, 1); // afterburner
-          put(ctx, JET, { g: "#7c858f", w: "#2b3a4a" }, x, y, 1, jets.dir < 0);
+          ctx.fillRect(jets.dir > 0 ? x - 1 : x + len, Math.round(y + 5), 1, 1); // afterburner
+          put(ctx, f.rows, f.pal, x, y, 1, jets.dir < 0);
         }
-        if (k * 75 > w + 120) {
+        if (k * f.speed > w + 200) {
           jets = null;
           nextJets = t + rand(30, 55);
         }
