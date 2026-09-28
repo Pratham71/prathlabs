@@ -40,7 +40,7 @@ on its own; any other agent (Codex, Cursor, Copilot...) should open the matching
 | `components/Boot.tsx`, `components/GameIntro.tsx`, `lib/boot-lines.ts` | the intro (terminal boot, and each theme's scene) |
 | `lib/commands.ts`, `components/CommandPalette.tsx` | the prompt: commands, eggs, reboot effects |
 | `lib/radio.ts`, `components/RadioPlayer.tsx`, `lib/audio.ts` | synth stations, the player, all Web Audio |
-| `components/ThemeScenery.tsx`, `components/scenes.ts`, `lib/sprites.ts` | background scenes, cursors |
+| `components/ThemeScenery.tsx`, `components/scenes.ts`, `components/spidey.ts`, `lib/sprites.ts` | background scenes and events (spidey.ts: the suits, villains and web-swing physics), cursors |
 | `lib/settings.ts`, `lib/admin.ts`, `app/admin`, `app/api/admin` | the admin panel and the settings it saves |
 | `lib/seo.ts`, `app/sitemap.ts`, `app/robots.txt`, `app/llms.txt` | structured data, sitemap, robots, llms.txt |
 | `lib/dither.ts` | the ordered-dither helper the canvases use (`inked()`) |
