@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ContactLink } from "@/components/ContactLink";
 import { ClockText } from "@/components/WorldClock";
 import { site } from "@/content/site";
 
@@ -21,14 +21,10 @@ export function ManPage({
     <div className="man">
       <header className="man-edge" aria-label="Manual page header" style={{ viewTransitionName: "man-head" }}>
         <span>{ref}</span>
-        <span className="mid-wrap">
-          <span className="mid">{section === 7 ? "Miscellaneous" : section === 8 ? "System Administration" : "User Commands"}</span>
-          <Link href="/#contact" className="contact-btn">
-            contact
-          </Link>
-        </span>
+        <span className="mid">{section === 7 ? "Miscellaneous" : section === 8 ? "System Administration" : "User Commands"}</span>
         <span className="right">
           <ClockText />
+          <ContactLink />
         </span>
       </header>
       <main id="main">{children}</main>

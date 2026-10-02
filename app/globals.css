@@ -119,12 +119,11 @@ a:hover {
   text-overflow: ellipsis;
 }
 
-/* the section name with the contact chip beside it; on phones the name hides and the chip stays */
-.man-edge .mid-wrap {
+/* the clock and the contact chip, top right; on phones the clock hides and the chip stays */
+.man-edge .right {
   display: flex;
   align-items: center;
   gap: 1.5ch;
-  min-width: 0;
 }
 
 .contact-btn {
@@ -141,6 +140,30 @@ a:hover {
 .contact-btn:hover {
   border-color: var(--amber);
   background: color-mix(in srgb, var(--amber) 12%, transparent);
+}
+
+/* landing on CONTACT from the chip: the heading flashes in the accent so you see where you are */
+#contact:target > .man-label,
+#contact.flash > .man-label {
+  animation: contact-flash 1.6s var(--ease-out);
+}
+
+@keyframes contact-flash {
+  0%,
+  35% {
+    color: var(--ink);
+    background: var(--amber);
+    box-shadow: 0 0 0 0.3ch var(--amber);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #contact:target > .man-label,
+  #contact.flash > .man-label {
+    animation: none;
+    text-decoration: underline 2px var(--amber);
+    text-underline-offset: 0.3em;
+  }
 }
 
 .man-edge--foot {
@@ -615,7 +638,7 @@ html[data-boot="out"] .boot {
   }
 
   .man-edge .mid,
-  .man-edge .right {
+  .man-edge .clock-text {
     display: none;
   }
 
