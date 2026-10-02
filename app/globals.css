@@ -119,6 +119,30 @@ a:hover {
   text-overflow: ellipsis;
 }
 
+/* the section name with the contact chip beside it; on phones the name hides and the chip stays */
+.man-edge .mid-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.5ch;
+  min-width: 0;
+}
+
+.contact-btn {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--amber);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 0.9ch;
+  transition: border-color var(--duration-quick) var(--ease-out), background-color var(--duration-quick) var(--ease-out);
+}
+
+.contact-btn:hover {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+}
+
 .man-edge--foot {
   margin-top: 3.5rem;
   padding-top: 1rem;
@@ -2798,6 +2822,7 @@ html[data-boot] .radio {
   .heat-tip,
   .copy,
   .row .go,
+  .contact-btn,
   .man-edge .right {
     display: none !important;
   }
