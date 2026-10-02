@@ -7,14 +7,14 @@ import { nowPlaying, spotifyConfigured } from "@/lib/spotify";
 const cachedNowPlaying = unstable_cache(nowPlaying, ["now-playing"], { revalidate: 30 });
 
 // GET: what's on Spotify right now (or last). When there's nothing to show, {off: true, reason} says why
-// (no secrets in it): "not configured" (env vars missing), "switched off" (/admin), "nothing played",
-// or Spotify's error. The `spotify` prompt command prints the reason.
+// (no secrets in it): "not configured" (env vars missing), "nothing played", or Spotify's error. Switched off
+// in /admin has no reason: visitors just see it's off. The `spotify` prompt command prints the reason.
 // Not CDN-cached: the /admin switch is read on every request, so turning it off applies at once.
 export async function GET() {
   const headers = { "Cache-Control": "no-store" };
-  const off = (reason: string) => Response.json({ off: true, reason }, { headers });
+  const off = (reason?: string) => Response.json({ off: true, reason }, { headers });
   if (!spotifyConfigured()) return off("not configured: set SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN and redeploy");
-  if (!(await getSettings()).spotify) return off("switched off in /admin");
+  if (!(await getSettings()).spotify) return off();
   try {
     const t = await cachedNowPlaying();
     return t ? Response.json(t, { headers }) : off("nothing played yet");

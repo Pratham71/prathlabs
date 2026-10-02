@@ -154,7 +154,7 @@ export const STATIONS: Partial<Record<Theme, Station>> = {
     ],
   },
   gtav: {
-    name: "vinewood fm",
+    name: "non-stop-pop fm",
     tracks: [
       {
         title: "grove street, 2am",
