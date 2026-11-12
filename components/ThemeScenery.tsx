@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { currentTheme, isGame, onThemeChange } from "@/lib/theme";
 import { palm } from "@/components/GameIntro";
-import { battleBus, fortniteProps, losSantos, type Scene } from "@/components/scenes";
+import { battleBus, fortniteProps, losSantos, motelSign, MOTEL_SIGN, viceCity, type Scene } from "@/components/scenes";
 import { webChase } from "@/components/spidey";
 
 // Behind-the-page scenery for the station themes, drawn in 3px cells like the intros:
@@ -11,10 +11,12 @@ import { webChase } from "@/components/spidey";
 // low on the horizon; los santos: the skyline with premiere searchlights sweeping over it; matrix: faint
 // rain; night city: neon skyline in the rain; spider-man: Manhattan and a web in the corner; minecraft:
 // block hills and drifting clouds.
-// Events: on spider-man, one of five suits swings after its villain (components/spidey.ts); on blade,
+// Events: on vice city, boats, birds, a low-rider, an airboat or a news chopper cross the sunset
+// (components/scenes.ts) while the sun sinks very slowly and a motel sign flickers now and then; on spider-man, one of five suits swings after its villain (components/spidey.ts); on blade,
 // blade walks in and cuts down a vampire (it goes up in ash), blood drops land on the screen, and clicking
 // three bats is an egg. All sprites are original pixel drawings.
-// Static layers render once per resize; only bats, beams and the events animate. Paused offscreen and in
+// Static layers render once per resize; only bats, beams and the events animate (vice city's sun is
+// pre-rendered in four shimmer frames and only moved, so it costs one drawImage). Paused offscreen and in
 // background tabs; with reduced motion, a single still frame.
 
 const CELL = 3;
@@ -52,7 +54,11 @@ export function ThemeScenery() {
     let fight: { t0: number; left: boolean; burnt: boolean } | null = null;
     let ash: { x: number; y: number; vx: number; vy: number; life: number; c: string }[] = [];
     let nextFight = 0, nextBlood = 0, hits = 0;
-    const events: Partial<Record<string, Scene>> = { gtav: losSantos(), fortnite: battleBus(), spiderman: webChase() };
+    // vice city: the sun's shimmer frames and where they sit, the motel sign lit and dark (null: no room)
+    let sun: { frames: HTMLCanvasElement[]; x: number; y: number; r: number } | null = null;
+    let sign: { on: HTMLCanvasElement; off: HTMLCanvasElement; x: number; y: number } | null = null;
+    let sunT0 = 0, nextFlicker = 0, flickerUntil = 0;
+    const events: Partial<Record<string, Scene>> = { gtav: losSantos(), gtavi: viceCity(), fortnite: battleBus(), spiderman: webChase() };
     // those scenes draw at half resolution (6px cells) and are blown up 2x, so their sprites read
     const half = document.createElement("canvas");
     const hctx = half.getContext("2d")!;
@@ -110,17 +116,40 @@ export function ThemeScenery() {
       l.clearRect(0, 0, w, h);
       const a = w / h;
       if (theme === "gtavi") {
-        // striped sun sinking on the right, palms at both edges
+        // striped sun sinking on the right (its own small canvases, drawn under the palms each frame),
+        // palms at both edges. Four frames: the stripes breathe and the lower rows waver like heat.
         const sx = w * 0.84, sy = h * 0.9, r = h * 0.16;
-        for (let y = Math.floor(sy - r); y < h; y++)
-          for (let x = Math.floor(sx - r); x < sx + r; x++) {
-            const d = Math.hypot(x - sx, y - sy);
-            if (d > r) continue;
-            const k = (y - (sy - r)) / (2 * r);
-            if (k > 0.45 && ((y - sy) / r * 10 + 20) % 1 < (k - 0.45) * 1.2) continue;
-            l.fillStyle = k < 0.35 ? "#ffd36e" : k < 0.55 ? "#ff8a5c" : "#ff4f9a";
-            l.fillRect(x, y, 1, 1);
-          }
+        const x0 = Math.floor(sx - r), y0 = Math.floor(sy - r);
+        const frames = [0, 1, 2, 3].map((f) => {
+          const c = document.createElement("canvas");
+          c.width = Math.ceil(2 * r) + 3;
+          c.height = Math.max(1, h - y0);
+          const s = c.getContext("2d")!;
+          for (let y = y0; y < h; y++)
+            for (let x = x0; x < sx + r; x++) {
+              const d = Math.hypot(x - sx, y - sy);
+              if (d > r) continue;
+              const k = (y - (sy - r)) / (2 * r);
+              if (k > 0.45 && ((y - sy) / r * 10 + 20 + (f ? 0.06 * Math.sin(f * 2.1) : 0)) % 1 < (k - 0.45) * 1.2) continue;
+              s.fillStyle = k < 0.35 ? "#ffd36e" : k < 0.55 ? "#ff8a5c" : "#ff4f9a";
+              s.fillRect(x - x0 + (f && k > 0.55 && hash(y, f) > 0.7 ? 1 : 0), y - y0, 1, 1);
+            }
+          return c;
+        });
+        sun = { frames, x: x0, y: y0, r };
+        // the motel sign by the left palms, only where the margin has room for it
+        const sgx = Math.floor(w * 0.2) - MOTEL_SIGN.w;
+        sign = null;
+        if (sgx > w * 0.08) {
+          const [on, off] = [true, false].map((lit) => {
+            const c = document.createElement("canvas");
+            c.width = MOTEL_SIGN.w;
+            c.height = MOTEL_SIGN.h;
+            motelSign(c.getContext("2d")!, 0, 0, lit);
+            return c;
+          });
+          sign = { on, off, x: sgx, y: Math.round(h * 0.72) }; // below the side rail's clocks, above the radio card
+        }
         l.fillStyle = "#07030d";
         for (let y = Math.floor(h * 0.3); y < h; y++)
           for (let x = 0; x < w; x++) {
@@ -193,7 +222,20 @@ export function ThemeScenery() {
       last = now;
       const t = now / 1000;
       ctx.clearRect(0, 0, w, h);
+      if (theme === "gtavi" && sun) {
+        // sinks half its radius over twenty minutes, then rests; with reduced motion it stays put
+        const sink = reduce ? 0 : Math.round(Math.min(1, (t - sunT0) / 1200) * sun.r * 0.5);
+        ctx.drawImage(sun.frames[reduce ? 0 : Math.floor(t * 2) % 4], sun.x, sun.y + sink);
+      }
       ctx.drawImage(layer, 0, 0);
+      if (theme === "gtavi" && sign) {
+        // lit, but every so often the tube stutters for a moment
+        if (!reduce && t > nextFlicker) {
+          flickerUntil = t + 0.5 + Math.random() * 0.6;
+          nextFlicker = t + 8 + Math.random() * 14;
+        }
+        ctx.drawImage(!reduce && t < flickerUntil && hash(Math.floor(t * 18), 3) < 0.5 ? sign.off : sign.on, sign.x, sign.y);
+      }
       if (theme === "gtav") {
         // two searchlights sweeping from the skyline
         for (const [bx, ph] of [[0.28, 0], [0.74, 2.2]]) {
@@ -306,11 +348,12 @@ export function ThemeScenery() {
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(half, 0, 0, w2 * 2, h2 * 2);
       }
-      const moving = !reduce && ["gtav", "fortnite", "blade", "matrix", "cyberpunk", "minecraft", "spiderman"].includes(theme);
+      const moving = !reduce && ["gtav", "gtavi", "fortnite", "blade", "matrix", "cyberpunk", "minecraft", "spiderman"].includes(theme);
       raf = moving && !document.hidden ? requestAnimationFrame(frame) : 0;
     };
 
     const restart = () => {
+      const was = theme;
       theme = currentTheme();
       cancelAnimationFrame(raf);
       raf = 0;
@@ -321,6 +364,9 @@ export function ThemeScenery() {
       const now = performance.now() / 1000;
       nextFight = now + 6;
       nextBlood = now + 10;
+      nextFlicker = now + 6;
+      flickerUntil = 0;
+      if (theme !== was || !sunT0) sunT0 = now; // a resize keeps the sunset where it was
       Object.values(events).forEach((e) => e?.reset(now));
       document.querySelectorAll(".blood-drop").forEach((d) => d.remove());
       canvas.dataset.theme = theme;
