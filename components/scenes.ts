@@ -1,8 +1,10 @@
-// Background events for two station themes, drawn into ThemeScenery's 3px-cell canvas:
+// Background events for three station themes, drawn into ThemeScenery's 3px-cell canvas:
 // los santos: police chases (a car, a bike, a Deluxo that takes off, or an Oppressor that blows up a car
 //   first) with cruisers and a helicopter, and flybys (Lazers, Hydras, a Strikeforce, a Buzzard); sirens,
 //   rotors, jets, booms.
 // battle bus: the bus crosses and drops players, they fight, and "you" win.
+// vice city: one thing at a time crosses the sunset: a speedboat or jet ski with its wake, flamingos in a
+//   loose V or a lone pelican, a low-rider with neon underglow, an airboat or a news chopper.
 // All original pixel drawings. Each scene keeps its own state; ThemeScenery calls frame() every frame on a
 // half-resolution canvas (one cell = 6 screen px), so speeds are in those cells per second.
 import { clientSettings } from "@/lib/client-settings";
@@ -60,6 +62,10 @@ const FONT: Record<string, string[]> = {
   U: ["1.1", "1.1", "1.1", "1.1", "111"],
   "#": ["1.1", "111", "1.1", "111", "1.1"],
   "1": [".1.", "11.", ".1.", ".1.", "111"],
+  M: ["1.1", "111", "111", "1.1", "1.1"],
+  T: ["111", ".1.", ".1.", ".1.", ".1."],
+  E: ["111", "1..", "11.", "1..", "111"],
+  L: ["1..", "1..", "1..", "1..", "111"],
 };
 function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, col: string) {
   [...s].forEach((ch, i) => put(ctx, FONT[ch] ?? [], { "1": col }, x + i * 4, y));
@@ -404,4 +410,172 @@ export function fortniteProps(l: CanvasRenderingContext2D, w: number, h: number)
   at(CHEST, { y: "#f2c94c", o: "#c8932a", q: "#fff6c2" }, 0.85);
   at(BUSH, { g: "#3fa34d" }, 0.93);
   at(DROP, { b: "#3aa3ff", l: "#cfd8e3", c: "#6b4a2b", w: "#c8932a" }, 0.9, Math.round(h * 0.2));
+}
+
+// ---------------------------------------------------------------- vice city
+
+// all face right (flipped for leftward runs); the boats' bottom row sits on the water line
+const SPEEDBOAT = [
+  ".......h............",
+  "......ksw...........",
+  "KKKKKKKKKKKKKK......",
+  "HHHHHHHHHHHHHHHHHHH.",
+  "HppppppppppppppppH..",
+  ".HHHHHHHHHHHHHHHH...",
+];
+const SPEEDBOAT_PAL = { h: "#d69a72", k: "#2a1a3d", s: "#3fe0d0", w: "#cfe3f2", K: "#3fe0d0", H: "#e9e2f0", p: "#ff5fae" };
+const JETSKI = ["....h......", "...ssb.....", "...s..b....", "jjjjjjjjj..", "JJJJJJJJJJj"];
+const JETSKI_PAL = { h: "#d69a72", s: "#ff5fae", b: "#b89ac8", j: "#3fe0d0", J: "#e9e2f0" };
+// wings up / down: the same cells mirrored, so a bird is always the same size
+const FLAMINGO = [
+  ["......P......", ".....PP......", "LLLLpppppNNbk", ".............", "............."],
+  [".............", ".............", "LLLLpppppNNbk", ".....PP......", "......P......"],
+];
+const FLAMINGO_PAL = { P: "#ff4f9a", p: "#ff7eb6", L: "#ff9cc8", N: "#ff7eb6", b: "#fdeefe", k: "#b89ac8" };
+const PELICAN = [
+  ["......GG...........", ".....GWW...........", "....GWWW...........", "GGWWWWWWWWWHHyyyyyy", "...........HYYYY..."],
+  ["...................", "...................", "...................", "GGWWWWWWWWWHHyyyyyy", "....GWWW...HYYYY...", ".....GWW...........", "......GG..........."],
+];
+const PELICAN_PAL = { G: "#7d6f8c", W: "#d9d2e3", H: "#fdeefe", y: "#ffd36e", Y: "#ff8a5c" };
+// the low-rider's body bounces on its hydraulics; the wheels stay on the road
+const LOWRIDER = [
+  "...........KKKKKKKKKK...........",
+  "..........KwwwwwKwwwwwK.........",
+  "..KKKKKKKKKwwwwwKwwwwwwKKKKKKKK.",
+  ".KbbbbbbbbbbbbbbbbbbbbbbbbbbbbbY",
+  "RbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbY",
+  "bbbb....bbbbbbbbbbbbbbbb....bbbb",
+];
+const LOW_WHEELS = ["....tHHt................tHHt....", ".....tt..................tt....."];
+const LOWRIDER_PAL = { K: "#9a6fd0", w: "#2a1a3d", b: "#5b2a86", Y: "#fff3b0", R: "#ff4f9a", t: "#0a0a0a", H: "#b89ac8" };
+// the airboat: a caged fan (two blade frames) spliced onto the back of the hull
+const FANS = [
+  ["..ccc..", ".c.F.c.", "c..F..c", "c..H..c", "c..F..c", ".c.F.c.", "..ccc.."],
+  ["..ccc..", ".c...c.", "c.....c", "cFFHFFc", "c.....c", ".c...c.", "..ccc.."],
+];
+const AIRBOAT_TOP = [".................", ".................", "..h..............", ".sss.............", ".s.s.............", "kkkkk............", "k...k............"];
+const AIRBOAT_HULL = ["mmmmmmmmmmmmmmmmmmmmmm..", "MMMMMMMMMMMMMMMMMMMMMMMM", ".MMMMMMMMMMMMMMMMMMMMMM."];
+const airboat = (f: number) => [...FANS[f].map((r, i) => r + AIRBOAT_TOP[i]), ...AIRBOAT_HULL];
+const AIRBOAT_PAL = { c: "#b89ac8", F: "#fdeefe", H: "#ff5fae", h: "#d69a72", s: "#3fe0d0", k: "#7d6f8c", m: "#9a8aa8", M: "#4a2f63" };
+// a news chopper: round teal cabin, pink tail and stripe, a camera under the nose
+const CHOPPER = [
+  "..llllllllllllllllllllllll..",
+  "..............kk............",
+  "T.........bbbbbbbbbb........",
+  "TT.......bbbbbbbbbbggg......",
+  "TTbbbbbbbbpppppppppbggggg...",
+  "..T......bbbbbbbbbbbbbbgg...",
+  ".........bbbbbbbbbbbbbbb....",
+  "...........k.......k..oo....",
+  ".........sssssssssssssss....",
+];
+const CHOPPER_PAL = { l: "#b89ac8", k: "#7d6f8c", T: "#ff5fae", b: "#2fb8aa", p: "#ff5fae", g: "#cfe3f2", o: "#fdeefe", s: "#b89ac8" };
+const VICE_SPEED = { speedboat: 34, jetski: 40, flamingos: 18, pelican: 13, lowrider: 14, airboat: 22, chopper: 28 } as const;
+type ViceKind = keyof typeof VICE_SPEED;
+const VICE_LEAD: Record<ViceKind, string[]> = { speedboat: SPEEDBOAT, jetski: JETSKI, flamingos: FLAMINGO[0], pelican: PELICAN[0], lowrider: LOWRIDER, airboat: airboat(0), chopper: CHOPPER };
+// one of four, then one of its pair
+const VICE_PAIRS: [ViceKind, ViceKind][] = [["speedboat", "jetski"], ["flamingos", "pelican"], ["lowrider", "lowrider"], ["airboat", "chopper"]];
+export const FOAM = ["#fdeefe", "#7fe8dc"];
+// birds in a loose V: each rank 15 cells further back (a bird is 13 wide), 6 rows out to either side
+const FLOCK_GAP = 15;
+
+export function viceCity(): Scene {
+  type Ev = { t0: number; dir: 1 | -1; kind: ViceKind; y: number; n: number; len: number; trail: number };
+  let ev: Ev | null = null;
+  let next = 0;
+  // a wake: foam strung out behind the stern, never inside the hull's own columns
+  const wake = (ctx: CanvasRenderingContext2D, x: number, len: number, dir: 1 | -1, y: number, n: number, t: number) => {
+    for (let i = 1; i <= n; i++) {
+      if ((i + Math.floor(t * 8)) % 3 === 0) continue;
+      ctx.globalAlpha = 1 - i / (n + 1);
+      ctx.fillStyle = FOAM[i > n / 2 ? 1 : 0];
+      ctx.fillRect(dir > 0 ? x - i : x + len - 1 + i, y - (i % 4 === 1 ? 1 : 0) + Math.floor(i / 12), 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  };
+  return {
+    reset(t) {
+      ev = null;
+      next = t + 5;
+    },
+    frame(ctx, w, h, t) {
+      const water = groundOf(h); // the waterline runs across the sun; the low-rider's road is the same line
+      if (!ev && t > next) {
+        const pair = VICE_PAIRS[Math.floor(Math.random() * VICE_PAIRS.length)];
+        const kind = pair[Math.random() < 0.5 ? 0 : 1];
+        const dir = Math.random() < 0.5 ? 1 : -1;
+        const n = kind === "flamingos" ? 4 + Math.floor(Math.random() * 3) : 1;
+        // birds high enough that the V's outer ranks stay on screen
+        const y = kind === "flamingos" || kind === "pelican" ? Math.max(24, h * rand(0.14, 0.3)) : kind === "chopper" ? h * rand(0.06, 0.16) : water;
+        const len = VICE_LEAD[kind][0].length;
+        const trail = kind === "flamingos" ? Math.ceil((n - 1) / 2) * FLOCK_GAP : ["speedboat", "jetski", "airboat"].includes(kind) ? 30 : 0;
+        ev = { t0: t, dir, kind, y, n, len, trail };
+        if (kind === "chopper") sound("heli", (w + len + 20) / VICE_SPEED.chopper);
+      }
+      if (!ev) return;
+      const e = ev, k = t - e.t0, dir = e.dir, speed = VICE_SPEED[e.kind];
+      // the lead's left edge: starts just off one side; whatever follows trails behind it
+      const x = Math.round(dir > 0 ? -e.len + k * speed : w - k * speed);
+      const flip = dir < 0;
+      switch (e.kind) {
+        case "speedboat":
+          wake(ctx, x, e.len, dir, water - 1, e.trail, t);
+          put(ctx, SPEEDBOAT, SPEEDBOAT_PAL, x, water - SPEEDBOAT.length, 1, flip);
+          break;
+        case "jetski":
+          wake(ctx, x, e.len, dir, water - 1, e.trail, t);
+          put(ctx, JETSKI, JETSKI_PAL, x, water - JETSKI.length + Math.round(Math.sin(k * 9) * 0.6), 1, flip);
+          break;
+        case "airboat": {
+          const rows = airboat(Math.floor(t * 16) % 2);
+          wake(ctx, x, e.len, dir, water - 1, e.trail, t);
+          put(ctx, rows, AIRBOAT_PAL, x, water - rows.length, 1, flip);
+          break;
+        }
+        case "flamingos":
+          for (let i = 0; i < e.n; i++) {
+            const rank = Math.ceil(i / 2), side = i === 0 ? 0 : i % 2 ? -1 : 1;
+            const by = Math.round(e.y + side * rank * 6 + Math.sin(t * 1.3 + i));
+            put(ctx, FLAMINGO[Math.floor(t * 5 + i * 0.7) % 2], FLAMINGO_PAL, x - dir * rank * FLOCK_GAP, by - 2, 1, flip);
+          }
+          break;
+        case "pelican":
+          // mostly gliding, a slow flap now and then
+          put(ctx, PELICAN[Math.floor(k * 2.5) % 6 === 1 ? 1 : 0], PELICAN_PAL, x, Math.round(e.y + Math.sin(k * 0.8) * 2) - 3, 1, flip);
+          break;
+        case "lowrider": {
+          const bounce = Math.max(0, Math.round(Math.sin(k * 2.2) * 2));
+          // the underglow: a strip under the body between the wheels, and its pool on the road
+          ctx.fillStyle = Math.floor(k / 1.5) % 2 ? "#3fe0d0" : "#ff5fae";
+          ctx.fillRect(x + 9, water - 2, 14, 1);
+          ctx.globalAlpha = 0.35;
+          ctx.fillRect(x + 2, water, 28, 1);
+          ctx.globalAlpha = 1;
+          put(ctx, LOW_WHEELS, LOWRIDER_PAL, x, water - LOW_WHEELS.length, 1, flip);
+          put(ctx, LOWRIDER, LOWRIDER_PAL, x, water - LOW_WHEELS.length - LOWRIDER.length - bounce, 1, flip);
+          break;
+        }
+        case "chopper":
+          put(ctx, Math.floor(t * 14) % 2 ? CHOPPER : spin(CHOPPER), CHOPPER_PAL, x, Math.round(e.y + Math.sin(k * 1.5) * 1.5), 1, flip);
+          break;
+      }
+      if (k * speed > w + e.len + e.trail + 10) {
+        ev = null;
+        next = t + rand(18, 35);
+      }
+    },
+  };
+}
+
+// the motel sign by the left palms (ThemeScenery's 3px cells): a neon box with MOTEL in it, on a pole
+export const MOTEL_SIGN = { w: 23, h: 21 };
+export function motelSign(ctx: CanvasRenderingContext2D, x: number, y: number, on: boolean) {
+  ctx.fillStyle = on ? "#3fe0d0" : "#1f4a48";
+  ctx.fillRect(x, y, MOTEL_SIGN.w, 1);
+  ctx.fillRect(x, y + 8, MOTEL_SIGN.w, 1);
+  ctx.fillRect(x, y, 1, 9);
+  ctx.fillRect(x + MOTEL_SIGN.w - 1, y, 1, 9);
+  ctx.fillStyle = "#3a2352";
+  ctx.fillRect(x + 11, y + 9, 1, MOTEL_SIGN.h - 9);
+  text(ctx, "MOTEL", x + 2, y + 2, on ? "#ff5fae" : "#4a2238");
 }

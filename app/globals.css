@@ -609,6 +609,23 @@ html[data-boot="out"] .boot {
   color: var(--amber);
 }
 
+/* code samples: a flat bordered block that scrolls sideways itself, never the page */
+.man-body pre {
+  margin-top: 0.9rem;
+  padding: 0.75rem 1.5ch;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  overflow-x: auto;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.man-body pre code {
+  color: var(--text);
+  font: inherit;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -2792,6 +2809,28 @@ html[data-boot] .radio {
 
 .radio-ctl button:active {
   translate: 0 1px;
+}
+
+/* touch: grow the small chips' hit areas to ~44px tall without moving anything. Sideways the radio
+   buttons grow only half their 0.5rem gap, so neighbours never overlap; z-index -1 keeps the
+   slider and knob above the buttons' extra area. */
+@media (pointer: coarse) {
+  .contact-btn,
+  .radio-ctl button {
+    position: relative;
+  }
+  .contact-btn::after,
+  .radio-ctl button::after {
+    content: "";
+    position: absolute;
+  }
+  .contact-btn::after {
+    inset: -12px -4px;
+  }
+  .radio-ctl button::after {
+    inset: -11px -0.25rem;
+    z-index: -1;
+  }
 }
 
 .radio-note {

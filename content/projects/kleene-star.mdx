@@ -1,0 +1,24 @@
+A small language for Theory of Computation, named after the star in `a*`: write automata, grammars and machines in `.kstar` files and run them with `kstar`.
+
+- Defines DFAs, NFAs, eps-NFAs, regular expressions, context-free grammars and pushdown automata; runs Turing machines with a step limit.
+- Converts regex to eps-NFA to NFA to DFA to minimal DFA and back, combines languages, checks equivalence and emptiness, and draws state diagrams as Graphviz files.
+- A Rust interpreter with a hand-written lexer and recursive-descent parser, and a checker that reports errors (missing DFA transitions, symbols outside the alphabet) before anything runs.
+- Ships a REPL, a formatter, a language server and a VS Code extension.
+
+```
+alphabet B = {0, 1}
+
+nfa EndsIn01 over B {
+    start  a
+    accept c
+    a --0,1--> a
+    a --0-->   b
+    b --1-->   c
+}
+
+let d = minimize(EndsIn01)
+
+print d
+test d accepts "1101"
+test equivalent(d, /(0|1)*01/)
+```

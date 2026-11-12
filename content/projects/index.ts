@@ -17,6 +17,18 @@ export type Project = {
 // Order = order on the home page. Body copy lives in <slug>.mdx.
 export const projects: Project[] = [
   {
+    slug: "kleene-star",
+    title: "KLEENE-STAR",
+    section: 1,
+    name: "kleene-star",
+    status: "shipped",
+    lang: "Rust",
+    summary: "a small language for automata theory",
+    repo: "https://github.com/Pratham71/kleene-star",
+    stack: ["Rust", "rustyline", "tower-lsp-server", "tokio", "Graphviz"],
+    images: [],
+  },
+  {
     slug: "homelab",
     title: "HOMELAB",
     section: 7,
